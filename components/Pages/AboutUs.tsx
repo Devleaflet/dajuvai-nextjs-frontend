@@ -1,0 +1,348 @@
+'use client';
+
+import "@/styles/AboutUs.css";
+import Navbar from "@/components/Components/Navbar";
+import Footer from "@/components/Components/Footer";
+
+const AboutUs = () => {
+  return (
+    <>
+      <Navbar />
+      <main className="about">
+        {/* Hero */}
+        <section className="about__hero">
+          <div className="about__container">
+            <div className="about__hero-content">
+              <div className="about__hero-text">
+                <p className="about__eyebrow">About DajuVai</p>
+                <h1 className="about__title">
+                  Nepal's Fastest Growing E-Commerce Marketplace
+                </h1>
+               <p className="about__text">
+              Dajuvai.com is a multi-vendor online marketplace designed to connect sellers and buyers across Nepal. The name "Daju Vai" (meaning elder brother & younger brother) symbolizes trust, unity, and family values, reflecting the founders bond as two brothers starting the business together.
+            </p>
+                <div className="about__stats" role="list">
+                  <div className="about__stat" role="listitem">
+                    <span className="about__stat-number">24/7</span>
+                    <span className="about__stat-label">Customer Support</span>
+                  </div>
+                  <div className="about__stat" role="listitem">
+                    <span className="about__stat-number">77</span>
+                    <span className="about__stat-label">Districts served</span>
+                  </div>
+                  <div className="about__stat" role="listitem">
+                    <span className="about__stat-number">Fast</span>
+                    <span className="about__stat-label">Delivery</span>
+                  </div>
+                </div>
+              </div>
+              <div className="about__hero-image">
+                <img
+                  src="/assets/aboutHead.png"
+                  alt="DajuVai founders Aarav and Rohan Thapa working in their Kathmandu office"
+                  className="about__hero-img"
+                />
+                <div className="about__hero-badge">
+                  <span>🇳🇵 Made in Nepal</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="about__ribbon">
+            <span className="about__ribbon-chip">Daju = guide</span>
+            <span className="about__ribbon-dot" aria-hidden="true">
+              •
+            </span>
+            <span className="about__ribbon-chip">Vai = innovate</span>
+            <span className="about__ribbon-dot" aria-hidden="true">
+              •
+            </span>
+            <span className="about__ribbon-chip">Together, we rise</span>
+          </div>
+        </section>
+
+        {/* About Dajuvai.com */}
+        {/* <section className="about__section">
+          <div className="about__container">
+            <h2 className="about__heading">About Dajuvai.com</h2>
+            
+
+            <h3 className="about__subheading">Business Model</h3>
+            <div className="about__business-model">
+              <div className="about__model-item">
+                <h4>B2C (Business-to-Consumer)</h4>
+                <ul>
+                  <li>Individual vendors list their products (fashion, electronics, groceries, handicrafts, etc.) directly for consumers.</li>
+                  <li>Customers browse, compare, and buy from multiple sellers in one platform.</li>
+                </ul>
+              </div>
+              <div className="about__model-item">
+                <h4>B2B (Business-to-Business)</h4>
+                <ul>
+                  <li>Wholesalers, manufacturers, and distributors can connect with retailers or businesses.</li>
+                  <li>Bulk order system, wholesale pricing, and direct supply chain deals.</li>
+                </ul>
+              </div>
+              <div className="about__model-item">
+                <h4>Multi-Vendor System</h4>
+                <ul>
+                  <li>Any verified vendor (small business, wholesaler or brand) can register and sell.</li>
+                  <li>Vendors can manage their own store, inventory, and pricing.</li>
+                  <li>Dajuvai.com provides logistics, payment gateway, and customer support.</li>
+                </ul>
+              </div>
+            </div>
+
+            <h3 className="about__subheading">Key Features of the Platform</h3>
+            <ul className="about__featurelist">
+              <li className="about__feature">
+                <IconCheck /> <span>User-friendly website & mobile app</span>
+              </li>
+              <li className="about__feature">
+                <IconCheck /> <span>Vendor dashboard for managing sales</span>
+              </li>
+              <li className="about__feature">
+                <IconCheck /> <span>Secure payment gateway (Esewa, NPX & COD)</span>
+              </li>
+              <li className="about__feature">
+                <IconCheck /> <span>Logistics & delivery support</span>
+              </li>
+              <li className="about__feature">
+                <IconCheck /> <span>B2B bulk ordering system</span>
+              </li>
+              <li className="about__feature">
+                <IconCheck /> <span>Customer loyalty rewards</span>
+              </li>
+            </ul>
+
+            <h3 className="about__subheading">Vision</h3>
+            <ul className="about__vision-list">
+              <li>To become Nepal's most trusted online marketplace, connecting local businesses with consumers.</li>
+              <li>To empower Nepali entrepreneurs, SMEs, and wholesalers by giving them digital reach.</li>
+              <li>To bridge the gap between traditional markets and modern e-commerce.</li>
+            </ul>
+          </div>
+        </section> */}
+
+        {/* Our Vision */}
+        <section className="about__section about__section--alt" id="vision">
+          <div className="about__container about__grid">
+            <div>
+              <p className="about__eyebrow">Our Vision</p>
+              <h2 className="about__heading">
+                "To Make Nepal the Digital Commerce Capital of South Asia."
+              </h2>
+              <p className="about__text">
+                We're building inclusive commerce that uplifts every maker,
+                merchant, and micro-entrepreneur. Our commitment drives us to
+                innovate and empower communities across Nepal.
+              </p>
+              <ul className="about__cards">
+                <li className="about__card">
+                  <IconTarget />
+                  <h3>Global by 2030</h3>
+                  <p>Connect every Nepali SME to global markets by 2030.</p>
+                </li>
+                <li className="about__card">
+                  <IconRoute />
+                  <h3>AI-Driven Logistics</h3>
+                  <p>
+                    Use AI to navigate Nepal's challenging terrains with smarter
+                    routing.
+                  </p>
+                </li>
+                <li className="about__card">
+                  <IconHeart />
+                  <h3>5% for Literacy</h3>
+                  <p>
+                    Allocate 5% of profits to digital literacy in Karnali &
+                    Terai villages.
+                  </p>
+                </li>
+                <li className="about__card">
+                  <IconStar />
+                  <h3>Curated Craft</h3>
+                  <p>
+                    Showcase Dhaka, Lokta paper, Khukuri, and world-class Nepali
+                    craftsmanship.
+                  </p>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        {/* For Sellers */}
+        <section className="about__section" id="sellers">
+          <div className="about__container about__grid about__grid--reverse">
+            <div>
+              <p className="about__eyebrow">For Sellers</p>
+              <h2 className="about__heading">Grow with DajuVai</h2>
+              <p className="about__text">
+                Whether you're a home-based creator or a scaling SME, we provide
+                zero-hassle onboarding, fast payouts, nationwide reach, and real
+                human support—always.
+              </p>
+              <ul className="about__bullets">
+                <li>
+                  <IconBolt /> Zero fees for women & youth sellers
+                </li>
+                <li>
+                  <IconTruck /> Nationwide pick-up & delivery
+                </li>
+                <li>
+                  <IconShield /> Buyer protection & dispute resolution
+                </li>
+                <li>
+                  <IconChart /> Analytics to understand and grow your sales
+                </li>
+              </ul>
+              <div className="about__ctas">
+                <a
+                  href="/becomevendor"
+                  className="btn btn--primary"
+                  aria-label="Become a Vendor"
+                >
+                  Become a Vendor
+                </a>
+              </div>
+            </div>
+            <div className="about__seller-showcase">
+              <img
+                src="/assets/about2nd.png"
+                alt="Nepali artisan creating traditional Dhaka fabric, representing DajuVai sellers"
+                className="about__seller-img"
+              />
+              <div className="about__panel">
+                <div className="about__panel-inner">
+                  <h3 className="about__panel-title">Your brand, your way</h3>
+                  <p className="about__panel-text">
+                    Custom storefronts, easy product uploads, and tools that put
+                    you in control.
+                  </p>
+                  <ul className="about__panel-points">
+                    <li>Instant KYC</li>
+                    <li>Bulk listing via CSV</li>
+                    <li>Discount & campaign tools</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+      <Footer />
+    </>
+  );
+};
+
+/* --- Minimal inline SVG icons (CSS-colored) --- */
+const IconCheck = () => (
+  <svg className="icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      d="M20 6L9 17l-5-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const IconTarget = () => (
+  <svg className="icon" viewBox="0 0 24 24" aria-hidden="true">
+    <circle
+      cx="12"
+      cy="12"
+      r="8"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    />
+    <circle cx="12" cy="12" r="3" fill="currentColor" />
+  </svg>
+);
+
+const IconRoute = () => (
+  <svg className="icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      d="M4 6h6a4 4 0 014 4v4a4 4 0 004 4h2"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+    <circle cx="4" cy="6" r="2" fill="currentColor" />
+    <circle cx="20" cy="18" r="2" fill="currentColor" />
+  </svg>
+);
+
+const IconHeart = () => (
+  <svg className="icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+const IconStar = () => (
+  <svg className="icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      d="M12 2l3.09 6.26L22 9.27l-5 4.84L18.18 22 12 18.77 5.82 22 7 14.11 2 9.27l6.91-1.01L12 2z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+const IconBolt = () => (
+  <svg className="icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" fill="currentColor" />
+  </svg>
+);
+
+const IconTruck = () => (
+  <svg className="icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      d="M1 7h13v8H1zM14 9h4l4 3v3h-8z"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    />
+    <circle cx="5" cy="17" r="2" fill="currentColor" />
+    <circle cx="17" cy="17" r="2" fill="currentColor" />
+  </svg>
+);
+
+const IconShield = () => (
+  <svg className="icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    />
+    <path
+      d="M9 12l2 2 4-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+const IconChart = () => (
+  <svg className="icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      d="M4 19V5M10 19V9M16 19V3M22 21H2"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+export default AboutUs;
