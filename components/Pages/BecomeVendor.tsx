@@ -143,7 +143,7 @@ const BecomeVendor: React.FC = () => {
                   </div>
                   <h3 className="become-vendor__cta-title">Ready to Grow Your Business?</h3>
                   <p className="cta-subtitle">Join Nepal's fastest growing marketplace today</p>
-                  
+
                   <div className="become-vendor__buttons">
                     <button
                       className="become-vendor__button become-vendor__button--primary"
@@ -155,7 +155,7 @@ const BecomeVendor: React.FC = () => {
                       <div className="button-shine"></div>
                     </button>
                     <Link
-                      to="/contact"
+                      href="/contact"
                       className="become-vendor__button become-vendor__button--secondary"
                       aria-label="Contact DajuVai support"
                     >
@@ -163,7 +163,7 @@ const BecomeVendor: React.FC = () => {
                       Contact Support
                     </Link>
                   </div>
-                  
+
                   <div className="cta-footer">
                     <FaClock className="cta-footer-icon" />
                     <span>Average setup time: 10 minutes</span>
@@ -179,7 +179,7 @@ const BecomeVendor: React.FC = () => {
           isOpen={isModalOpen}
           onClose={closeModal}
         />
-        
+
         <Footer />
       </div>
     </>
