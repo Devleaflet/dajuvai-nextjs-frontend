@@ -3,6 +3,7 @@
 // SubCategoryModal.tsx
 import React, { useState, useEffect } from "react";
 import "@/styles/CategoryModal.css"; // Reuse same styles for consistency
+import '@/styles/SubCategoryModal.css';
 
 interface SubCategory {
   id: string;

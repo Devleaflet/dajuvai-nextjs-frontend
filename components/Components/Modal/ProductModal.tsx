@@ -3,6 +3,7 @@
 // src/Components/ProductModal/ProductModal.tsx
 import React, { useState } from "react";
 import { Product } from "@/lib/types/product";
+import '@/styles/ProductModal.css';
 
 interface ProductModalProps {
   show: boolean;

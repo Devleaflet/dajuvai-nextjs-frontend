@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import '@/styles/SliderSkeleton.css';
 
 /**
  * Improved skeleton component for slider loading state

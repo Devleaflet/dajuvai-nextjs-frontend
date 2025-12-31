@@ -15,6 +15,7 @@ import CategoryCatalogSection from "@/components/Components/CategoryCatalogSecti
 import HeroSliderSkeleton from "@/components/skeleton/HeroSliderSkeleton";
 import CategorySliderSkeleton from "@/components/skeleton/CategorySliderSkeleton";
 import HomepageSectionsSkeleton from "@/components/skeleton/HomepageSectionsSkeleton";
+import '@/styles/Home.css';
 
 const Home = () => {
 	const [isLoading, setIsLoading] = useState(true);

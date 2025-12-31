@@ -130,7 +130,7 @@
 	width: 100%;
 	padding: 10px 50px 10px 15px;
 	border: 2px solid #ff6b00;
-	border-radius: 25px !important;
+	border-radius: 4px;
 	font-size: 14px;
 	outline: none;
 	transition: all 0.3s ease;
@@ -143,16 +143,15 @@
 
 .navbar__search-button {
 	position: absolute;
-	right: 0.25rem;
-	top: 50%;
-	transform: translateY(-50%);
-	background: #ff6b00;
-	border: none;
-	border-radius: 50% !important;
-	width: 2.5rem;
-	height: 2.5rem;
+	right: 2px;
+	top: 2px;
+	height: calc(100% - 4px);
+	width: 45px;
 	padding: 0;
 	margin: 0;
+	background: #ff6b00;
+	border: none;
+	border-radius: 0 2px 2px 0;
 	color: white;
 	cursor: pointer;
 	transition: background-color 0.3s ease;

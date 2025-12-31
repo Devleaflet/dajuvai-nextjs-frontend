@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import '@/styles/ProductCardSkeleton.css';
 
 /**
  * Improved skeleton component for product cards loading state

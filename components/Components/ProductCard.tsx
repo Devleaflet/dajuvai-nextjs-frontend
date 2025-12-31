@@ -16,6 +16,7 @@ import { calculateDiscountedPrice } from "@/lib/utils/pricing";
 import ProductImageGallery from "@/components/features/ProductImageGallery";
 import ProductInfo from "@/components/features/ProductInfo";
 import ProductActions from "@/components/features/ProductActions";
+import '@/styles/ProductCard.css';
 
 const AuthModal = dynamic(() => import("./AuthModal"), {
 	ssr: false

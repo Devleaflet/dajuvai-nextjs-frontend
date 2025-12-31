@@ -1,5 +1,6 @@
 import React from "react";
 import { Order } from "./Types/Order";
+import '@/styles/OrderList.css';
 
 // Define props interface
 interface OrderListProps {
@@ -37,15 +38,14 @@ const OrderList: React.FC<OrderListProps> = ({ orders, isMobile, onView }) => {
               <td>{order.paymentStatus || "Unknown"}</td>
               <td>
                 <span
-                  className={`product-status ${
-                    order.status === "delivered"
+                  className={`product-status ${order.status === "delivered"
                       ? "featured"
                       : order.status === "pending"
-                      ? "on-sale"
-                      : order.status === "canceled"
-                      ? "out-of-stock"
-                      : ""
-                  }`}
+                        ? "on-sale"
+                        : order.status === "canceled"
+                          ? "out-of-stock"
+                          : ""
+                    }`}
                 >
                   {order.status || "Pending"}
                 </span>
@@ -57,8 +57,8 @@ const OrderList: React.FC<OrderListProps> = ({ orders, isMobile, onView }) => {
                   title="View Order Details"
                 >
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 5C7.63636 5 4 8.63636 4 12C4 15.3636 7.63636 19 12 19C16.3636 19 20 15.3636 20 12C20 8.63636 16.3636 5 12 5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M12 5C7.63636 5 4 8.63636 4 12C4 15.3636 7.63636 19 12 19C16.3636 19 20 15.3636 20 12C20 8.63636 16.3636 5 12 5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </button>
               </td>

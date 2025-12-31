@@ -14,6 +14,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCart } from "@/lib/context/CartContext";
 import { useUI } from "@/lib/context/UIContext";
+import '@/styles/Cart.css';
 
 interface CartProps {
 	cartOpen: boolean;

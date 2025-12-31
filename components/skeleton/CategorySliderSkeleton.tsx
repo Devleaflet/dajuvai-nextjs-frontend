@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import '@/styles/Skeleton.css';
 
 /**
  * Skeleton component for CategorySlider loading state

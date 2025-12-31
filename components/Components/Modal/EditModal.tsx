@@ -1,5 +1,6 @@
 import React from "react";
 import { Order } from "@/lib/types/entities/order";
+import '@/styles/EditModal.css';
 
 type OrderDetail = any;
 

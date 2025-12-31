@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { ProductFormData } from '@/lib/types/product';
 import { fetchCategories, fetchSubcategories, Category, Subcategory } from '@/lib/api/categories';
 import "@/styles/ProductModal.css";
+import '@/styles/AdminProductModal.css';
 import { useAuth } from '@/lib/context/AuthContext';
 import { API_BASE_URL } from '@/lib/config';
 

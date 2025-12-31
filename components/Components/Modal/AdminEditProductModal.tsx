@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import { useQuery } from '@tanstack/react-query';
 import { fetchCategories as fetchProductCategories, fetchSubcategories as fetchProductSubcategories } from '@/lib/api/categories';
+import '@/styles/AdminProductModal.css';
 
 // Types
 type InventoryStatus = 'IN_STOCK' | 'OUT_OF_STOCK' | 'LOW_STOCK' | 'DISCONTINUED' | 'AVAILABLE' | 'UNAVAILABLE';
