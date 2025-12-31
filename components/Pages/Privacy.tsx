@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import Navbar from "@/components/Components/Navbar";
 import Footer from "@/components/Components/Footer";
 import "@/styles/Privacy.css";
@@ -8,7 +8,9 @@ import "@/styles/Privacy.css";
 const PrivacyPolicy = () => {
   return (
     <>
-      <Navbar />
+      <Suspense fallback={<div style={{ height: '80px' }} />}>
+        <Navbar />
+      </Suspense>
       <div className="privacy">
         <header className="privacy__header">
           <h1 className="privacy__title">Privacy Policy</h1>

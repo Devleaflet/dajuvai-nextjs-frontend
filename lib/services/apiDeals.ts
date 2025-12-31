@@ -32,7 +32,7 @@ export class DealApiService {
     try {
       const response = await this.axiosInstance.post('/deal', dealData);
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw this.handleError(error);
     }
   }
@@ -44,7 +44,7 @@ export class DealApiService {
         params: status ? { status } : undefined,
       });
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw this.handleError(error);
     }
   }
@@ -54,7 +54,7 @@ export class DealApiService {
     try {
       const response = await this.axiosInstance.get(`/deal/${id}`);
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw this.handleError(error);
     }
   }
@@ -64,7 +64,7 @@ export class DealApiService {
     try {
       const response = await this.axiosInstance.patch(`/deal/${id}`, dealData);
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw this.handleError(error);
     }
   }
@@ -74,7 +74,7 @@ export class DealApiService {
     try {
       const response = await this.axiosInstance.delete(`/deal/${id}`);
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw this.handleError(error);
     }
   }

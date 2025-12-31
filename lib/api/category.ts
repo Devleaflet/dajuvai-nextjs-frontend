@@ -13,8 +13,10 @@ export const fetchCategory = async () => {
 			console.warn("⚠️ Unexpected response structure:", response.data);
 			return response.data.data || response.data || [];
 		}
-	} catch (error: any) {
-		console.error("❌ Failed to fetch categories:", error.message);
-		throw new Error(`Failed to fetch categories: ${error.message}`);
+	} catch (error: unknown) {
+		const errorMessage = error instanceof Error ? error.message : "Unknown error";
+		console.error("❌ Failed to fetch categories:", errorMessage);
+		throw new Error(`Failed to fetch categories: ${errorMessage}`);
 	}
 };
+

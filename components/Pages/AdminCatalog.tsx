@@ -265,7 +265,7 @@ const AdminCatalog = () => {
 
 	const handleSaveHomepageSection = async () => {
 		try {
-			let payload = {
+			let payload: Record<string, any> = {
 				title: modalTitle,
 				isActive: modalIsActive,
 				productSource: selectedProductSource,
@@ -278,20 +278,20 @@ const AdminCatalog = () => {
 			// Build payload based on product source
 			switch (selectedProductSource) {
 				case "manual":
-					payload.productIds = modalProductIds;
+					payload['productIds'] = modalProductIds;
 					break;
 
 				case "deal":
-					payload.selectedDealId = selectedDealId;
+					payload['selectedDealId'] = selectedDealId;
 					break;
 
 				case "category":
-					payload.selectedCategoryId = selectedCategoryId;
+					payload['selectedCategoryId'] = selectedCategoryId;
 					break;
 
 				case "subcategory":
-					payload.selectedCategoryId = selectedCategoryId;
-					payload.selectedSubcategoryId = selectedSubcategoryId;
+					payload['selectedCategoryId'] = selectedCategoryId;
+					payload['selectedSubcategoryId'] = selectedSubcategoryId;
 					break;
 
 				default:
@@ -299,7 +299,7 @@ const AdminCatalog = () => {
 			}
 
 			if (editingHomepage) {
-				payload.sectionId = sectionToEdit;
+				payload['sectionId'] = sectionToEdit;
 			}
 
 
@@ -325,7 +325,7 @@ const AdminCatalog = () => {
 				: "Homepage section added successfully";
 			toast.success(successMessage);
 			fetchHomepageSections();
-			openHomepageModal(null, -1);
+			openHomepageModal(undefined, -1);
 		} catch (err) {
 			console.error("❌ Error:", err);
 		}
@@ -499,7 +499,7 @@ const AdminCatalog = () => {
 			<AdminSidebar />
 			<div className="admin-catalog__container">
 				<Header
-					onSearch={() => {}}
+					onSearch={() => { }}
 					showSearch={false}
 					title="Content Management"
 				/>
@@ -579,11 +579,10 @@ const AdminCatalog = () => {
 														onClick={() =>
 															handleToggleHomepageStatus(section.id)
 														}
-														className={`admin-catalog__status-toggle ${
-															section.isActive
-																? "admin-catalog__status-toggle--active"
-																: "admin-catalog__status-toggle--inactive"
-														}`}
+														className={`admin-catalog__status-toggle ${section.isActive
+															? "admin-catalog__status-toggle--active"
+															: "admin-catalog__status-toggle--inactive"
+															}`}
 													>
 														{section.isActive ? "Active" : "Inactive"}
 													</button>
@@ -912,9 +911,8 @@ const AdminCatalog = () => {
 																				return (
 																					<div
 																						key={product.id}
-																						className={`admin-catalog-card ${
-																							isSelected ? "selected" : ""
-																						}`}
+																						className={`admin-catalog-card ${isSelected ? "selected" : ""
+																							}`}
 																						onClick={() =>
 																							handleProductSelect(product.id)
 																						}

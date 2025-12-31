@@ -201,14 +201,16 @@ const HomeBanner: React.FC = () => {
               </button>
             </>
           )}
-          <img
-            src={banners[currentIndex].image}
-            alt={banners[currentIndex].name}
-            className="home-banner__image"
-            style={{ cursor: "pointer", width: "100%", height: "auto" }}
-            draggable={false}
-            onDragStart={handleDragStart}
-          />
+          {banners[currentIndex] && (
+            <img
+              src={banners[currentIndex].image}
+              alt={banners[currentIndex].name}
+              className="home-banner__image"
+              style={{ cursor: "pointer", width: "100%", height: "auto" }}
+              draggable={false}
+              onDragStart={handleDragStart}
+            />
+          )}
           {banners.length > 1 && (
             <div className="home-banner__indicators">
               {banners.map((_, index) => (

@@ -1,6 +1,29 @@
 import axios from 'axios';
 import { API_BASE_URL } from '@/lib/config';
 
+export interface VendorSignupData {
+  businessName: string;
+  email: string;
+  password: string;
+  phoneNumber: string;
+  telePhone: string;
+  businessRegNumber: string;
+  province: string;
+  district: string;
+  taxNumber: string;
+  taxDocuments: string[];
+  citizenshipDocuments: string[];
+  chequePhoto: string;
+  bankDetails: {
+    accountName: string;
+    bankName: string;
+    accountNumber: string;
+    bankBranch: string;
+    bankCode?: string;
+    bankAddress?: string;
+  };
+}
+
 export interface Vendor {
   id: number;
   businessName: string;
@@ -151,7 +174,7 @@ class VendorService {
   }
 
   // Get vendor products
-  async getVendorProducts(vendorId: number, page: number = 1, limit: number = 10, token: string) {
+  async getVendorProducts(vendorId: number, page: number = 1, limit: number = 10, token: string): Promise<any> {
     const response = await axios.get(`${this.baseURL}/${vendorId}/products`, {
       params: { page, limit },
       headers: { Authorization: `Bearer ${token}` }
@@ -168,37 +191,37 @@ class VendorService {
   }
 
   // Vendor signup
-  async signup(data: VendorSignupData) {
+  async signup(data: VendorSignupData): Promise<any> {
     const response = await axios.post(`${this.baseURL}/signup`, data);
     return response.data;
   }
 
   // Vendor login
-  async login(data: VendorLoginData) {
+  async login(data: VendorLoginData): Promise<any> {
     const response = await axios.post(`${this.baseURL}/login`, data);
     return response.data;
   }
 
   // Resend verification email
-  async resendVerification(email: string) {
+  async resendVerification(email: string): Promise<any> {
     const response = await axios.post(`${this.baseURL}/verify/resend`, { email });
     return response.data;
   }
 
   // Send verification token
-  async sendVerification(email: string) {
+  async sendVerification(email: string): Promise<any> {
     const response = await axios.post(`${this.baseURL}/verify`, { email });
     return response.data;
   }
 
   // Request password reset
-  async forgotPassword(email: string) {
+  async forgotPassword(email: string): Promise<any> {
     const response = await axios.post(`${this.baseURL}/forgot-password`, { email });
     return response.data;
   }
 
   // Reset password
-  async resetPassword(newPass: string, confirmPass: string, token: string) {
+  async resetPassword(newPass: string, confirmPass: string, token: string): Promise<any> {
     const response = await axios.post(`${this.baseURL}/reset-password`, {
       newPass,
       confirmPass,

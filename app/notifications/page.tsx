@@ -1,4 +1,6 @@
-import Notifications from '@/components/Pages/Notifications';
+import { Notifications } from '@/components/Pages/Notifications';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Notifications - Daju Vai',

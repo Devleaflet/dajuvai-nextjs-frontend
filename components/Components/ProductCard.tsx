@@ -1,20 +1,25 @@
 'use client';
 
-import "@/styles/ProductCard.css";
-import { FaCartPlus } from "react-icons/fa";
 import { Product } from "./Types/Product";
 import { useCart } from "@/lib/context/CartContext";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useUI } from "@/lib/context/UIContext";
 import { addToWishlist, removeFromWishlist } from "@/lib/api/wishlist";
 import { useWishlist } from "@/lib/context/WishlistContext";
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import AuthModal from "./AuthModal";
+import dynamic from "next/dynamic";
 import { getProductPrimaryImage } from "@/lib/utils/getProductPrimaryImage";
 import { toast } from "react-hot-toast";
 import { API_BASE_URL } from "@/lib/config";
+import { calculateDiscountedPrice } from "@/lib/utils/pricing";
+import ProductImageGallery from "@/components/features/ProductImageGallery";
+import ProductInfo from "@/components/features/ProductInfo";
+import ProductActions from "@/components/features/ProductActions";
+
+const AuthModal = dynamic(() => import("./AuthModal"), {
+	ssr: false
+});
 interface ProductCardProps {
 	product: Product;
 }
@@ -26,9 +31,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 	const { cartOpen } = useUI();
 	const [wishlistLoading, setWishlistLoading] = useState(false);
 	const [authModalOpen, setAuthModalOpen] = useState(false);
-	const [imageError, setImageError] = useState(false);
-	const [currentImageIndex, setCurrentImageIndex] = useState(0);
-	const [isHovering, setIsHovering] = useState(false);
 	const [isWishlisted, setIsWishlisted] = useState(false);
 	const [wishlistItemId, setWishlistItemId] = useState<number | null>(null);
 
@@ -36,21 +38,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 	const {
 		title,
 		description,
-		price,
-		originalPrice,
-		discount,
 		rating,
 		ratingCount,
 		isBestSeller,
-		freeDelivery,
-		variants,
 		id,
 	} = product;
 
 	useEffect(() => {
 		if (isAuthenticated && token) {
 			const variantCount = product.variants?.length || 0;
-			const variantId = variantCount > 0 ? product.variants![0].id : undefined;
+			const variantId = variantCount > 0 && product.variants?.[0] ? product.variants[0].id : undefined;
 			const wishlistItem = wishlist.find((item: any) => {
 				const productMatch = item.productId === id || item.product?.id === id;
 				const variantMatch = variantId
@@ -71,28 +68,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 		}
 	}, [wishlist, id, product.variants, isAuthenticated, token]);
 
-	// Process image URL helper (same as in getProductPrimaryImage)
-	const processImageUrl = (imgUrl: string): string => {
-		if (!imgUrl) return "";
-		const trimmed = imgUrl.trim();
-		if (!trimmed) return "";
-		if (trimmed.startsWith("//")) return `https:${trimmed} `;
-		if (
-			trimmed.startsWith("http://") ||
-			trimmed.startsWith("https://") ||
-			trimmed.startsWith("/")
-		) {
-			return trimmed;
-		}
-		const base = API_BASE_URL.replace(/\/?api\/?$/, "");
-		const needsSlash = !trimmed.startsWith("/");
-		const url = `${base}${needsSlash ? "/" : ""}${trimmed} `;
-		return url.replace(/([^:]\/)\/+/, "$1/");
-	};
-
-	// Get all available images following the same logic as getProductPrimaryImage
-	const getProductImages = () => {
-		const images = [];
+	// Memoize product images array
+	const productImages = useMemo(() => {
+		const images: string[] = [];
 
 		try {
 			const variantsArray: any[] = Array.isArray(product?.variants)
@@ -112,6 +90,25 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 				});
 
 				orderedVariants.forEach((variant) => {
+					// Process image URL helper
+					const processImageUrl = (imgUrl: string): string => {
+						if (!imgUrl) return "";
+						const trimmed = imgUrl.trim();
+						if (!trimmed) return "";
+						if (trimmed.startsWith("//")) return `https:${trimmed}`;
+						if (
+							trimmed.startsWith("http://") ||
+							trimmed.startsWith("https://") ||
+							trimmed.startsWith("/")
+						) {
+							return trimmed;
+						}
+						const base = API_BASE_URL.replace(/\/?api\/?$/, "");
+						const needsSlash = !trimmed.startsWith("/");
+						const url = `${base}${needsSlash ? "/" : ""}${trimmed}`;
+						return url.replace(/([^:]\/)\/+/, "$1/");
+					};
+
 					// Add variant.image
 					if (typeof variant?.image === "string" && variant.image.trim()) {
 						const url = processImageUrl(variant.image);
@@ -122,7 +119,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
 					// Add variant.images array
 					if (Array.isArray(variant?.images)) {
-						variant.images.forEach((img) => {
+						variant.images.forEach((img: any) => {
 							if (typeof img === "string" && img.trim()) {
 								const url = processImageUrl(img);
 								if (url && !images.includes(url)) {
@@ -134,7 +131,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
 					// Add variant.variantImages array
 					if (Array.isArray(variant?.variantImages)) {
-						variant.variantImages.forEach((img) => {
+						variant.variantImages.forEach((img: any) => {
 							if (typeof img === "string" && img.trim()) {
 								const url = processImageUrl(img);
 								if (url && !images.includes(url)) {
@@ -146,9 +143,28 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 				});
 			}
 
+			// Process image URL helper (defined here for product images)
+			const processImageUrl = (imgUrl: string): string => {
+				if (!imgUrl) return "";
+				const trimmed = imgUrl.trim();
+				if (!trimmed) return "";
+				if (trimmed.startsWith("//")) return `https:${trimmed}`;
+				if (
+					trimmed.startsWith("http://") ||
+					trimmed.startsWith("https://") ||
+					trimmed.startsWith("/")
+				) {
+					return trimmed;
+				}
+				const base = API_BASE_URL.replace(/\/?api\/?$/, "");
+				const needsSlash = !trimmed.startsWith("/");
+				const url = `${base}${needsSlash ? "/" : ""}${trimmed}`;
+				return url.replace(/([^:]\/)\/+/, "$1/");
+			};
+
 			// Add product.productImages array
 			if (Array.isArray(product?.productImages)) {
-				product.productImages.forEach((img) => {
+				product.productImages.forEach((img: any) => {
 					if (typeof img === "string" && img.trim()) {
 						const url = processImageUrl(img);
 						if (url && !images.includes(url)) {
@@ -182,91 +198,56 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
 		// Ensure we have at least one image
 		return images.length > 0 ? images : ["/assets/logo.webp"];
-	};
+	}, [product]);
 
-	const productImages = getProductImages();
-	const displayImage = imageError
-		? "/assets/logo.webp"
-		: productImages[currentImageIndex];
-
-	// Auto-rotate images on hover
-	useEffect(() => {
-		let interval: NodeJS.Timeout;
-
-		if (isHovering && productImages.length > 1) {
-			interval = setInterval(() => {
-				setCurrentImageIndex((prev) => (prev + 1) % productImages.length);
-			}, 1500); // Change image every 1.5 seconds
+	// Memoize pricing calculation
+	const pricing = useMemo(() => {
+		// Get base price from variant (if exists) or product
+		let baseNum = 0;
+		if (product.variants && product.variants.length > 0) {
+			// Use first variant's basePrice
+			const variantBase = product.variants[0]?.['basePrice'];
+			baseNum = typeof variantBase === "string" ? parseFloat(variantBase) : Number(variantBase) || 0;
 		} else {
-			setCurrentImageIndex(0); // Reset to first image when not hovering
+			// Use product's basePrice or price
+			const productBase = product['basePrice'] ?? product.price;
+			baseNum = typeof productBase === "string" ? parseFloat(productBase) : Number(productBase) || 0;
 		}
 
-		return () => {
-			if (interval) clearInterval(interval);
-		};
-	}, [isHovering, productImages.length]);
+		// Apply product-level discount to the base price
+		const productDiscount = Number(product.discount) || 0;
+		const productDiscountType = product.discountType;
 
-	const handleImageError = () => {
-		setImageError(true);
-	};
+		return calculateDiscountedPrice(baseNum, productDiscount, productDiscountType);
+	}, [product.variants, product, product.price, product.discount, product.discountType]);
 
-	const handleDotClick = (index: number, e: React.MouseEvent) => {
-		e.preventDefault();
-		e.stopPropagation();
-		setCurrentImageIndex(index);
-	};
+	// Memoize card click handler
+	const handleCardClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+		const target = e.target as HTMLElement;
 
-	const calculatePrice = (
-		basePrice: string | number,
-		discountVal?: string | number,
-		discountType?: string | null
-	): number => {
-		const base =
-			typeof basePrice === "string"
-				? parseFloat(basePrice)
-				: Number(basePrice) || 0;
-		if (!discountVal || !discountType) return base;
-		const dVal =
-			typeof discountVal === "string"
-				? parseFloat(discountVal)
-				: Number(discountVal) || 0;
-		if (discountType === "PERCENTAGE") return base * (1 - dVal / 100);
-		if (discountType === "FIXED" || discountType === "FLAT") return base - dVal;
-		return base;
-	};
+		if (
+			target.closest(".product-card__wishlist-button") ||
+			target.closest(".product-card__cart-button") ||
+			target.closest(".product-card__dot")
+		) {
+			return;
+		}
 
-	let currentPrice = 0;
-	let originalPriceDisplay: number | undefined = undefined;
-	let discountLabel: string | null = null;
+		// Navigate to product page
+		router.push(`/product-page/${product.id}`);
 
-	// Get base price from variant (if exists) or product
-	let baseNum = 0;
-	if (variants && variants.length > 0) {
-		// Use first variant's basePrice
-		const variantBase = variants[0]?.basePrice;
-		baseNum = typeof variantBase === "string" ? parseFloat(variantBase) : Number(variantBase) || 0;
-	} else {
-		// Use product's basePrice or price
-		const productBase = product.basePrice ?? price;
-		baseNum = typeof productBase === "string" ? parseFloat(productBase) : Number(productBase) || 0;
-	}
+		// Force scroll to top on next tick
+		setTimeout(() => {
+			window.scrollTo(0, 0);
+		}, 0);
 
-	// Apply product-level discount to the base price
-	const productDiscount = Number(product.discount) || 0;
-	const productDiscountType = product.discountType;
-
-	if (productDiscount > 0 && productDiscountType) {
-		// Calculate discounted price
-		currentPrice = calculatePrice(baseNum, productDiscount, productDiscountType);
-		originalPriceDisplay = baseNum;
-		discountLabel = productDiscountType === "PERCENTAGE"
-			? `${productDiscount}% `
-			: `Rs ${productDiscount} `;
-	} else {
-		// No discount
-		currentPrice = baseNum;
-	}
-	const handleWishlist = async () => {
+		// Extra insurance: also after a tiny delay
+		setTimeout(() => {
+			window.scrollTo(0, 0);
+		}, 100);
+	}, [product.id, router]);
+	// Memoize wishlist handler
+	const handleWishlist = useCallback(async () => {
 		if (!isAuthenticated) {
 			setAuthModalOpen(true);
 			return;
@@ -275,27 +256,27 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 		setWishlistLoading(true);
 		try {
 			const variantCount = product.variants?.length || 0;
-			const variantId = variantCount > 0 ? product.variants![0].id : undefined;
+			const variantId = variantCount > 0 && product.variants?.[0] ? product.variants[0].id : undefined;
 
 			if (isWishlisted && wishlistItemId) {
-				await removeFromWishlist(wishlistItemId, token);
+				await removeFromWishlist(wishlistItemId, token || undefined);
 				toast.success("Removed from wishlist");
 				setIsWishlisted(false);
 				setWishlistItemId(null);
 				await refreshWishlist();
 			} else {
-				const addedItem = await addToWishlist(id, variantId, token);
+				const addedItem = await addToWishlist(id, variantId, token || undefined);
 				toast.success("Added to wishlist");
 				setIsWishlisted(true);
 				setWishlistItemId(addedItem?.id || null);
 				await refreshWishlist();
 			}
-		} catch (e: any) {
-			const status = e?.response?.status;
+		} catch (e: unknown) {
+			const status = (e as any)?.response?.status;
 			const msg: string =
-				e?.response?.data?.message ||
-				e?.response?.data?.error ||
-				e?.message ||
+				(e as any)?.response?.data?.message ||
+				(e as any)?.response?.data?.error ||
+				(e as any)?.message ||
 				"";
 
 			if (status === 409 || /already/i.test(msg)) {
@@ -315,173 +296,59 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 		} finally {
 			setWishlistLoading(false);
 		}
-	};
+	}, [isAuthenticated, product.variants, isWishlisted, wishlistItemId, token, id, refreshWishlist]);
 
-	const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
-		const target = e.target as HTMLElement;
-
-		if (
-			target.closest(".product-card__wishlist-button") ||
-			target.closest(".product-card__cart-button") ||
-			target.closest(".product-card__dot")
-		) {
+	// Memoize add to cart handler
+	const handleAddToCart = useCallback(() => {
+		if (!isAuthenticated) {
+			setAuthModalOpen(true);
 			return;
 		}
-
-		//("Navigating to product:", product.id);
-
-		//("scroll called")
-		//("scroll called")
-		//("scroll called")
-		//("scroll called")
-		//("scroll called")
-
-		// Navigate first
-		router.push(`/ product - page / ${product.id} `, { replace: true });
-
-		// Then FORCE scroll to top on next tick (beats React Router restoration)
-		setTimeout(() => {
-			window.scrollTo(0, 0);
-		}, 0);
-
-		// Extra insurance: also after a tiny delay
-		setTimeout(() => {
-			window.scrollTo(0, 0);
-		}, 100);
-	};
+		const variantCount = product.variants?.length || 0;
+		const variantId = variantCount > 0 && product.variants?.[0] ? product.variants[0].id : undefined;
+		handleCartOnAdd(product, 1, variantId);
+	}, [isAuthenticated, product, handleCartOnAdd]);
 
 	return (
 		<div
 			onClick={handleCardClick}
-			className="product-card__link-wrapper"
+			className="cursor-pointer no-underline text-inherit"
 		>
-			<div
-				className="product-card"
-				onMouseEnter={() => setIsHovering(true)}
-				onMouseLeave={() => setIsHovering(false)}
-			>
-				<div className="product-card__header">
+			<div className="relative z-0 flex-shrink-0 w-60 rounded-lg bg-white shadow-md p-2 transition-transform duration-300 hover:shadow-xl hover:-translate-y-1 h-fit pointer-events-auto">
+				<div className="flex justify-between items-center mb-1.5 max-h-2.5">
 					{isBestSeller && (
-						<span className="product-card__tag">Best seller</span>
+						<span className="bg-gray-700 text-white px-2 py-1 rounded-full text-xs font-medium">Best seller</span>
 					)}
 				</div>
 
-				{!cartOpen && (
-					<button
-						className="product-card__wishlist-button"
-						aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-						onClick={(e) => {
-							e.preventDefault();
-							e.stopPropagation();
-							handleWishlist();
-						}}
-						disabled={wishlistLoading}
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							viewBox="0 0 24 24"
-							fill={isWishlisted ? "red" : "none"}
-							stroke={isWishlisted ? "red" : "currentColor"}
-							strokeWidth="2"
-						>
-							<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-						</svg>
-					</button>
-				)}
+				<ProductActions
+					product={{
+						id: product.id,
+						...(product.variants && { variants: product.variants.map(v => ({ id: v.id || 0 })) })
+					}}
+					onAddToCart={handleAddToCart}
+					onToggleWishlist={handleWishlist}
+					isWishlisted={isWishlisted}
+					wishlistLoading={wishlistLoading}
+					cartOpen={cartOpen}
+				/>
 
+				<ProductImageGallery
+					images={productImages}
+					alt={title || "Product image"}
+				/>
 
-				<div className="product-card__image">
-					<img
-						src={displayImage}
-						alt={title || "Product image"}
-						onError={handleImageError}
-						loading="lazy"
-					/>
-
-					{productImages.length > 1 && (
-						<div className="product-card__pagination product-card__pagination--inside">
-							<div className="product-card__dots">
-								{productImages.slice(0, 5).map((_, index) => (
-									<span
-										key={index}
-										className={`product - card__dot ${index === currentImageIndex
-											? "product-card__dot--active"
-											: ""
-											} `}
-										onClick={(e) => handleDotClick(index, e)}
-									/>
-								))}
-							</div>
-						</div>
-					)}
-				</div>
-
-
-				{!cartOpen && (
-					<div className="product-card__cart-button">
-						<FaCartPlus
-							style={{ color: "#ea5f0a", width: "25px" }}
-							onClick={(e) => {
-								e.preventDefault();
-								e.stopPropagation();
-								if (!isAuthenticated) {
-									setAuthModalOpen(true);
-									return;
-								}
-								const variantCount = product.variants?.length || 0;
-								const variantId =
-									variantCount > 0 ? product.variants![0].id : undefined;
-								handleCartOnAdd(product, 1, variantId);
-							}}
-						/>
-					</div>
-				)}
-
-				<div className="product__info">
-					<div className="product-card__rating">
-						<span className="product-card__rating-star">
-							<img
-								src="/assets/star.png"
-								alt="Rating"
-							/>
-						</span>
-						<div className="product-card__rating-info">
-							<span className="product-card__rating-score">{rating} |</span>
-							<span className="product-card__rating-count">
-								{" "}
-								({ratingCount})
-							</span>
-						</div>
-					</div>
-
-					<div className="product-card__info">
-						<h3
-							className="product-card__title"
-							title={title}
-						>
-							{title}
-						</h3>
-						<p className="product-card__description">{description}</p>
-						<div className="product-card__price">
-							<span className="product-card__current-price">
-								Rs {currentPrice.toFixed(2)}
-							</span>
-							<div className="product-card__price-details">
-								{typeof originalPriceDisplay === "number" &&
-									originalPriceDisplay > currentPrice && (
-										<span className="product-card__original-price">
-											{originalPriceDisplay.toFixed(2)}
-										</span>
-									)}
-								{Number(discount) == 0 || discount === "0" ? null : (
-									<span className="product-card__discount">
-										{discountLabel}
-									</span>
-								)}
-							</div>
-						</div>
-					</div>
-				</div>
+				<ProductInfo
+					product={{
+						title: title || '',
+						description,
+						rating: typeof rating === 'number' ? rating : 0,
+						ratingCount: typeof ratingCount === 'number' ? ratingCount : 0,
+						discount: typeof product.discount === 'number' ? product.discount : 0,
+						...(product.vendor && { vendor: product.vendor })
+					}}
+					pricing={pricing}
+				/>
 			</div>
 			<AuthModal
 				isOpen={authModalOpen}
@@ -495,3 +362,4 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 };
 
 export default ProductCard;
+

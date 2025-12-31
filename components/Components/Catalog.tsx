@@ -7,9 +7,8 @@ import ProductCard from "./ProductCard";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import PageLoader from "./PageLoader";
-import { fetchProductsBySection } from "@/lib/api/products";
+import { fetchProductsBySection, Product } from "@/lib/api/products";
 import "@/styles/Catalog.css";
-import type { Product } from "@/lib/types/Product";
 
 const Catalog: React.FC = () => {
   const { sectionId } = useParams<{ sectionId: string }>();
@@ -58,7 +57,7 @@ const Catalog: React.FC = () => {
         {products && products.length > 0 ? (
           <div className="catalog__products">
             {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product.id} product={product as any} />
             ))}
           </div>
         ) : (

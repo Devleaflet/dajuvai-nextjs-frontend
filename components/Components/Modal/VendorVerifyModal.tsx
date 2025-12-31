@@ -34,8 +34,9 @@ const VendorVerifyModal: React.FC<VendorVerifyModalProps> = ({ show, onClose, em
       } else {
         toast.error(data.message || (data.errors ? data.errors.map((e: any) => e.message).join('; ') : 'Failed to send verification.'));
       }
-    } catch (err: any) {
-      toast.error(err.message || 'Network error.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Network error.';
+      toast.error(errorMessage);
     } finally {
       setSending(false);
     }
@@ -56,8 +57,9 @@ const VendorVerifyModal: React.FC<VendorVerifyModalProps> = ({ show, onClose, em
       } else {
         toast.error(data.message || (data.errors ? data.errors.map((e: any) => e.message).join('; ') : 'Failed to verify OTP.'));
       }
-    } catch (err: any) {
-      toast.error(err.message || 'Network error.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Network error.';
+      toast.error(errorMessage);
     } finally {
       setVerifying(false);
     }
@@ -77,8 +79,9 @@ const VendorVerifyModal: React.FC<VendorVerifyModalProps> = ({ show, onClose, em
       } else {
         toast.error(data.message || (data.errors ? data.errors.map((e: any) => e.message).join('; ') : 'Failed to resend verification.'));
       }
-    } catch (err: any) {
-      toast.error(err.message || 'Network error.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Network error.';
+      toast.error(errorMessage);
     } finally {
       setSending(false);
     }

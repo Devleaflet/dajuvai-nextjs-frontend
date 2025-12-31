@@ -33,7 +33,7 @@ interface AddVendorModalProps {
 }
 
 const AddVendorModal: React.FC<AddVendorModalProps> = ({ show, onClose, districts, token }) => {
-  const [formData, setFormData] = useState<VendorSignupRequest>({
+  const [formData, setFormData] = useState<any>({
     businessName: "",
     email: "",
     password: "",
@@ -109,12 +109,12 @@ const AddVendorModal: React.FC<AddVendorModalProps> = ({ show, onClose, district
     const { name, value } = e.target;
     //(`Input changed: ${name} = ${value}`);
     if (name in formData.bankDetails) {
-      setFormData((prev) => ({
+      setFormData((prev: any) => ({
         ...prev,
         bankDetails: { ...prev.bankDetails, [name]: value },
       }));
     } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
+      setFormData((prev: any) => ({ ...prev, [name]: value }));
       if (name === "email" && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
         toast.warn("Please enter a valid email address");
       }
@@ -133,7 +133,7 @@ const AddVendorModal: React.FC<AddVendorModalProps> = ({ show, onClose, district
     if (files.length > 0) {
       if (field === "taxDocuments") setTaxFiles((prev) => [...prev, ...files]);
       if (field === "citizenshipDocuments") setCitizenshipFiles((prev) => [...prev, ...files]);
-      if (field === "chequePhoto") setChequeFile(files[0]);
+      if (field === "chequePhoto") setChequeFile(files[0] || null);
     }
   };
 
@@ -164,9 +164,10 @@ const AddVendorModal: React.FC<AddVendorModalProps> = ({ show, onClose, district
       }
       //(`File uploaded successfully: ${file.name} -> ${response.data.data}`);
       return response.data.data;
-    } catch (error: any) {
-      console.error(`Failed to upload file ${file.name}:`, error.response?.data || error.message);
-      throw new Error(`Failed to upload file ${file.name}: ${error.response?.data?.message || error.message}`);
+    } catch (error: unknown) {
+      const err = error as any;
+      console.error(`Failed to upload file ${file.name}:`, err.response?.data || err.message);
+      throw new Error(`Failed to upload file ${file.name}: ${err.response?.data?.message || err.message}`);
     }
   };
 
@@ -277,18 +278,19 @@ const AddVendorModal: React.FC<AddVendorModalProps> = ({ show, onClose, district
       toast.success(response.data.message || "Verification code sent successfully!");
       setShowVerification(true);
       setCountdown(120);
-    } catch (err: any) {
-      console.error("Error in handleSendVerification:", err.response?.data || err.message);
+    } catch (err: unknown) {
+      const error = err as any;
+      console.error("Error in handleSendVerification:", error.response?.data || error.message);
       const errorMessage =
-        err.response?.data?.message ||
-        err.response?.data?.error ||
+        error.response?.data?.message ||
+        error.response?.data?.error ||
         "Failed to send verification code";
       toast.error(errorMessage);
-      if (err.response?.status === 429) {
+      if (error.response?.status === 429) {
         toast.error("Too many requests. Please try again later.");
-      } else if (err.response?.status === 400) {
+      } else if (error.response?.status === 400) {
         toast.error("Invalid email. Please check and try again.");
-      } else if (err.response?.status === 404) {
+      } else if (error.response?.status === 404) {
         toast.error("User not found. Please register again.");
       }
     } finally {
@@ -322,20 +324,21 @@ const AddVendorModal: React.FC<AddVendorModalProps> = ({ show, onClose, district
       setIsVerificationComplete(true);
       setVerificationToken("");
       setCountdown(0);
-    } catch (err: any) {
-      console.error("Error in handleVerifyOtp:", err.response?.data || err.message);
+    } catch (err: unknown) {
+      const error = err as any;
+      console.error("Error in handleVerifyOtp:", error.response?.data || error.message);
       const errorMessage =
-        err.response?.data?.message ||
-        err.response?.data?.error ||
+        error.response?.data?.message ||
+        error.response?.data?.error ||
         "Verification failed";
       toast.error(errorMessage);
       if (errorMessage.toLowerCase().includes("token") && errorMessage.toLowerCase().includes("invalid")) {
         toast.error("Invalid verification code. Please try again.");
       } else if (errorMessage.toLowerCase().includes("token") && errorMessage.toLowerCase().includes("expired")) {
         toast.error("Verification code expired. Please request a new one.");
-      } else if (err.response?.status === 429) {
+      } else if (error.response?.status === 429) {
         toast.error("Too many requests. Please try again later.");
-      } else if (err.response?.status === 400) {
+      } else if (error.response?.status === 400) {
         toast.error("Invalid verification attempt. Please check the code and try again.");
       }
     } finally {
@@ -362,16 +365,17 @@ const AddVendorModal: React.FC<AddVendorModalProps> = ({ show, onClose, district
       //("Resend OTP response:", response.data);
       toast.success(response.data.message || "Verification code resent successfully!");
       setCountdown(120);
-    } catch (err: any) {
-      console.error("Error in handleResendOtp:", err.response?.data || err.message);
+    } catch (err: unknown) {
+      const error = err as any;
+      console.error("Error in handleResendOtp:", error.response?.data || error.message);
       const errorMessage =
-        err.response?.data?.message ||
-        err.response?.data?.error ||
+        error.response?.data?.message ||
+        error.response?.data?.error ||
         "Failed to resend verification code";
       toast.error(errorMessage);
-      if (err.response?.status === 429) {
+      if (error.response?.status === 429) {
         toast.error("Too many requests. Please try again later.");
-      } else if (err.response?.status === 404) {
+      } else if (error.response?.status === 404) {
         toast.error("User not found. Please register again.");
       }
     } finally {
@@ -388,7 +392,7 @@ const AddVendorModal: React.FC<AddVendorModalProps> = ({ show, onClose, district
     }
 
     setLoading(true);
-    const updatedFormData: VendorSignupRequest = { ...formData };
+    const updatedFormData: any = { ...formData };
 
     try {
       const district = districts.find((d) => d.name.toLowerCase() === formData.district.toLowerCase());
@@ -408,9 +412,10 @@ const AddVendorModal: React.FC<AddVendorModalProps> = ({ show, onClose, district
             taxFiles.map(async (file) => await uploadFile(file, token))
           );
           //("Tax documents uploaded:", updatedFormData.taxDocuments);
-        } catch (error: any) {
-          console.error("Error uploading tax documents:", error.message);
-          toast.error(`Failed to upload tax documents: ${error.message}`);
+        } catch (error: unknown) {
+          const err = error as any;
+          console.error("Error uploading tax documents:", err.message);
+          toast.error(`Failed to upload tax documents: ${err.message}`);
           setLoading(false);
           return;
         }
@@ -421,9 +426,10 @@ const AddVendorModal: React.FC<AddVendorModalProps> = ({ show, onClose, district
           //("Uploading cheque photo:", chequeFile.name);
           updatedFormData.chequePhoto = await uploadFile(chequeFile, token);
           //("Cheque photo uploaded:", updatedFormData.chequePhoto);
-        } catch (error: any) {
-          console.error("Error uploading cheque photo:", error.message);
-          toast.error(`Failed to upload cheque photo: ${error.message}`);
+        } catch (error: unknown) {
+          const err = error as any;
+          console.error("Error uploading cheque photo:", err.message);
+          toast.error(`Failed to upload cheque photo: ${err.message}`);
           setLoading(false);
           return;
         }
@@ -443,9 +449,10 @@ const AddVendorModal: React.FC<AddVendorModalProps> = ({ show, onClose, district
             citizenshipFiles.map(async (file) => await uploadFile(file, token))
           );
           //("Citizenship documents uploaded:", updatedFormData.citizenshipDocuments);
-        } catch (error: any) {
-          console.error("Error uploading citizenship documents:", error.message);
-          toast.error(`Failed to upload citizenship documents: ${error.message}`);
+        } catch (error: unknown) {
+          const err = error as any;
+          console.error("Error uploading citizenship documents:", err.message);
+          toast.error(`Failed to upload citizenship documents: ${err.message}`);
           setLoading(false);
           return;
         }
@@ -474,23 +481,24 @@ const AddVendorModal: React.FC<AddVendorModalProps> = ({ show, onClose, district
 
 
 
-    } catch (err: any) {
-      console.error("Error in handleSubmit:", err.response?.data || err.message);
+    } catch (err: unknown) {
+      const error = err as any;
+      console.error("Error in handleSubmit:", error.response?.data || error.message);
       const errorMessage =
-        err.response?.data?.message ||
-        err.response?.data?.errors?.map((e: any) => e.message).join("; ") ||
-        err.message ||
+        error.response?.data?.message ||
+        error.response?.data?.errors?.map((e: any) => e.message).join("; ") ||
+        error.message ||
         "Failed to add vendor";
 
 
       toast.error(errorMessage);
 
 
-      if (err.response?.status === 500) {
+      if (error.response?.status === 500) {
         toast.error("Server error occurred. Please try again later.");
-      } else if (err.response?.status === 400) {
+      } else if (error.response?.status === 400) {
         toast.error("Invalid data provided. Please check your information.");
-      } else if (err.response?.status === 409) {
+      } else if (error.response?.status === 409) {
         toast.error("Vendor with this email already exists.");
       }
 
@@ -896,7 +904,7 @@ const AddVendorModal: React.FC<AddVendorModalProps> = ({ show, onClose, district
                       onChange={(e) => {
                         const files = e.target.files;
                         if (files && files.length > 0) {
-                          setChequeFile(files[0]); // Update chequeFile state with the first file
+                          setChequeFile(files[0] || null); // Update chequeFile state with the first file
                         }
                       }}
                       required

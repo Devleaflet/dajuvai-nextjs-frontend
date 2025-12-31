@@ -170,8 +170,8 @@ const DealAdmin: React.FC = () => {
         // Ensure discountPercentage is a number for frontend consistency
         const normalizedDeal = {
           ...updatedDeal,
-          discountPercentage: typeof updatedDeal.discountPercentage === 'string' 
-            ? parseFloat(updatedDeal.discountPercentage) 
+          discountPercentage: typeof updatedDeal.discountPercentage === 'string'
+            ? parseFloat(updatedDeal.discountPercentage)
             : updatedDeal.discountPercentage
         };
         setDeals((prev) =>
@@ -195,13 +195,14 @@ const DealAdmin: React.FC = () => {
       } else {
         toast.error(response.message || "Failed to update deal");
       }
-    } catch (err: any) {
-      if (err.response && err.response.data && err.response.data.message) {
-        console.error("Edit deal error:", err.response.data);
-        toast.error(err.response.data.message);
-      } else if (err.message) {
-        console.error("Edit deal error:", err.message);
-        toast.error(err.message);
+    } catch (err: unknown) {
+      const error = err as any;
+      if (error?.response?.data?.message) {
+        console.error("Edit deal error:", error.response.data);
+        toast.error(error.response.data.message);
+      } else if (error?.message) {
+        console.error("Edit deal error:", error.message);
+        toast.error(error.message);
       } else {
         console.error("Edit deal error:", err);
         toast.error("Failed to update deal");
@@ -282,7 +283,7 @@ const DealAdmin: React.FC = () => {
     <div className="deal-admin">
       <AdminSidebar />
       <div className="deal-admin__content">
-        <Header onSearch={() => {}} showSearch={false} title="Deal Management" />
+        <Header onSearch={() => { }} showSearch={false} title="Deal Management" />
 
         <div className="deal-admin__header">
           <div className="deal-admin__header-content">
@@ -363,53 +364,53 @@ const DealAdmin: React.FC = () => {
                     {loading
                       ? renderSkeleton()
                       : paginatedDeals.map((deal) => (
-                          <tr key={deal.id} className="deal-admin__table-row">
-                            <td className="deal-admin__cell-id">#{deal.id}</td>
-                            <td className="deal-admin__cell-name">
-                              {deal.name}
-                            </td>
-                            <td className="deal-admin__cell-discount">
-                              <span className="deal-admin__discount-badge">
-                                {deal.discountPercentage}%
-                              </span>
-                            </td>
-                            <td>
-                              <span
-                                className={`deal-admin__status deal-admin__status--${deal.status.toLowerCase()}`}
+                        <tr key={deal.id} className="deal-admin__table-row">
+                          <td className="deal-admin__cell-id">#{deal.id}</td>
+                          <td className="deal-admin__cell-name">
+                            {deal.name}
+                          </td>
+                          <td className="deal-admin__cell-discount">
+                            <span className="deal-admin__discount-badge">
+                              {deal.discountPercentage}%
+                            </span>
+                          </td>
+                          <td>
+                            <span
+                              className={`deal-admin__status deal-admin__status--${deal.status.toLowerCase()}`}
+                            >
+                              {deal.status}
+                            </span>
+                          </td>
+                          <td>
+                            <div className="deal-admin__actions">
+                              <button
+                                className="deal-admin__action-btn deal-admin__edit-btn"
+                                title="Edit Deal"
+                                onClick={() => {
+                                  setShowEditModal({ show: true, deal });
+                                  setFormData({
+                                    name: deal.name,
+                                    discountPercentage:
+                                      deal.discountPercentage,
+                                    status: deal.status,
+                                  });
+                                }}
                               >
-                                {deal.status}
-                              </span>
-                            </td>
-                            <td>
-                              <div className="deal-admin__actions">
-                                <button
-                                  className="deal-admin__action-btn deal-admin__edit-btn"
-                                  title="Edit Deal"
-                                  onClick={() => {
-                                    setShowEditModal({ show: true, deal });
-                                    setFormData({
-                                      name: deal.name,
-                                      discountPercentage:
-                                        deal.discountPercentage,
-                                      status: deal.status,
-                                    });
-                                  }}
-                                >
-                                  <FiEdit2 />
-                                </button>
-                                <button
-                                  className="deal-admin__action-btn deal-admin__delete-btn"
-                                  title="Delete Deal"
-                                  onClick={() =>
-                                    setShowDeleteModal({ show: true, deal })
-                                  }
-                                >
-                                  <FiTrash2 />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
+                                <FiEdit2 />
+                              </button>
+                              <button
+                                className="deal-admin__action-btn deal-admin__delete-btn"
+                                title="Delete Deal"
+                                onClick={() =>
+                                  setShowDeleteModal({ show: true, deal })
+                                }
+                              >
+                                <FiTrash2 />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
                     {!loading && paginatedDeals.length === 0 && (
                       <tr>
                         <td colSpan={5} className="deal-admin__empty-state">
@@ -437,11 +438,10 @@ const DealAdmin: React.FC = () => {
                     {Array.from({ length: totalPages }).map((_, i) => (
                       <button
                         key={i}
-                        className={`deal-admin__pagination-btn${
-                          currentPage === i + 1
+                        className={`deal-admin__pagination-btn${currentPage === i + 1
                             ? " deal-admin__pagination-btn--active"
                             : ""
-                        }`}
+                          }`}
                         onClick={() => setCurrentPage(i + 1)}
                       >
                         {i + 1}
@@ -656,3 +656,4 @@ const DealAdmin: React.FC = () => {
 };
 
 export default DealAdmin;
+

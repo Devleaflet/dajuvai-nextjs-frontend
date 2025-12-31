@@ -1,11 +1,13 @@
 import React from "react";
-import { Order, OrderDetail } from "@/lib/types/Order";
+import { Order } from "@/lib/types/entities/order";
+
+type OrderDetail = any;
 
 interface EditModalProps {
   show: boolean;
   onClose: () => void;
-  onSave: (order: Order) => void;
-  order: Order | null;
+  onSave: (order: any) => void;
+  order: any | null;
   orderDetail: OrderDetail | null;
 }
 

@@ -141,7 +141,7 @@ const AdminProfile: React.FC = () => {
         const authToken = token || localStorage.getItem("authToken");
 
         if (authToken) {
-          headers.Authorization = `Bearer ${authToken}`;
+          headers["Authorization"] = `Bearer ${authToken}`;
         }
 
         const response = await axiosInstance.get(`/api/auth/users/${adminId}`, {
@@ -217,7 +217,7 @@ const AdminProfile: React.FC = () => {
       };
       const authToken = token || localStorage.getItem("authToken");
       if (authToken) {
-        headers.Authorization = `Bearer ${authToken}`;
+        headers["Authorization"] = `Bearer ${authToken}`;
       }
 
       const requestData = {
@@ -300,7 +300,7 @@ const AdminProfile: React.FC = () => {
   };
 
   const renderAdminDetails = () => {
-    if (isLoading.fetchAdmin) {
+    if (isLoading['fetchAdmin']) {
       return (
         <div className="admin-profile-form">
           {[...Array(4)].map((_, i) => (
@@ -357,7 +357,7 @@ const AdminProfile: React.FC = () => {
         <div className="admin-profile-form__row">
           <div className="admin-profile-form__group admin-profile-form__group--half">
             <label>Email</label>
-              <div className="admin-profile-form__display">{adminDetails.email|| "Not provided"}</div>
+            <div className="admin-profile-form__display">{adminDetails.email || "Not provided"}</div>
           </div>
           <div className="admin-profile-form__group admin-profile-form__group--half">
             <label>Phone Number</label>
@@ -379,9 +379,9 @@ const AdminProfile: React.FC = () => {
             <button
               className="admin-btn-edit--primary"
               onClick={handleSave}
-              disabled={isLoading.saveAdmin}
+              disabled={isLoading['saveAdmin']}
             >
-              {isLoading.saveAdmin ? "Saving..." : "Save Changes"}
+              {isLoading['saveAdmin'] ? "Saving..." : "Save Changes"}
             </button>
             <button
               className="admin-btn-edit--secondary"
@@ -406,7 +406,7 @@ const AdminProfile: React.FC = () => {
   };
 
   const renderCredentials = () => {
-    if (isLoading.fetchAdmin) {
+    if (isLoading['fetchAdmin']) {
       return (
         <div className="admin-credentials">
           {[...Array(5)].map((_, i) => (
@@ -429,9 +429,8 @@ const AdminProfile: React.FC = () => {
           </p>
           <div className="admin-credentials__actions">
             <button
-              className={`admin-profile-form__help ${
-                credentialsMode === "forgot" ? "active" : ""
-              }`}
+              className={`admin-profile-form__help ${credentialsMode === "forgot" ? "active" : ""
+                }`}
               onClick={() => setCredentialsMode("forgot")}
             >
               Forgot Password
@@ -451,9 +450,9 @@ const AdminProfile: React.FC = () => {
             <button
               className="admin-btn admin-btn--primary"
               onClick={handleForgotPassword}
-              disabled={isLoading.forgot}
+              disabled={isLoading['forgot']}
             >
-              {isLoading.forgot ? "Sending..." : "Send Reset Email"}
+              {isLoading['forgot'] ? "Sending..." : "Send Reset Email"}
             </button>
           </div>
         )}
@@ -504,9 +503,9 @@ const AdminProfile: React.FC = () => {
               <button
                 className="admin-btn admin-btn--primary"
                 onClick={handleResetPassword}
-                disabled={isLoading.reset}
+                disabled={isLoading['reset']}
               >
-                {isLoading.reset ? "Resetting..." : "Reset Password"}
+                {isLoading['reset'] ? "Resetting..." : "Reset Password"}
               </button>
             </div>
           </div>
@@ -588,10 +587,10 @@ const AdminProfile: React.FC = () => {
       <div className="admin-profile">
         <AdminSidebar />
         <div className="admin-profile-main">
-          <Header showSearch={false} title="Admin Profile" />
+          <Header showSearch={false} title="Admin Profile" onSearch={() => { }} />
           <div className={`admin-profile-card ${activeTab === "details" || activeTab === "credentials" ? "admin-profile-card--wide" : ""}`}>
             <div className="admin-profile-sidebar">
-              {isLoading.fetchAdmin ? (
+              {isLoading['fetchAdmin'] ? (
                 <>
                   <div className="admin-skeleton admin-skeleton-avatar" />
                   {[...Array(2)].map((_, i) => (
@@ -619,11 +618,10 @@ const AdminProfile: React.FC = () => {
                       <button
                         key={tab}
                         onClick={() => handleTabChange(tab)}
-                        className={`admin-profile-sidebar__button ${
-                          activeTab === tab
-                            ? "admin-profile-sidebar__button--primary"
-                            : "admin-profile-sidebar__button--secondary"
-                        }`}
+                        className={`admin-profile-sidebar__button ${activeTab === tab
+                          ? "admin-profile-sidebar__button--primary"
+                          : "admin-profile-sidebar__button--secondary"
+                          }`}
                       >
                         {tab === "details" ? "Manage Details" : "Change Credentials"}
                       </button>

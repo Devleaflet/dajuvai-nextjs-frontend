@@ -1,19 +1,29 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { usePathname, useRouter } from "next/navigation";
 import "@/styles/Notifications.css";
 import { AdminSidebar } from "@/components/Components/AdminSidebar";
-import { Sidebar, Sidebar as VendorSidebar } from "@/components/Components/Sidebar";
+import { Sidebar } from "@/components/Components/Sidebar";
 import axiosInstance from "@/lib/api/axiosInstance";
 import { useAuth } from "@/lib/context/AuthContext";
 import Header from "@/components/Components/Header";
 import VendorHeader from "@/components/Components/VendorHeader";
 
+interface Notification {
+  id: number;
+  type: string;
+  title: string;
+  time: string;
+  read: boolean;
+}
+
 export function Notifications() {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 1000);
-  const {token} = useAuth()
+  const [isMobile, setIsMobile] = useState(false);
+  const { token } = useAuth();
+
   useEffect(() => {
+    setIsMobile(window.innerWidth < 1000);
     const handleResize = () => {
       setIsMobile(window.innerWidth < 1000);
     };
@@ -24,16 +34,16 @@ export function Notifications() {
 
   const pathname = usePathname();
   const router = useRouter();
-  const isVendor = pathname === "/vendor-notifications";
+  const isVendor = pathname === "/vendor/notifications";
 
-  const [notifications, setNotifications] = useState([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeTab, setActiveTab] = useState("All");
   const [unreadCount, setUnreadCount] = useState(0);
 
-  const formatTime = (dateString) => {
+  const formatTime = (dateString: string) => {
     const now = new Date();
     const date = new Date(dateString);
-    const diff = now - date;
+    const diff = now.getTime() - date.getTime();
     const minutes = Math.floor(diff / 60000);
     if (minutes < 1) return 'Just now';
     if (minutes < 60) return `${minutes} mins ago`;
@@ -43,7 +53,7 @@ export function Notifications() {
     return `${days} day${days > 1 ? 's' : ''} ago`;
   };
 
-  const getTypeForIcon = (apiType) => {
+  const getTypeForIcon = (apiType: string) => {
     switch (apiType) {
       case "ORDER_PLACED": return "order";
       case "VENDOR_APPROVED": return "vendor";
@@ -65,7 +75,7 @@ export function Notifications() {
           }
         });
         if (response.data && response.data.success) {
-          const mappedNotifications = response.data.data.map(item => ({
+          const mappedNotifications: Notification[] = response.data.data.map((item: any) => ({
             id: item.id,
             type: getTypeForIcon(item.type),
             title: `${item.title}: ${item.message}`,
@@ -81,7 +91,7 @@ export function Notifications() {
     fetchNotifications();
   }, [token]);
 
-  const markAsRead = async (id) => {
+  const markAsRead = async (id: number) => {
     try {
       await axiosInstance.patch(`/api/notification/${id}`, { isRead: true }, {
         headers: {
@@ -94,7 +104,7 @@ export function Notifications() {
     }
   };
 
-  const handleNotificationClick = async (notification) => {
+  const handleNotificationClick = async (notification: Notification) => {
     if (!notification.read) {
       await markAsRead(notification.id);
     }
@@ -108,11 +118,11 @@ export function Notifications() {
     }
   };
 
-  const filteredNotifications = activeTab === "Unread" 
-    ? notifications.filter(n => !n.read) 
+  const filteredNotifications = activeTab === "Unread"
+    ? notifications.filter(n => !n.read)
     : notifications;
 
-  const getIcon = (type) => {
+  const getIcon = (type: string) => {
     switch (type) {
       case "order": return "🛒";
       case "vendor": return "🏪";
@@ -124,13 +134,15 @@ export function Notifications() {
   return (
     <div className="admin-layout">
       {isVendor ? <Sidebar /> : <AdminSidebar />}
-      <div style={{flex:1}}>
-        {!isVendor? <Header
-        showSearch = {false}
-        title="Notification"/>: 
-        <VendorHeader
-        title="Notification"
-        />}
+      <div style={{ flex: 1 }}>
+        {!isVendor ? <Header
+          showSearch={false}
+          onSearch={() => { }}
+          title="Notification" /> :
+          <VendorHeader
+            showSearch={false}
+            title="Notification"
+          />}
         <div className={`notifications-main ${isMobile ? "notifications-main--mobile" : ""}`}>
           <div className="notifications-container">
             <div className="notifications-header">

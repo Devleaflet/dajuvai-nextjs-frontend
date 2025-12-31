@@ -2,7 +2,7 @@
 
 // src/Components/ProductModal/ProductModal.tsx
 import React, { useState } from "react";
-import { Product } from "@/lib/types/Product";
+import { Product } from "@/lib/types/product";
 
 interface ProductModalProps {
   show: boolean;
@@ -20,7 +20,9 @@ const ProductModal: React.FC<ProductModalProps> = ({ show, onClose, onSave, prod
   const [discount, setDiscount] = useState<number | null>(null);
   const [discountType, setDiscountType] = useState<string>("percentage");
 
-  const [status, setStatus] = useState<string>(product?.status || "active");
+  const [status, setStatus] = useState<'AVAILABLE' | 'OUT_OF_STOCK' | 'LOW_STOCK'>(
+    (product?.status as 'AVAILABLE' | 'OUT_OF_STOCK' | 'LOW_STOCK') || 'AVAILABLE'
+  );
 
   // Handle file upload for product image
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -38,13 +40,34 @@ const ProductModal: React.FC<ProductModalProps> = ({ show, onClose, onSave, prod
       name: productName,
       description,
       price: basePrice || 0,
+      basePrice: basePrice || 0,
+      stock: stock || 0,
       piece: stock || 0,
-
+      discount: discount || null,
+      discountType: discountType as 'PERCENTAGE' | 'FLAT' | null,
+      size: product?.size || [],
       status,
       rating: product?.rating ?? 0,
       ratingCount: product?.ratingCount ?? 0,
       image: product?.image ?? '',
-      // Add other required fields here
+      productImages: product?.productImages || [],
+      subcategory: product?.subcategory || { id: 0, name: '', image: null, createdAt: '', updatedAt: '' },
+      vendor: product?.vendor || {
+        id: 0,
+        businessName: '',
+        email: '',
+        phoneNumber: '',
+        districtId: 0,
+        isVerified: false,
+        createdAt: '',
+        updatedAt: '',
+        district: { id: 0, name: '' }
+      },
+      inventory: product?.inventory || [],
+      vendorId: product?.vendorId || 0,
+      created_at: product?.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      deal: product?.deal || null,
     };
     onSave(newProduct);
     onClose();
@@ -153,10 +176,11 @@ const ProductModal: React.FC<ProductModalProps> = ({ show, onClose, onSave, prod
                 <select
                   id="status"
                   value={status}
-                  onChange={(e) => setStatus(e.target.value)}
+                  onChange={(e) => setStatus(e.target.value as 'AVAILABLE' | 'OUT_OF_STOCK' | 'LOW_STOCK')}
                 >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
+                  <option value="AVAILABLE">Available</option>
+                  <option value="OUT_OF_STOCK">Out of Stock</option>
+                  <option value="LOW_STOCK">Low Stock</option>
                 </select>
               </div>
             </div>

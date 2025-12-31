@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { useAuth } from "@/lib/context/AuthContext";
 import { processGoogleAuthResponse } from "@/lib/utils/googleAuthUtils";
 import { API_BASE_URL } from "@/lib/config";
@@ -10,7 +10,6 @@ import '@/styles/GoogleAuthCallback.css';
 
 const GoogleAuthBackend: React.FC = () => {
   const router = useRouter();
-  const pathname = usePathname();
   const { login } = useAuth();
   const [isProcessing, setIsProcessing] = useState(true);
   const [error, setError] = useState<string>('');
@@ -19,7 +18,7 @@ const GoogleAuthBackend: React.FC = () => {
     const processBackendCallback = async () => {
       try {
         // Get the authorization code from URL parameters
-        const urlParams = new URLSearchParams(location.search);
+        const urlParams = new URLSearchParams(window.location.search);
         const code = urlParams.get('code');
         const error = urlParams.get('error');
 
@@ -36,24 +35,24 @@ const GoogleAuthBackend: React.FC = () => {
         }
 
         // Make a request to the backend callback URL to get the response
-        const response = await axios.get(`${API_BASE_URL}/api/auth/google/callback?${location.search}`, {
+        const response = await axios.get(`${API_BASE_URL}/api/auth/google/callback?${window.location.search}`, {
           headers: {
             'Content-Type': 'application/json',
           },
         });
 
         // Process the response data
-        const result = await processGoogleAuthResponse(response.data, login, navigate);
-        
+        const result = await processGoogleAuthResponse(response.data, login, (path: string) => router.push(path));
+
         if (!result.success) {
           setError(result.error || 'Authentication failed');
         }
       } catch (err) {
         console.error('Google OAuth backend callback error:', err);
         if (axios.isAxiosError(err)) {
-          const errorMessage = err.response?.data?.message || 
-                             err.response?.data?.error || 
-                             'Authentication failed";
+          const errorMessage = err.response?.data?.message ||
+            err.response?.data?.error ||
+            'Authentication failed';
           setError(errorMessage);
         } else {
           setError('An unexpected error occurred during authentication');
@@ -64,7 +63,7 @@ const GoogleAuthBackend: React.FC = () => {
     };
 
     processBackendCallback();
-  }, [location, login, navigate]);
+  }, [login, router]);
 
   if (isProcessing) {
     return (
@@ -88,7 +87,7 @@ const GoogleAuthBackend: React.FC = () => {
             <h2 className="google-auth-callback__title">Authentication Failed</h2>
             <p className="google-auth-callback__message">{error}</p>
             <button
-              onClick={() => router.push('/', { replace: true })}
+              onClick={() => router.replace('/')}
               className="google-auth-callback__button"
             >
               Return to Home

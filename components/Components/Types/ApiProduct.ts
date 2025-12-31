@@ -1,4 +1,4 @@
-import { ApiProduct, ProductVariant, Attribute } from "../../types/product";
+import { ApiProduct, ProductVariant, Attribute } from "../../../lib/types/product";
 
 // Re-export the unified ApiProduct type for backward compatibility
 export type { ApiProduct };

@@ -13,7 +13,7 @@ class VendorDashboardService {
     return VendorDashboardService.instance;
   }
 
-  async getVendorOrders(token: string) {
+  async getVendorOrders(token: string): Promise<any> {
     // Always use the latest vendorToken from localStorage if available
     const realToken = token || localStorage.getItem('vendorToken');
     const response = await fetch(`${this.baseUrl}/vendor/dashboard/orders`, {
@@ -27,7 +27,7 @@ class VendorDashboardService {
     return response.json();
   }
 
-  async getVendorOrdersNew(token: string) {
+  async getVendorOrdersNew(token: string): Promise<any> {
     const realToken = token || localStorage.getItem('vendorToken');
     const response = await fetch(`${this.baseUrl}/order/vendor/orders`, {
       headers: {
@@ -40,7 +40,7 @@ class VendorDashboardService {
     return response.json();
   }
 
-  async getVendorOrderDetail(token: string, orderId: number) {
+  async getVendorOrderDetail(token: string, orderId: number): Promise<any> {
     const realToken = token || localStorage.getItem('vendorToken');
     const response = await fetch(`${this.baseUrl}/order/vendor/${orderId}`, {
       headers: {
@@ -53,7 +53,7 @@ class VendorDashboardService {
     return response.json();
   }
 
-  async getVendorStats(token: string) {
+  async getVendorStats(token: string): Promise<any> {
     const realToken = token || localStorage.getItem('vendorToken');
     const response = await fetch(`${this.baseUrl}/vendor/dashboard/stats`, {
       headers: {
@@ -66,7 +66,7 @@ class VendorDashboardService {
     return response.json();
   }
 
-  async getTopsellingProduct(token: string) {
+  async getTopsellingProduct(token: string): Promise<any> {
     const realToken = token || localStorage.getItem('vendorToken');
     const response = await fetch(`${this.baseUrl}/vendor/dashboard/analytics/top-selling-products`, {
       headers: {

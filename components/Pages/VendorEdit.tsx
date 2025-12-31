@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, FormEvent } from 'react';
-import { VendorAuthService, VendorUpdateRequest } from "@/lib/services/vendorAuthService";
+import { VendorAuthService } from "@/lib/services/vendorAuthService";
+import type { VendorUpdateRequest } from "@/components/Components/Types/vendor";
 import { Vendor } from "@/components/Components/Types/vendor";
 import './VendorEdit.css';
 
@@ -10,10 +11,9 @@ interface VendorEditProps {
 }
 
 const VendorEdit: React.FC<VendorEditProps> = ({ vendor }) => {
-  const [formData, setFormData] = useState<VendorUpdateRequest>({
+  const [formData, setFormData] = useState<Partial<VendorUpdateRequest>>({
     id: vendor.id,
     businessName: vendor.businessName,
-    email: vendor.email,
     phoneNumber: vendor.phoneNumber || '',
     businessAddress: vendor.businessAddress || '',
   });
@@ -35,9 +35,9 @@ const VendorEdit: React.FC<VendorEditProps> = ({ vendor }) => {
       return;
     }
 
-    const response = await VendorAuthService.updateVendor(vendor.id, formData, token);
+    const response = await VendorAuthService.updateVendor(vendor.id, formData as any, token);
 
-    if (response.success && response.data) {
+    if (response.success && response.vendor) {
       setSuccess('Profile updated successfully!');
     } else {
       setError(response.message || 'Update failed. Please try again.');
@@ -69,9 +69,9 @@ const VendorEdit: React.FC<VendorEditProps> = ({ vendor }) => {
             type="email"
             id="email"
             name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
+            value={vendor.email}
+            readOnly
+            disabled
           />
         </div>
         <div className="vendor-edit__field">

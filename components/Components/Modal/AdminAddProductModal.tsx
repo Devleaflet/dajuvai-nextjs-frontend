@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ProductFormData } from '../../types/product';
-import { fetchCategories, fetchSubcategories, Category, Subcategory } from '../../api/categories';
+import { ProductFormData } from '@/lib/types/product';
+import { fetchCategories, fetchSubcategories, Category, Subcategory } from '@/lib/api/categories';
 import "@/styles/ProductModal.css";
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '@/lib/context/AuthContext';
 import { API_BASE_URL } from '@/lib/config';
 
 interface Vendor {
@@ -180,29 +180,29 @@ const AdminAddProductModal: React.FC<AdminAddProductModalProps> = ({ show, onClo
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
     if (!formData.name?.trim()) {
-      newErrors.name = 'Product name is required';
+      newErrors['name'] = 'Product name is required';
     }
     if (!formData.description?.trim()) {
-      newErrors.description = 'Product description is required';
+      newErrors['description'] = 'Product description is required';
     }
     const price = parseFloat(formData.basePrice?.toString() || '0');
     if (isNaN(price) || price <= 0) {
-      newErrors.basePrice = 'Base price must be a valid positive number';
+      newErrors['basePrice'] = 'Base price must be a valid positive number';
     }
     if (typeof formData.stock !== 'number' || formData.stock < 0) {
-      newErrors.stock = 'Stock must be a valid non-negative number';
+      newErrors['stock'] = 'Stock must be a valid non-negative number';
     }
     if (typeof formData.quantity !== 'number' || formData.quantity <= 0) {
-      newErrors.quantity = 'Quantity must be a valid positive number';
+      newErrors['quantity'] = 'Quantity must be a valid positive number';
     }
     if (!formData.categoryId) {
-      newErrors.categoryId = 'Category is required';
+      newErrors['categoryId'] = 'Category is required';
     }
     if (!formData.subcategoryId) {
-      newErrors.subcategoryId = 'Subcategory is required";
+      newErrors['subcategoryId'] = 'Subcategory is required';
     }
     if (!selectedVendorId) {
-      newErrors.vendorId = 'Vendor is required";
+      newErrors['vendorId'] = 'Vendor is required';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -235,7 +235,7 @@ const AdminAddProductModal: React.FC<AdminAddProductModalProps> = ({ show, onClo
         discount: formData.discount || null,
         discountType: formData.discountType || null,
         size: formData.size || [],
-        status: formData.status || 'AVAILABLE',
+        status: (formData.status || 'AVAILABLE') as 'AVAILABLE' | 'OUT_OF_STOCK' | 'LOW_STOCK',
         productImages: formData.productImages,
         categoryId: formData.categoryId,
         subcategoryId: formData.subcategoryId,
@@ -244,6 +244,7 @@ const AdminAddProductModal: React.FC<AdminAddProductModalProps> = ({ show, onClo
         dealId: formData.dealId || null,
         inventory: formData.inventory || [],
         vendorId: String(selectedVendorId),
+        hasVariants: false,
       };
 
       //("AdminAddProductModal - Sending payload:", productData);
@@ -253,9 +254,10 @@ const AdminAddProductModal: React.FC<AdminAddProductModalProps> = ({ show, onClo
 
       await onAdd(productData, formData.categoryId, formData.subcategoryId, token, role);
       onClose();
-    } catch (err: any) {
-      console.error("AdminAddProductModal - Error creating product:", err);
-      setErrors(prev => ({ ...prev, general: err.message || 'Failed to create product' }));
+    } catch (err: unknown) {
+      const error = err as any;
+      console.error("AdminAddProductModal - Error creating product:", error);
+      setErrors(prev => ({ ...prev, general: error.message || 'Failed to create product' }));
     } finally {
       setLoading(false);
     }
@@ -282,8 +284,8 @@ const AdminAddProductModal: React.FC<AdminAddProductModalProps> = ({ show, onClo
           </button>
         </div>
 
-        {errors.general && (
-          <div className="product-modal__error">{errors.general}</div>
+        {errors['general'] && (
+          <div className="product-modal__error">{errors['general']}</div>
         )}
 
         <form onSubmit={handleSubmit} className="product-modal__form">
@@ -305,7 +307,7 @@ const AdminAddProductModal: React.FC<AdminAddProductModalProps> = ({ show, onClo
                     </option>
                   ))}
                 </select>
-                {errors.categoryId && <span className="product-modal__error">{errors.categoryId}</span>}
+                {errors['categoryId'] && <span className="product-modal__error">{errors['categoryId']}</span>}
               </div>
 
               <div className="product-modal__field">
@@ -325,7 +327,7 @@ const AdminAddProductModal: React.FC<AdminAddProductModalProps> = ({ show, onClo
                     </option>
                   ))}
                 </select>
-                {errors.subcategoryId && <span className="product-modal__error">{errors.subcategoryId}</span>}
+                {errors['subcategoryId'] && <span className="product-modal__error">{errors['subcategoryId']}</span>}
               </div>
             </div>
           </div>
@@ -347,7 +349,7 @@ const AdminAddProductModal: React.FC<AdminAddProductModalProps> = ({ show, onClo
                   </option>
                 ))}
               </select>
-              {errors.vendorId && <span className="product-modal__error">{errors.vendorId}</span>}
+              {errors['vendorId'] && <span className="product-modal__error">{errors['vendorId']}</span>}
             </div>
           </div>
 
@@ -362,7 +364,7 @@ const AdminAddProductModal: React.FC<AdminAddProductModalProps> = ({ show, onClo
                 required
                 className="product-modal__input"
               />
-              {errors.name && <span className="product-modal__error">{errors.name}</span>}
+              {errors['name'] && <span className="product-modal__error">{errors['name']}</span>}
             </div>
 
             <div className="product-modal__field">
@@ -375,7 +377,7 @@ const AdminAddProductModal: React.FC<AdminAddProductModalProps> = ({ show, onClo
                 rows={3}
                 className="product-modal__textarea"
               />
-              {errors.description && <span className="product-modal__error">{errors.description}</span>}
+              {errors['description'] && <span className="product-modal__error">{errors['description']}</span>}
             </div>
           </div>
 
@@ -393,7 +395,7 @@ const AdminAddProductModal: React.FC<AdminAddProductModalProps> = ({ show, onClo
                   step="0.01"
                   className="product-modal__input"
                 />
-                {errors.basePrice && <span className="product-modal__error">{errors.basePrice}</span>}
+                {errors['basePrice'] && <span className="product-modal__error">{errors['basePrice']}</span>}
               </div>
 
               <div className="product-modal__field">
@@ -407,7 +409,7 @@ const AdminAddProductModal: React.FC<AdminAddProductModalProps> = ({ show, onClo
                   min="0"
                   className="product-modal__input"
                 />
-                {errors.stock && <span className="product-modal__error">{errors.stock}</span>}
+                {errors['stock'] && <span className="product-modal__error">{errors['stock']}</span>}
               </div>
             </div>
           </div>
@@ -425,7 +427,7 @@ const AdminAddProductModal: React.FC<AdminAddProductModalProps> = ({ show, onClo
                   min="1"
                   className="product-modal__input"
                 />
-                {errors.quantity && <span className="product-modal__error">{errors.quantity}</span>}
+                {errors['quantity'] && <span className="product-modal__error">{errors['quantity']}</span>}
               </div>
 
               <div className="product-modal__field">
@@ -525,7 +527,7 @@ const AdminAddProductModal: React.FC<AdminAddProductModalProps> = ({ show, onClo
                 onChange={handleImageChange} // Removed duplicate 'multiple' attribute
                 className="product-modal__input"
               />
-              {errors.images && <span className="product-modal__error">{errors.images}</span>}
+              {errors['images'] && <span className="product-modal__error">{errors['images']}</span>}
               {imagePreviews.length > 0 && (
                 <div className="image-previews__product-modal">
                   {imagePreviews.map((preview, index) => (
@@ -574,3 +576,4 @@ style.innerHTML = `@keyframes spin { 0% { transform: rotate(0deg); } 100% { tran
 document.head.appendChild(style);
 
 export default AdminAddProductModal;
+

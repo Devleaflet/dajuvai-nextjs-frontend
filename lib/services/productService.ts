@@ -40,9 +40,8 @@ class ProductService {
     if ('discount' in formData && formData.discount && isNaN(Number(formData.discount))) throw new Error('Discount must be a valid number');
     if ('vendorId' in formData && !formData.vendorId) throw new Error('Vendor ID is required');
     if ('inventory' in formData && formData.inventory && Array.isArray(formData.inventory)) {
-      formData.inventory.forEach((inv: { sku: string; quantity: number; status: string }, index: number) => {
+      formData.inventory.forEach((inv: { sku: string; status: string }, index: number) => {
         if (!inv.sku) throw new Error(`Inventory[${index}]: SKU is required`);
-        if (isNaN(inv.quantity) || inv.quantity < 0) throw new Error(`Inventory[${index}]: Quantity must be a non-negative number`);
         if (!inv.status) throw new Error(`Inventory[${index}]: Status is required`);
       });
     }

@@ -23,7 +23,7 @@ const BestOfBottom: React.FC = () => {
         if (Array.isArray(parsed) && parsed.length > 0) {
           setRecommendedProducts(parsed);
         }
-      } catch {}
+      } catch { }
     }
   }, []);
 
@@ -45,7 +45,7 @@ const BestOfBottom: React.FC = () => {
       ratingCount: reviews.length,
       isBestSeller: item.stock > 20,
       freeDelivery: true,
-      image: item.productImages[0] || p1,
+      image: item.productImages[0] || item.image || '/assets/placeholder.png',
       category: item.subcategory?.category,
       subcategory: item.subcategory,
     };
@@ -66,6 +66,7 @@ const BestOfBottom: React.FC = () => {
   return (
     <ProductCarousel
       title="BEST OF LAPTOPS"
+      sectionId={0}
       products={recommendedProducts}
       scrollAmount={300}
     />

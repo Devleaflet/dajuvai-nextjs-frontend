@@ -16,6 +16,7 @@ import ScrollToTop from "@/components/Components/ScrollToTop";
 import AuthModal from "@/components/Components/AuthModal";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useCart } from "@/lib/context/CartContext";
+import { sanitizeHtml } from "@/lib/utils/sanitize";
 // ================================
 // TYPES & INTERFACES
 // ================================
@@ -338,7 +339,7 @@ const Wishlist: React.FC = () => {
   // ================================
   const handleQuantityChange = (id: number, newQuantity: number) => {
     if (newQuantity < 1) return;
-    setWishlistItems(prev => prev.map(item => 
+    setWishlistItems(prev => prev.map(item =>
       item.id === id ? { ...item, quantity: newQuantity } : item
     ));
   };
@@ -393,7 +394,7 @@ const Wishlist: React.FC = () => {
                 {error.includes('Please log in') ? (
                   <div className="wishlist__login-container">
                     <p className="wishlist__login-message">Please log in to view and manage your wishlist items</p>
-                    <button 
+                    <button
                       className="wishlist__login-button"
                       onClick={() => setShowAuthModal(true)}
                       aria-label="Log in to continue"
@@ -403,7 +404,7 @@ const Wishlist: React.FC = () => {
                     </button>
                   </div>
                 ) : (
-                  <button 
+                  <button
                     className="wishlist__retry-button"
                     onClick={handleRetry}
                     aria-label="Retry loading wishlist"
@@ -420,7 +421,7 @@ const Wishlist: React.FC = () => {
                   {wishlistItems.map((item) => (
                     <div key={item.id} className="wishlist__item" data-testid={`wishlist-item-${item.id}`}>
                       <div className="wishlist__item-image">
-                        <img 
+                        <img
                           src={getItemImage(item)}
                           alt={item.product.name}
                           onError={e => { e.currentTarget.src = "/assets/logo.webp"; }}
@@ -435,13 +436,13 @@ const Wishlist: React.FC = () => {
                             Variant: {formatVariantAttributes(item.variant.attributes)}
                           </div>
                         )}
-                        <p className="wishlist__item-specs">{item.product.description}</p>
+                        <p className="wishlist__item-specs" dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.product.description) }} />
                       </div>
                       <div className="wishlist__item-price">
                         Rs. {getItemPrice(item).toLocaleString('en-IN')}
                       </div>
                       <div className="wishlist__item-quantity">
-                        <button 
+                        <button
                           className="wishlist__qty-btn wishlist__qty-btn--touch"
                           onClick={() => handleQuantityChange(item.id, (item.quantity || 1) - 1)}
                           aria-label="Decrease quantity"
@@ -451,7 +452,7 @@ const Wishlist: React.FC = () => {
                           <FaMinus />
                         </button>
                         <span id={`qty-value-${item.id}`} className="wishlist__qty-value" aria-live="polite">{item.quantity || 1}</span>
-                        <button 
+                        <button
                           className="wishlist__qty-btn wishlist__qty-btn--touch"
                           onClick={() => handleQuantityChange(item.id, (item.quantity || 1) + 1)}
                           aria-label="Increase quantity"
@@ -462,7 +463,7 @@ const Wishlist: React.FC = () => {
                         </button>
                       </div>
                       <div className="wishlist__item-actions">
-                        <button 
+                        <button
                           className="wishlist__action-btn wishlist__action-btn--delete"
                           onClick={() => handleRemoveItem(item.id)}
                           aria-label="Remove from wishlist"
@@ -474,7 +475,7 @@ const Wishlist: React.FC = () => {
                             <FaTrash />
                           )}
                         </button>
-                        <button 
+                        <button
                           className="wishlist__action-btn wishlist__action-btn--cart"
                           onClick={() => handleMoveToCart(item.id, item.quantity || 1)}
                           aria-label="Move to cart"
@@ -497,7 +498,7 @@ const Wishlist: React.FC = () => {
                       <span className="wishlist__total-value">Rs. {totalPrice.toLocaleString('en-IN')}</span>
                     </div>
                   </div>
-                  <button 
+                  <button
                     className="wishlist__add-all-btn"
                     onClick={handleAddAllToCart}
                     disabled={actionLoading['add_all'] || wishlistItems.length === 0}
@@ -531,9 +532,9 @@ const Wishlist: React.FC = () => {
         theme="light"
       />
       <Footer />
-      <AuthModal 
-        isOpen={showAuthModal} 
-        onClose={() => setShowAuthModal(false)} 
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
       />
     </>
   );

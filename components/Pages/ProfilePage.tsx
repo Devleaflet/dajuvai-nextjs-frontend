@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, act } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Popup from "reactjs-popup";
 import "reactjs-popup/dist/index.css";
@@ -177,7 +177,7 @@ const ProfilePage: React.FC = () => {
 			return;
 		}
 		fetchVendorDetails();
-	}, [vendorId, navigate]);
+	}, [vendorId, router]);
 
 	const handleInputChange = (
 		e: React.ChangeEvent<HTMLInputElement>,
@@ -300,7 +300,7 @@ const ProfilePage: React.FC = () => {
 				if (index !== undefined) {
 					updatedField.splice(index, 1);
 				}
-			
+
 				return { ...prev, [field]: updatedField };
 			});
 		}
@@ -426,7 +426,7 @@ const ProfilePage: React.FC = () => {
 	};
 
 	const renderVendorDetails = () => {
-		if (isLoading.fetchVendor) {
+		if (isLoading['fetchVendor']) {
 			return (
 				<div className="vendor-profile-form">
 					{[...Array(10)].map((_, i) => (
@@ -638,7 +638,7 @@ const ProfilePage: React.FC = () => {
 									onClick={() => chequeInputRef.current?.click()}
 								>
 									<p>
-										{isLoading.upload_chequePhoto
+										{isLoading['upload_chequePhoto']
 											? "Uploading..."
 											: "Click to upload cheque photo"}
 									</p>
@@ -691,7 +691,7 @@ const ProfilePage: React.FC = () => {
 									onClick={() => citizenshipInputRef.current?.click()}
 								>
 									<p>
-										{isLoading.upload_citizenshipDocuments
+										{isLoading['upload_citizenshipDocuments']
 											? "Uploading..."
 											: "Click to upload citizenship documents"}
 									</p>
@@ -732,13 +732,13 @@ const ProfilePage: React.FC = () => {
 							<div className="vendor-profile-form__display">
 								{vendorDetails.citizenshipDocuments?.length
 									? vendorDetails.citizenshipDocuments.map((doc, index) => (
-											<div key={index}>
-												<img
-													src={doc}
-													alt="Citizenship Document"
-												/>
-											</div>
-									  ))
+										<div key={index}>
+											<img
+												src={doc}
+												alt="Citizenship Document"
+											/>
+										</div>
+									))
 									: "Not provided"}
 							</div>
 						)}
@@ -754,7 +754,7 @@ const ProfilePage: React.FC = () => {
 									onClick={() => taxInputRef.current?.click()}
 								>
 									<p>
-										{isLoading.upload_taxDocuments
+										{isLoading['upload_taxDocuments']
 											? "Uploading..."
 											: "Click to upload tax documents"}
 									</p>
@@ -791,13 +791,13 @@ const ProfilePage: React.FC = () => {
 							<div className="vendor-profile-form__display">
 								{vendorDetails.taxDocuments?.length
 									? vendorDetails.taxDocuments.map((doc, index) => (
-											<div key={index}>
-												<img
-													src={doc}
-													alt="Tax Document"
-												/>
-											</div>
-									  ))
+										<div key={index}>
+											<img
+												src={doc}
+												alt="Tax Document"
+											/>
+										</div>
+									))
 									: "Not provided"}
 							</div>
 						)}
@@ -808,9 +808,9 @@ const ProfilePage: React.FC = () => {
 						<button
 							className="vendor-btn-edit--primary"
 							onClick={handleSave}
-							disabled={isLoading.saveVendor}
+							disabled={isLoading['saveVendor']}
 						>
-							{isLoading.saveVendor ? "Saving..." : "Save Changes"}
+							{isLoading['saveVendor'] ? "Saving..." : "Save Changes"}
 						</button>
 						<button
 							className="vendor-btn-edit--secondary"
@@ -841,7 +841,7 @@ const ProfilePage: React.FC = () => {
 	};
 
 	const renderCredentials = () => {
-		if (isLoading.fetchVendor) {
+		if (isLoading['fetchVendor']) {
 			return (
 				<div className="vendor-credentials">
 					{[...Array(5)].map((_, i) => (
@@ -864,9 +864,8 @@ const ProfilePage: React.FC = () => {
 					</p>
 					<div className="vendor-credentials__actions">
 						<button
-							className={`vendor-profile-form__help ${
-								credentialsMode === "forgot" ? "active" : ""
-							}`}
+							className={`vendor-profile-form__help ${credentialsMode === "forgot" ? "active" : ""
+								}`}
 							onClick={() => setCredentialsMode("forgot")}
 						>
 							Forgot Password
@@ -893,10 +892,10 @@ const ProfilePage: React.FC = () => {
 						<button
 							className="vendor-btn vendor-btn--primary"
 							onClick={handleForgotPassword}
-							disabled={isLoading.forgot}
+							disabled={isLoading['forgot']}
 							style={{ marginTop: "20px", maxWidth: "300px" }}
 						>
-							{isLoading.forgot ? "Sending..." : "Send Reset Email"}
+							{isLoading['forgot'] ? "Sending..." : "Send Reset Email"}
 						</button>
 					</div>
 				)}
@@ -951,9 +950,9 @@ const ProfilePage: React.FC = () => {
 							<button
 								className="vendor-btn vendor-btn--primary"
 								onClick={handleResetPassword}
-								disabled={isLoading.reset}
+								disabled={isLoading['reset']}
 							>
-								{isLoading.reset ? "Resetting..." : "Reset Password"}
+								{isLoading['reset'] ? "Resetting..." : "Reset Password"}
 							</button>
 						</div>
 					</div>
@@ -1051,14 +1050,13 @@ const ProfilePage: React.FC = () => {
 						title="Profile Management"
 					/>
 					<div
-						className={`vendor-profile-card ${
-							activeTab === "details" || activeTab === "credentials"
-								? "vendor-profile-card--wide"
-								: ""
-						}`}
+						className={`vendor-profile-card ${activeTab === "details" || activeTab === "credentials"
+							? "vendor-profile-card--wide"
+							: ""
+							}`}
 					>
 						<div className="vendor-profile-sidebar">
-							{isLoading.fetchVendor ? (
+							{isLoading['fetchVendor'] ? (
 								<>
 									<div className="vendor-skeleton vendor-skeleton-avatar" />
 									{[...Array(2)].map((_, i) => (
@@ -1084,11 +1082,10 @@ const ProfilePage: React.FC = () => {
 										<button
 											key={tab}
 											onClick={() => handleTabChange(tab)}
-											className={`vendor-profile-sidebar__button ${
-												activeTab === tab
-													? "vendor-profile-sidebar__button--primary"
-													: "vendor-profile-sidebar__button--secondary"
-											}`}
+											className={`vendor-profile-sidebar__button ${activeTab === tab
+												? "vendor-profile-sidebar__button--primary"
+												: "vendor-profile-sidebar__button--secondary"
+												}`}
 										>
 											{tab === "details"
 												? "Manage Details"
@@ -1116,3 +1113,4 @@ const ProfilePage: React.FC = () => {
 };
 
 export default ProfilePage;
+

@@ -41,8 +41,6 @@ const AdminProduct: React.FC = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const productService = ProductService;
-
   // Fetch products from backend with pagination, sorting, and filtering
   const fetchProducts = useCallback(async () => {
     if (!token || !isAuthenticated) return;
@@ -123,11 +121,14 @@ const AdminProduct: React.FC = () => {
 
   // Delete product function
   const deleteProduct = useCallback(async (product: ApiProduct) => {
+    if (!token) {
+      toast.error("Authentication required");
+      return;
+    }
+
     setIsDeleting(true);
     try {
-      await productService.deleteProduct(
-        product.id, token
-      );
+      await ProductService.deleteProduct(product.id, token);
       await fetchProducts();
       setShowDeleteModal(false);
       setProductToDelete(null);
@@ -138,7 +139,7 @@ const AdminProduct: React.FC = () => {
     } finally {
       setIsDeleting(false);
     }
-  }, [productService, fetchProducts]);
+  }, [token, fetchProducts]);
 
   // Handle sort change - Fixed mapping
   const handleSort = useCallback((newSortOption: string) => {
@@ -291,15 +292,9 @@ const AdminProduct: React.FC = () => {
                             return variant.price;
                           }
 
-                          // Try variant.basePrice (number)
-                          if (variant.basePrice && typeof variant.basePrice === 'number' && variant.basePrice > 0) {
-                            //("hiee",product.name)
-                            return variant.basePrice;
-                          }
-
-                          // Try variant.basePrice (string)
-                          if (typeof variant.basePrice === 'string') {
-                            const parsedVariantPrice = parseFloat(variant.basePrice);
+                          // Try parsing variant.price as string
+                          if (typeof variant.price === 'string') {
+                            const parsedVariantPrice = parseFloat(variant.price);
                             if (!isNaN(parsedVariantPrice) && parsedVariantPrice > 0) {
                               return parsedVariantPrice;
                             }

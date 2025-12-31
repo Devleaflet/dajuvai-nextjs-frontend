@@ -15,7 +15,7 @@ export const fetchSubCategory = async (id: number): Promise<CategoryItem[]> => {
     } else {
       return [];
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     return [];
   }
 };

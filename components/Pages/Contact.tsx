@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import Navbar from "@/components/Components/Navbar";
 import Footer from "@/components/Components/Footer";
 import axiosInstance from "@/lib/api/axiosInstance";
@@ -74,7 +74,9 @@ const Contact: React.FC = () => {
 
   return (
     <>
-      <Navbar />
+      <Suspense fallback={<div style={{ height: '80px' }} />}>
+        <Navbar />
+      </Suspense>
       <div className="contact-page">
         <h1 className="contact-title">Contact Us</h1>
         <div className="contact-vendor-info" style={{ marginBottom: '2rem', background: '#f8f8f8', padding: '1.5rem', borderRadius: '8px' }}>

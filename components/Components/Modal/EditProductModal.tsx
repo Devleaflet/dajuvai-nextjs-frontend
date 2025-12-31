@@ -1,19 +1,19 @@
 'use client';
 
 import React, { useState, useEffect } from "react";
-import { ProductFormData, ProductVariant, Attribute, ApiProduct } from "../../types/product";
+import { ProductFormData, ProductVariant, Attribute, ApiProduct } from "@/lib/types/product";
 import "@/styles/ProductModal.css";
 import "@/styles/Modal.css";
-import { useAuth } from "../../context/AuthContext";
-import { useVendorAuth } from "../../context/VendorAuthContext";
+import { useAuth } from "@/lib/context/AuthContext";
+import { useVendorAuth } from "@/lib/context/VendorAuthContext";
 import { API_BASE_URL } from "@/lib/config";
 // ApiProduct comes from ../../types/product
 import { useSearchParams } from "next/navigation";
 import { usePathname } from "next/navigation";
-import ProductService from "../../services/productService";
+import ProductService from "@/lib/services/productService";
 import { toast } from 'react-toastify';
-import { dealApiService } from '../../services/apiDeals';
-import { Deal } from "@/lib/types/Deal";
+import { dealApiService } from '@/lib/services/apiDeals';
+import type { Deal } from '@/lib/types/Deal';
 
 export enum InventoryStatus {
   AVAILABLE = 'AVAILABLE',
@@ -62,12 +62,11 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     brand_id: null,
     dealId: null,
     bannerId: null,
+    brandId: null,
     vendorId: "",
     inventory: [],
     hasVariants: false,
     variants: [],
-    bannerId: null,
-    brandId: null,
   });
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
@@ -110,7 +109,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   useEffect(() => {
     if (product && show) {
       // Check if variants exist in the API response
-      const hasVariants = product.variants && product.variants.length > 0;
+      const hasVariants = Boolean(product.variants && product.variants.length > 0);
 
       const initialFormData: ProductFormData = {
         name: product.name || "",
@@ -128,14 +127,13 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
         brand_id: product.brand_id || null,
         dealId: product.dealId || null,
         bannerId: product.bannerId || null,
+        brandId: product.brand_id || null,
         inventory: product.inventory || [],
         vendorId: isVendorContext
           ? String(vendorAuthState.vendor?.id || "")
           : (product.vendorId ? String(product.vendorId) : ""),
-        hasVariants: hasVariants, // Use computed value
+        hasVariants: hasVariants,
         variants: product.variants || [],
-        bannerId: product.bannerId || null,
-        brandId: product.brandId || null,
       };
 
       setFormData(initialFormData);
@@ -367,6 +365,10 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
           setError("Authentication token is missing");
           return;
         }
+        if (!imageUrl || typeof imageUrl !== 'string') {
+          setError("Invalid image URL");
+          return;
+        }
         //("Auth token being sent:", authToken);
         //("Requesting delete for imageUrl:", imageUrl, "productId:", productId, "categoryId:", categoryId, "subcategoryId:", subcategoryId);
 
@@ -419,42 +421,43 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
-    if (!formData.name?.trim()) newErrors.name = "Product name is required";
+    if (!formData.name?.trim()) newErrors['name'] = "Product name is required";
     if (!formData.description?.trim())
-      newErrors.description = "Product description is required";
+      newErrors['description'] = "Product description is required";
 
     // Validate based on whether product has variants
     if (!formData.hasVariants) {
       // Non-variant product validation
       const price = parseFloat(formData.basePrice?.toString() || "0");
       if (isNaN(price) || price <= 0)
-        newErrors.basePrice = "Base price must be a valid positive number";
+        newErrors['basePrice'] = "Base price must be a valid positive number";
       if (typeof formData.stock !== "number" || formData.stock < 0)
-        newErrors.stock = "Stock must be a valid non-negative number";
+        newErrors['stock'] = "Stock must be a valid non-negative number";
       if (typeof formData.quantity !== "number" || formData.quantity <= 0)
-        newErrors.quantity = "Quantity must be a valid positive number";
+        newErrors['quantity'] = "Quantity must be a valid positive number";
     } else {
       // Variant product validation
       if (variants.length === 0) {
-        newErrors.variants = "At least one variant is required for variant products";
+        newErrors['variants'] = "At least one variant is required for variant products";
       } else {
         // Validate each variant
         for (let i = 0; i < variants.length; i++) {
           const variant = variants[i];
+          if (!variant) continue;
           if (!variant.sku) {
-            newErrors.variants = `Variant ${i + 1} missing SKU`;
+            newErrors['variants'] = `Variant ${i + 1} missing SKU`;
             break;
           }
           if (!variant.price || variant.price <= 0) {
-            newErrors.variants = `Variant ${i + 1} must have a valid positive price`;
+            newErrors['variants'] = `Variant ${i + 1} must have a valid positive price`;
             break;
           }
           if (!variant.stock || variant.stock < 0) {
-            newErrors.variants = `Variant ${i + 1} must have a valid non-negative stock`;
+            newErrors['variants'] = `Variant ${i + 1} must have a valid non-negative stock`;
             break;
           }
           if (!variant.status) {
-            newErrors.variants = `Variant ${i + 1} must have a valid status`;
+            newErrors['variants'] = `Variant ${i + 1} must have a valid status`;
             break;
           }
         }
@@ -463,7 +466,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
 
     // Only validate vendor selection for admin context
     if (!isVendorContext && !formData.vendorId) {
-      newErrors.vendorId = "Vendor is required";
+      newErrors['vendorId'] = "Vendor is required";
     }
 
     setErrors(newErrors);
@@ -505,186 +508,208 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
           ...v,
           variantImages: v.images || [],
         }))
-        : undefined;
+        : [];
 
       const finalFormData = {
         ...formData,
         variants: variantsForSubmit,
       };
 
-      //('EditProductModal: Submitting form data:', {
-      productId: product.id,
-        formData: finalFormData,
-          categoryId: categoryId,
-            subcategoryId: subcategoryId,
-              status: formData.status,
-                hasVariants: formData.hasVariants,
-                  variantsCount: variants.length
-    });
+      // console.log('EditProductModal: Submitting form data:', {
+      //   productId: product.id,
+      //   formData: finalFormData,
+      //   categoryId: categoryId,
+      //   subcategoryId: subcategoryId,
+      //   status: formData.status,
+      //   hasVariants: formData.hasVariants,
+      //   variantsCount: variants.length
+      // });
 
-    await onSave(product.id, finalFormData, categoryId, subcategoryId);
-    onClose();
-  } catch (err) {
-    const errorMessage =
-      err instanceof Error ? err.message : "Failed to update product";
-    setError(errorMessage);
-  } finally {
-    setIsSubmitting(false);
-  }
-};
-
-useEffect(() => {
-  // Update state when the URL changes
-  // setQuery(location.search); // Removed as per edit hint
-}, [location.search]);
-
-useEffect(() => {
-  //("Fetching products for:", categoryId, subcategoryId);
-  // ...fetch logic
-}, [categoryId, subcategoryId]);
-
-// Add this handler for the deal dropdown
-const handleDealChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-  const value = e.target.value;
-  setFormData((prev) => ({
-    ...prev,
-    dealId: value ? Number(value) : null,
-    vendorId: isVendorContext
-      ? String(vendorAuthState.vendor?.id || "")
-      : (selectedVendorId ? String(selectedVendorId) : ""),
-    inventory: prev.inventory || [],
-  }));
-};
-
-// Variant management functions
-const handleVariantChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-  const { name, value } = e.target;
-  setCurrentVariant((prev) => ({ ...prev, [name]: value }));
-};
-
-const handleAttributeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const { name, value } = e.target;
-  setCurrentAttribute((prev) => ({ ...prev, [name]: value }));
-};
-
-const handleAttributeValueAdd = () => {
-  if (currentAttributeValue.trim()) {
-    setCurrentAttribute((prev) => ({
-      ...prev,
-      attributeValues: [...(prev.attributeValues || []), currentAttributeValue.trim()]
-    }));
-    setCurrentAttributeValue("");
-  }
-};
-
-const handleAttributeValueRemove = (valueToRemove: string) => {
-  setCurrentAttribute((prev) => ({
-    ...prev,
-    attributeValues: (prev.attributeValues || []).filter(v => v !== valueToRemove)
-  }));
-};
-
-const handleAttributeAdd = () => {
-  if (currentAttribute.attributeType && currentAttribute.attributeValues && currentAttribute.attributeValues.length > 0) {
-    setCurrentVariant((prev) => ({
-      ...prev,
-      attributes: [...(prev.attributes || []), currentAttribute as Attribute]
-    }));
-    setCurrentAttribute({ attributeType: "", attributeValues: [] });
-  }
-};
-
-const handleAttributeRemove = (indexToRemove: number) => {
-  setCurrentVariant((prev) => ({
-    ...prev,
-    attributes: (prev.attributes || []).filter((_, index) => index !== indexToRemove)
-  }));
-};
-
-const handleVariantAddOrUpdate = () => {
-  //("EditProductModal: Saving variant:", currentVariant, "editing index:", editingVariantIndex);
-
-  if (!currentVariant.sku) {
-    toast.error("SKU is required for variant");
-    return;
-  }
-
-  if (!currentVariant.price || currentVariant.price <= 0) {
-    toast.error("Valid price is required for variant");
-    return;
-  }
-  if (!currentVariant.stock || currentVariant.stock < 0) {
-    toast.error("Valid stock is required for variant");
-    return;
-  }
-  if (!currentVariant.status) {
-    toast.error("Status is required for variant");
-    return;
-  }
-
-  const newVariant: ProductVariant = {
-    sku: currentVariant.sku,
-    price: currentVariant.price,
-    stock: currentVariant.stock,
-    status: currentVariant.status,
-    attributes: currentVariant.attributes || [],
-    images: currentVariant.images || [],
+      await onSave(product.id, finalFormData, categoryId, subcategoryId);
+      onClose();
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to update product";
+      setError(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  if (editingVariantIndex !== null && editingVariantIndex >= 0) {
-    // Update existing variant
-    setVariants((prev) => prev.map((v, i) => (i === editingVariantIndex ? newVariant : v)));
-  } else {
-    // Add new variant
-    setVariants((prev) => [...prev, newVariant]);
+  useEffect(() => {
+    // Update state when the URL changes
+    // setQuery(location.search); // Removed as per edit hint
+  }, [location.search]);
+
+  useEffect(() => {
+    //("Fetching products for:", categoryId, subcategoryId);
+    // ...fetch logic
+  }, [categoryId, subcategoryId]);
+
+  // Add this handler for the deal dropdown
+  const handleDealChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      dealId: value ? Number(value) : null,
+      vendorId: isVendorContext
+        ? String(vendorAuthState.vendor?.id || "")
+        : (selectedVendorId ? String(selectedVendorId) : ""),
+      inventory: prev.inventory || [],
+    }));
+  };
+
+  // Variant management functions
+  const handleVariantChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setCurrentVariant((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAttributeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setCurrentAttribute((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAttributeValueAdd = () => {
+    if (currentAttributeValue.trim()) {
+      setCurrentAttribute((prev) => ({
+        ...prev,
+        values: [...(prev.values || [{ value: "", nestedAttributes: [] }]), { value: currentAttributeValue.trim(), nestedAttributes: [] }]
+      }));
+      setCurrentAttributeValue("");
+    }
+  };
+
+  const handleAttributeValueRemove = (valueToRemove: string) => {
+    setCurrentAttribute((prev) => ({
+      ...prev,
+      values: (prev.values || []).filter(v => v.value !== valueToRemove)
+    }));
+  };
+
+  const handleAttributeAdd = () => {
+    if (currentAttribute.type && currentAttribute.values && currentAttribute.values.length > 0) {
+      setCurrentVariant((prev) => ({
+        ...prev,
+        attributes: [...(prev.attributes || []), currentAttribute as Attribute]
+      }));
+      setCurrentAttribute({ type: "", values: [{ value: "", nestedAttributes: [] }] });
+    }
+  };
+
+  const handleAttributeRemove = (indexToRemove: number) => {
+    setCurrentVariant((prev) => ({
+      ...prev,
+      attributes: (prev.attributes || []).filter((_, index) => index !== indexToRemove)
+    }));
+  };
+
+  const handleVariantAddOrUpdate = () => {
+    //("EditProductModal: Saving variant:", currentVariant, "editing index:", editingVariantIndex);
+
+    if (!currentVariant.sku) {
+      toast.error("SKU is required for variant");
+      return;
+    }
+
+    if (!currentVariant.price || currentVariant.price <= 0) {
+      toast.error("Valid price is required for variant");
+      return;
+    }
+    if (!currentVariant.stock || currentVariant.stock < 0) {
+      toast.error("Valid stock is required for variant");
+      return;
+    }
+    if (!currentVariant.status) {
+      toast.error("Status is required for variant");
+      return;
+    }
+
+    const newVariant: ProductVariant = {
+      sku: currentVariant.sku,
+      price: currentVariant.price,
+      stock: currentVariant.stock,
+      status: currentVariant.status,
+      attributes: currentVariant.attributes || [],
+      images: currentVariant.images || [],
+      variantImages: currentVariant.images || [],
+    };
+
+    if (editingVariantIndex !== null && editingVariantIndex >= 0) {
+      // Update existing variant
+      setVariants((prev) => prev.map((v, i) => (i === editingVariantIndex ? newVariant : v)));
+    } else {
+      // Add new variant
+      setVariants((prev) => [...prev, newVariant]);
+    }
+
+    // Reset form and editing state
+    setCurrentVariant({
+      sku: "",
+      price: 0,
+      stock: 0,
+      status: "AVAILABLE" as const,
+      attributes: [],
+      images: [],
+    });
+    setEditingVariantIndex(null);
+
+    //("EditProductModal: Variants after save:", editingVariantIndex !== null ? variants.map((v,i)=> i===editingVariantIndex? newVariant: v) : [...variants, newVariant]);
+  };
+
+  const handleVariantRemove = (skuToRemove: string) => {
+    setVariants((prev) => prev.filter(v => v.sku !== skuToRemove));
+  };
+
+  const handleVariantEdit = (index: number) => {
+    const v = variants[index];
+    setCurrentVariant({ ...v });
+    setEditingVariantIndex(index);
+  };
+
+  const handleVariantImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+    const files = Array.from(e.target.files);
+    // For now, store File objects or string URLs as-is in images array
+    setCurrentVariant((prev) => ({
+      ...prev,
+      images: [...(prev.images || []), ...files] as any
+    }));
+    // clear input
+    e.target.value = '';
+  };
+
+  const handleVariantImageRemove = (imgIndex: number) => {
+    setCurrentVariant((prev) => ({
+      ...prev,
+      images: (prev.images || []).filter((_, i) => i !== imgIndex)
+    }));
+  };
+
+  if (!show) return null;
+
+  if (!product) {
+    return (
+      <div className="modal-overlay">
+        <div className="modal modal-large">
+          <div className="modal-header">
+            <h2 className="modal-title">
+              {isVendorContext ? "Edit Product" : "Edit Product (Admin)"}
+            </h2>
+            <button className="modal-close" onClick={onClose}>
+              ×
+            </button>
+          </div>
+          <div className="modal-body">
+            <div className="product-modal__error">
+              No product selected for editing.
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  // Reset form and editing state
-  setCurrentVariant({
-    sku: "",
-    price: 0,
-    stock: 0,
-    status: "AVAILABLE" as const,
-    attributes: [],
-    images: [],
-  });
-  setEditingVariantIndex(null);
-
-  //("EditProductModal: Variants after save:", editingVariantIndex !== null ? variants.map((v,i)=> i===editingVariantIndex? newVariant: v) : [...variants, newVariant]);
-};
-
-const handleVariantRemove = (skuToRemove: string) => {
-  setVariants((prev) => prev.filter(v => v.sku !== skuToRemove));
-};
-
-const handleVariantEdit = (index: number) => {
-  const v = variants[index];
-  setCurrentVariant({ ...v });
-  setEditingVariantIndex(index);
-};
-
-const handleVariantImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  if (!e.target.files) return;
-  const files = Array.from(e.target.files);
-  // For now, store File objects or string URLs as-is in images array
-  setCurrentVariant((prev) => ({
-    ...prev,
-    images: [...(prev.images || []), ...files] as any
-  }));
-  // clear input
-  e.target.value = '';
-};
-
-const handleVariantImageRemove = (imgIndex: number) => {
-  setCurrentVariant((prev) => ({
-    ...prev,
-    images: (prev.images || []).filter((_, i) => i !== imgIndex)
-  }));
-};
-
-if (!show) return null;
-
-if (!product) {
   return (
     <div className="modal-overlay">
       <div className="modal modal-large">
@@ -697,281 +722,96 @@ if (!product) {
           </button>
         </div>
         <div className="modal-body">
-          <div className="product-modal__error">
-            No product selected for editing.
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-return (
-  <div className="modal-overlay">
-    <div className="modal modal-large">
-      <div className="modal-header">
-        <h2 className="modal-title">
-          {isVendorContext ? "Edit Product" : "Edit Product (Admin)"}
-        </h2>
-        <button className="modal-close" onClick={onClose}>
-          ×
-        </button>
-      </div>
-      <div className="modal-body">
-        {error && <div className="product-modal__error">{error}</div>}
-        {errors.general && (
-          <div className="product-modal__error">{errors.general}</div>
-        )}
-
-        <form
-          onSubmit={handleSubmit}
-          className="product-modal__form"
-          id="edit-product-form"
-        >
-          {/* Only show vendor selection for admin context */}
-          {!isVendorContext && (
-            <div className="product-modal__section">
-              <div className="product-modal__field">
-                <label className="product-modal__label">Vendor *</label>
-                <select
-                  name="vendorId"
-                  value={selectedVendorId || ""}
-                  onChange={handleVendorChange}
-                  required
-                  className="product-modal__select"
-                >
-                  <option value="">Select a vendor</option>
-                  {vendors.map((vendor) => (
-                    <option key={vendor.id} value={vendor.id}>
-                      {vendor.businessName}
-                    </option>
-                  ))}
-                </select>
-                {errors.vendorId && (
-                  <span className="product-modal__error">
-                    {errors.vendorId}
-                  </span>
-                )}
-              </div>
-            </div>
+          {error && <div className="product-modal__error">{error}</div>}
+          {errors['general'] && (
+            <div className="product-modal__error">{errors['general']}</div>
           )}
 
-          {/* Show vendor info for vendor context */}
-          {isVendorContext && (
-            <div className="product-modal__section">
-              <div className="product-modal__field">
-                <label className="product-modal__label">Vendor</label>
-                <input
-                  type="text"
-                  value={vendorAuthState.vendor?.businessName || "Unknown Vendor"}
-                  disabled
-                  className="product-modal__input product-modal__input--disabled"
-                />
-                <small className="product-modal__help-text">
-                  You are editing this product as {vendorAuthState.vendor?.businessName}
-                </small>
-              </div>
-            </div>
-          )}
-
-          <div className="product-modal__section">
-            <div className="product-modal__field">
-              <label className="product-modal__label">Product Name *</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                required
-                className="product-modal__input"
-              />
-              {errors.name && (
-                <span className="product-modal__error">{errors.name}</span>
-              )}
-            </div>
-
-            <div className="product-modal__field">
-              <label className="product-modal__label">Description *</label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                required
-                rows={3}
-                className="product-modal__textarea"
-              />
-              {errors.description && (
-                <span className="product-modal__error">
-                  {errors.description}
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className="product-modal__section">
-            <div className="product-modal__row">
-              <div className="product-modal__field">
-                <label className="product-modal__label">Base Price *</label>
-                <input
-                  type="number"
-                  name="basePrice"
-                  value={formData.basePrice || ""}
-                  onChange={handleNumberInputChange}
-                  required
-                  min="0"
-                  step="0.01"
-                  className="product-modal__input"
-                />
-                {errors.basePrice && (
-                  <span className="product-modal__error">
-                    {errors.basePrice}
-                  </span>
-                )}
-              </div>
-
-              <div className="product-modal__field">
-                <label className="product-modal__label">Stock *</label>
-                <input
-                  type="number"
-                  name="stock"
-                  value={formData.stock?.toString() || ""}
-                  onChange={handleNumberInputChange}
-                  required
-                  min="0"
-                  className="product-modal__input"
-                />
-                {errors.stock && (
-                  <span className="product-modal__error">{errors.stock}</span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="product-modal__section">
-            <div className="product-modal__row">
-              <div className="product-modal__field">
-                <label className="product-modal__label">Discount</label>
-                <input
-                  type="number"
-                  name="discount"
-                  value={formData.discount || ""}
-                  onChange={handleNumberInputChange}
-                  min="0"
-                  step="0.01"
-                  className="product-modal__input"
-                />
-              </div>
-
-              <div className="product-modal__field">
-                <label className="product-modal__label">Discount Type</label>
-                <select
-                  name="discountType"
-                  value={formData.discountType || "PERCENTAGE"}
-                  onChange={handleInputChange}
-                  className="product-modal__select"
-                >
-                  <option value="PERCENTAGE">Percentage</option>
-                  <option value="FLAT">Fixed Amount</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-
-
-          <div className="product-modal__section">
-            <div className="product-modal__field">
-              <label className="product-modal__label">
-                Product Images ({formData.productImages?.length || 0}/5)
-              </label>
-              <div className="product-modal__file-input-wrapper">
-                <input
-                  type="file"
-                  multiple
-                  accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
-                  onChange={handleImageChange}
-                  className="product-modal__file-input"
-                  id="product-images"
-                  disabled={formData.productImages?.length >= 5}
-                />
-                <label
-                  htmlFor="product-images"
-                  className="product-modal__file-label"
-                >
-                  {formData.productImages?.length >= 5 ? (
-                    "Maximum images reached"
-                  ) : (
-                    <>
-                      <span className="product-modal__file-icon">📁</span>
-                      Choose Images
-                    </>
+          <form
+            onSubmit={handleSubmit}
+            className="product-modal__form"
+            id="edit-product-form"
+          >
+            {/* Only show vendor selection for admin context */}
+            {!isVendorContext && (
+              <div className="product-modal__section">
+                <div className="product-modal__field">
+                  <label className="product-modal__label">Vendor *</label>
+                  <select
+                    name="vendorId"
+                    value={selectedVendorId || ""}
+                    onChange={handleVendorChange}
+                    required
+                    className="product-modal__select"
+                  >
+                    <option value="">Select a vendor</option>
+                    {vendors.map((vendor) => (
+                      <option key={vendor.id} value={vendor.id}>
+                        {vendor.businessName}
+                      </option>
+                    ))}
+                  </select>
+                  {errors['vendorId'] && (
+                    <span className="product-modal__error">
+                      {errors['vendorId']}
+                    </span>
                   )}
-                </label>
-              </div>
-              <small className="product-modal__file-help">
-                Supported formats: JPEG, PNG, GIF, WebP. Max 5MB per image.
-              </small>
-              {errors.images && (
-                <span className="product-modal__error">{errors.images}</span>
-              )}
-            </div>
-          </div>
-
-          {imagePreviews.length > 0 && (
-            <div className="product-modal__section">
-              <div className="product-modal__field">
-                <label className="product-modal__label">Image Previews</label>
-                <div className="product-modal__image-previews">
-                  {imagePreviews.map((preview, index) => (
-                    <div key={index} className="product-modal__image-preview">
-                      <img
-                        src={preview}
-                        alt={`Preview ${index + 1}`}
-                        className="product-modal__preview-img"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="product-modal__remove-image"
-                        title="Remove image"
-                        disabled={deletingImageIndex === index}
-                      >
-                        {deletingImageIndex === index ? (
-                          <span className="spinner spinner--small"></span>
-                        ) : (
-                          "×"
-                        )}
-                      </button>
-                      {deletingImageIndex === index && (
-                        <div className="product-modal__image-deleting">
-                          Deleting...
-                        </div>
-                      )}
-                    </div>
-                  ))}
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Has Variants Toggle */}
-          <div className="product-modal__section">
-            <div className="product-modal__field">
-              <label className="product-modal__label">
+            {/* Show vendor info for vendor context */}
+            {isVendorContext && (
+              <div className="product-modal__section">
+                <div className="product-modal__field">
+                  <label className="product-modal__label">Vendor</label>
+                  <input
+                    type="text"
+                    value={vendorAuthState.vendor?.businessName || "Unknown Vendor"}
+                    disabled
+                    className="product-modal__input product-modal__input--disabled"
+                  />
+                  <small className="product-modal__help-text">
+                    You are editing this product as {vendorAuthState.vendor?.businessName}
+                  </small>
+                </div>
+              </div>
+            )}
+
+            <div className="product-modal__section">
+              <div className="product-modal__field">
+                <label className="product-modal__label">Product Name *</label>
                 <input
-                  type="checkbox"
-                  name="hasVariants"
-                  checked={formData.hasVariants}
-                  onChange={(e) => setFormData(prev => ({ ...prev, hasVariants: e.target.checked }))}
-                  style={{ marginRight: "8px" }}
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  required
+                  className="product-modal__input"
                 />
-                Product has variants (e.g., different sizes, colors)
-              </label>
-            </div>
-          </div>
+                {errors['name'] && (
+                  <span className="product-modal__error">{errors['name']}</span>
+                )}
+              </div>
 
-          {/* Conditional Fields for Non-Variant Products */}
-          {!formData.hasVariants && (
+              <div className="product-modal__field">
+                <label className="product-modal__label">Description *</label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  required
+                  rows={3}
+                  className="product-modal__textarea"
+                />
+                {errors['description'] && (
+                  <span className="product-modal__error">
+                    {errors['description']}
+                  </span>
+                )}
+              </div>
+            </div>
+
             <div className="product-modal__section">
               <div className="product-modal__row">
                 <div className="product-modal__field">
@@ -979,15 +819,17 @@ return (
                   <input
                     type="number"
                     name="basePrice"
-                    value={formData.basePrice?.toString() || ""}
+                    value={formData.basePrice || ""}
                     onChange={handleNumberInputChange}
                     required
                     min="0"
                     step="0.01"
                     className="product-modal__input"
                   />
-                  {errors.basePrice && (
-                    <span className="product-modal__error">{errors.basePrice}</span>
+                  {errors['basePrice'] && (
+                    <span className="product-modal__error">
+                      {errors['basePrice']}
+                    </span>
                   )}
                 </div>
 
@@ -1002,428 +844,590 @@ return (
                     min="0"
                     className="product-modal__input"
                   />
-                  {errors.stock && (
-                    <span className="product-modal__error">{errors.stock}</span>
+                  {errors['stock'] && (
+                    <span className="product-modal__error">{errors['stock']}</span>
                   )}
                 </div>
               </div>
+            </div>
 
-              <div className="product-modal__field">
-                <label className="product-modal__label">Status *</label>
-                <select
-                  name="status"
-                  value={formData.status}
-                  onChange={handleInputChange}
-                  required
-                  className="product-modal__select"
-                >
-                  <option value="AVAILABLE">Available</option>
-                  <option value="OUT_OF_STOCK">Out of Stock</option>
-                  <option value="LOW_STOCK">Low Stock</option>
-                </select>
+            <div className="product-modal__section">
+              <div className="product-modal__row">
+                <div className="product-modal__field">
+                  <label className="product-modal__label">Discount</label>
+                  <input
+                    type="number"
+                    name="discount"
+                    value={formData.discount || ""}
+                    onChange={handleNumberInputChange}
+                    min="0"
+                    step="0.01"
+                    className="product-modal__input"
+                  />
+                </div>
+
+                <div className="product-modal__field">
+                  <label className="product-modal__label">Discount Type</label>
+                  <select
+                    name="discountType"
+                    value={formData.discountType || "PERCENTAGE"}
+                    onChange={handleInputChange}
+                    className="product-modal__select"
+                  >
+                    <option value="PERCENTAGE">Percentage</option>
+                    <option value="FLAT">Fixed Amount</option>
+                  </select>
+                </div>
               </div>
             </div>
-          )}
 
-          {/* Variant Management Section */}
-          {formData.hasVariants && (
+
+
             <div className="product-modal__section">
               <div className="product-modal__field">
-                <label className="product-modal__label" style={{ fontWeight: 'bold', marginBottom: '10px' }}>
-                  Product Variants *
+                <label className="product-modal__label">
+                  Product Images ({formData.productImages?.length || 0}/5)
                 </label>
+                <div className="product-modal__file-input-wrapper">
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                    onChange={handleImageChange}
+                    className="product-modal__file-input"
+                    id="product-images"
+                    disabled={formData.productImages?.length >= 5}
+                  />
+                  <label
+                    htmlFor="product-images"
+                    className="product-modal__file-label"
+                  >
+                    {formData.productImages?.length >= 5 ? (
+                      "Maximum images reached"
+                    ) : (
+                      <>
+                        <span className="product-modal__file-icon">📁</span>
+                        Choose Images
+                      </>
+                    )}
+                  </label>
+                </div>
+                <small className="product-modal__file-help">
+                  Supported formats: JPEG, PNG, GIF, WebP. Max 5MB per image.
+                </small>
+                {errors['images'] && (
+                  <span className="product-modal__error">{errors['images']}</span>
+                )}
+              </div>
+            </div>
 
-                {/* Current Variants List */}
-                {variants.length > 0 && (
-                  <div style={{ marginBottom: '15px' }}>
-                    <h4>Added Variants:</h4>
-                    {variants.map((variant, index) => (
-                      <div key={variant.sku} style={{
-                        border: '1px solid #ddd',
-                        padding: '10px',
-                        marginBottom: '10px',
-                        borderRadius: '4px',
-                        backgroundColor: '#f9f9f9'
-                      }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <strong>SKU: {variant.sku}</strong>
-                          <button
-                            type="button"
-                            onClick={() => handleVariantRemove(variant.sku)}
-                            style={{
-                              background: 'red',
-                              color: 'white',
-                              border: 'none',
-                              padding: '4px 8px',
-                              borderRadius: '4px',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            Remove
-                          </button>
-                        </div>
-                        <div>Price: ${variant.price}</div>
-                        <div>Stock: {variant.stock}</div>
-                        <div>Status: {variant.status}</div>
-                        {/* Per-variant images preview */}
-                        {variant.images && (variant.images as any[]).length > 0 && (
-                          <div style={{ marginTop: '8px' }}>
-                            <strong>Variant Images:</strong>
-                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
-                              {(variant.images as any[]).map((img, i) => {
-                                const src = typeof img === 'string' ? img : URL.createObjectURL(img as File);
-                                return (
-                                  <img key={i} src={src} alt={`Variant ${index} image ${i + 1}`} style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 4, border: '1px solid #eee' }} />
-                                );
-                              })}
-                            </div>
+            {imagePreviews.length > 0 && (
+              <div className="product-modal__section">
+                <div className="product-modal__field">
+                  <label className="product-modal__label">Image Previews</label>
+                  <div className="product-modal__image-previews">
+                    {imagePreviews.map((preview, index) => (
+                      <div key={index} className="product-modal__image-preview">
+                        <img
+                          src={preview}
+                          alt={`Preview ${index + 1}`}
+                          className="product-modal__preview-img"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="product-modal__remove-image"
+                          title="Remove image"
+                          disabled={deletingImageIndex === index}
+                        >
+                          {deletingImageIndex === index ? (
+                            <span className="spinner spinner--small"></span>
+                          ) : (
+                            "×"
+                          )}
+                        </button>
+                        {deletingImageIndex === index && (
+                          <div className="product-modal__image-deleting">
+                            Deleting...
                           </div>
                         )}
-                        <div style={{ marginTop: '8px' }}>
-                          <button
-                            type="button"
-                            onClick={() => handleVariantEdit(index)}
-                            style={{
-                              background: '#007bff',
-                              color: 'white',
-                              border: 'none',
-                              padding: '4px 8px',
-                              borderRadius: '4px',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            Edit
-                          </button>
-                        </div>
                       </div>
                     ))}
                   </div>
-                )}
+                </div>
+              </div>
+            )}
 
-                {/* Add New Variant Form */}
-                <div style={{
-                  border: '2px dashed #ccc',
-                  padding: '15px',
-                  borderRadius: '4px',
-                  backgroundColor: '#fafafa'
-                }}>
-                  <h4>{editingVariantIndex !== null ? 'Edit Variant' : 'Add New Variant'}:</h4>
+            {/* Has Variants Toggle */}
+            <div className="product-modal__section">
+              <div className="product-modal__field">
+                <label className="product-modal__label">
+                  <input
+                    type="checkbox"
+                    name="hasVariants"
+                    checked={formData.hasVariants}
+                    onChange={(e) => setFormData(prev => ({ ...prev, hasVariants: e.target.checked }))}
+                    style={{ marginRight: "8px" }}
+                  />
+                  Product has variants (e.g., different sizes, colors)
+                </label>
+              </div>
+            </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <input
-                      type="text"
-                      name="sku"
-                      placeholder="SKU (e.g., TSHIRT-RED-M)"
-                      value={currentVariant.sku}
-                      onChange={handleVariantChange}
-                      style={{
-                        padding: '8px',
-                        borderRadius: '4px',
-                        border: '1px solid #ccc'
-                      }}
-                    />
-
+            {/* Conditional Fields for Non-Variant Products */}
+            {!formData.hasVariants && (
+              <div className="product-modal__section">
+                <div className="product-modal__row">
+                  <div className="product-modal__field">
+                    <label className="product-modal__label">Base Price *</label>
                     <input
                       type="number"
-                      name="price"
-                      placeholder="Price"
-                      value={currentVariant.price}
-                      onChange={handleVariantChange}
-                      step="0.01"
+                      name="basePrice"
+                      value={formData.basePrice?.toString() || ""}
+                      onChange={handleNumberInputChange}
+                      required
                       min="0"
-                      style={{
-                        padding: '8px',
-                        borderRadius: '4px',
-                        border: '1px solid #ccc'
-                      }}
+                      step="0.01"
+                      className="product-modal__input"
                     />
+                    {errors['basePrice'] && (
+                      <span className="product-modal__error">{errors['basePrice']}</span>
+                    )}
+                  </div>
 
+                  <div className="product-modal__field">
+                    <label className="product-modal__label">Stock *</label>
                     <input
                       type="number"
                       name="stock"
-                      placeholder="Stock Quantity"
-                      value={currentVariant.stock}
-                      onChange={handleVariantChange}
+                      value={formData.stock?.toString() || ""}
+                      onChange={handleNumberInputChange}
+                      required
                       min="0"
-                      style={{
-                        padding: '8px',
-                        borderRadius: '4px',
-                        border: '1px solid #ccc'
-                      }}
+                      className="product-modal__input"
                     />
+                    {errors['stock'] && (
+                      <span className="product-modal__error">{errors['stock']}</span>
+                    )}
+                  </div>
+                </div>
 
-                    <select
-                      name="status"
-                      value={currentVariant.status}
-                      onChange={handleVariantChange}
-                      style={{
-                        padding: '8px',
-                        borderRadius: '4px',
-                        border: '1px solid #ccc'
-                      }}
-                    >
-                      <option value="AVAILABLE">Available</option>
-                      <option value="OUT_OF_STOCK">Out of Stock</option>
-                      <option value="LOW_STOCK">Low Stock</option>
-                    </select>
+                <div className="product-modal__field">
+                  <label className="product-modal__label">Status *</label>
+                  <select
+                    name="status"
+                    value={formData.status}
+                    onChange={handleInputChange}
+                    required
+                    className="product-modal__select"
+                  >
+                    <option value="AVAILABLE">Available</option>
+                    <option value="OUT_OF_STOCK">Out of Stock</option>
+                    <option value="LOW_STOCK">Low Stock</option>
+                  </select>
+                </div>
+              </div>
+            )}
 
-                    {/* Variant images input (optional) */}
-                    <div>
-                      <label style={{ fontWeight: 500 }}>Variant Images (optional)</label>
-                      <input
-                        type="file"
-                        multiple
-                        accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
-                        onChange={handleVariantImageChange}
-                        style={{ display: 'block', marginTop: 6 }}
-                      />
-                      {currentVariant.images && (currentVariant.images as any[]).length > 0 && (
-                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
-                          {(currentVariant.images as any[]).map((img, idx) => {
-                            const src = typeof img === 'string' ? img : URL.createObjectURL(img as File);
-                            return (
-                              <div key={idx} style={{ position: 'relative' }}>
-                                <img src={src} alt={`Selected variant image ${idx + 1}`} style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 4, border: '1px solid #eee' }} />
-                                <button type="button" onClick={() => handleVariantImageRemove(idx)} style={{ position: 'absolute', top: -6, right: -6, background: 'red', color: '#fff', border: 'none', borderRadius: '50%', width: 18, height: 18, cursor: 'pointer' }}>×</button>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
+            {/* Variant Management Section */}
+            {formData.hasVariants && (
+              <div className="product-modal__section">
+                <div className="product-modal__field">
+                  <label className="product-modal__label" style={{ fontWeight: 'bold', marginBottom: '10px' }}>
+                    Product Variants *
+                  </label>
 
-                    {/* Attribute Management */}
-                    <div style={{ marginTop: '10px' }}>
-                      <h5>Attributes (Optional):</h5>
-
-                      {/* Current Attributes for this variant */}
-                      {currentVariant.attributes && currentVariant.attributes.length > 0 && (
-                        <div style={{ marginBottom: '10px' }}>
-                          {currentVariant.attributes.map((attr, index) => (
-                            <div key={index} style={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              padding: '5px',
-                              backgroundColor: '#e9ecef',
-                              marginBottom: '5px',
-                              borderRadius: '4px'
-                            }}>
-                              <span>{attr.attributeType}: {attr.attributeValues.join(', ')}</span>
-                              <button
-                                type="button"
-                                onClick={() => handleAttributeRemove(index)}
-                                style={{
-                                  background: 'orange',
-                                  color: 'white',
-                                  border: 'none',
-                                  padding: '2px 6px',
-                                  borderRadius: '3px',
-                                  cursor: 'pointer'
-                                }}
-                              >
-                                Remove
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Add New Attribute */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                        <input
-                          type="text"
-                          name="attributeType"
-                          placeholder="Attribute Type (e.g., Color, Size)"
-                          value={currentAttribute.attributeType}
-                          onChange={handleAttributeChange}
-                          style={{
-                            padding: '6px',
-                            borderRadius: '4px',
-                            border: '1px solid #ccc'
-                          }}
-                        />
-
-                        <div style={{ display: 'flex', gap: '5px' }}>
-                          <input
-                            type="text"
-                            placeholder="Attribute Value"
-                            value={currentAttributeValue}
-                            onChange={(e) => setCurrentAttributeValue(e.target.value)}
-                            style={{
-                              padding: '6px',
-                              borderRadius: '4px',
-                              border: '1px solid #ccc',
-                              flex: 1
-                            }}
-                          />
-                          <button
-                            type="button"
-                            onClick={handleAttributeValueAdd}
-                            style={{
-                              padding: '6px 12px',
-                              backgroundColor: '#007bff',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '4px',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            Add Value
-                          </button>
-                        </div>
-
-                        {/* Current attribute values */}
-                        {currentAttribute.attributeValues && currentAttribute.attributeValues.length > 0 && (
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                            {currentAttribute.attributeValues.map((value, index) => (
-                              <span key={index} style={{
-                                backgroundColor: '#007bff',
+                  {/* Current Variants List */}
+                  {variants.length > 0 && (
+                    <div style={{ marginBottom: '15px' }}>
+                      <h4>Added Variants:</h4>
+                      {variants.map((variant, index) => (
+                        <div key={variant.sku} style={{
+                          border: '1px solid #ddd',
+                          padding: '10px',
+                          marginBottom: '10px',
+                          borderRadius: '4px',
+                          backgroundColor: '#f9f9f9'
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <strong>SKU: {variant.sku}</strong>
+                            <button
+                              type="button"
+                              onClick={() => handleVariantRemove(variant.sku)}
+                              style={{
+                                background: 'red',
                                 color: 'white',
-                                padding: '2px 8px',
-                                borderRadius: '12px',
-                                fontSize: '12px',
+                                border: 'none',
+                                padding: '4px 8px',
+                                borderRadius: '4px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                          <div>Price: ${variant.price}</div>
+                          <div>Stock: {variant.stock}</div>
+                          <div>Status: {variant.status}</div>
+                          {/* Per-variant images preview */}
+                          {variant.images && (variant.images as any[]).length > 0 && (
+                            <div style={{ marginTop: '8px' }}>
+                              <strong>Variant Images:</strong>
+                              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
+                                {(variant.images as any[]).map((img, i) => {
+                                  const src = typeof img === 'string' ? img : URL.createObjectURL(img as File);
+                                  return (
+                                    <img key={i} src={src} alt={`Variant ${index} image ${i + 1}`} style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 4, border: '1px solid #eee' }} />
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                          <div style={{ marginTop: '8px' }}>
+                            <button
+                              type="button"
+                              onClick={() => handleVariantEdit(index)}
+                              style={{
+                                background: '#007bff',
+                                color: 'white',
+                                border: 'none',
+                                padding: '4px 8px',
+                                borderRadius: '4px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              Edit
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add New Variant Form */}
+                  <div style={{
+                    border: '2px dashed #ccc',
+                    padding: '15px',
+                    borderRadius: '4px',
+                    backgroundColor: '#fafafa'
+                  }}>
+                    <h4>{editingVariantIndex !== null ? 'Edit Variant' : 'Add New Variant'}:</h4>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <input
+                        type="text"
+                        name="sku"
+                        placeholder="SKU (e.g., TSHIRT-RED-M)"
+                        value={currentVariant.sku}
+                        onChange={handleVariantChange}
+                        style={{
+                          padding: '8px',
+                          borderRadius: '4px',
+                          border: '1px solid #ccc'
+                        }}
+                      />
+
+                      <input
+                        type="number"
+                        name="price"
+                        placeholder="Price"
+                        value={currentVariant.price}
+                        onChange={handleVariantChange}
+                        step="0.01"
+                        min="0"
+                        style={{
+                          padding: '8px',
+                          borderRadius: '4px',
+                          border: '1px solid #ccc'
+                        }}
+                      />
+
+                      <input
+                        type="number"
+                        name="stock"
+                        placeholder="Stock Quantity"
+                        value={currentVariant.stock}
+                        onChange={handleVariantChange}
+                        min="0"
+                        style={{
+                          padding: '8px',
+                          borderRadius: '4px',
+                          border: '1px solid #ccc'
+                        }}
+                      />
+
+                      <select
+                        name="status"
+                        value={currentVariant.status}
+                        onChange={handleVariantChange}
+                        style={{
+                          padding: '8px',
+                          borderRadius: '4px',
+                          border: '1px solid #ccc'
+                        }}
+                      >
+                        <option value="AVAILABLE">Available</option>
+                        <option value="OUT_OF_STOCK">Out of Stock</option>
+                        <option value="LOW_STOCK">Low Stock</option>
+                      </select>
+
+                      {/* Variant images input (optional) */}
+                      <div>
+                        <label style={{ fontWeight: 500 }}>Variant Images (optional)</label>
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                          onChange={handleVariantImageChange}
+                          style={{ display: 'block', marginTop: 6 }}
+                        />
+                        {currentVariant.images && (currentVariant.images as any[]).length > 0 && (
+                          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
+                            {(currentVariant.images as any[]).map((img, idx) => {
+                              const src = typeof img === 'string' ? img : URL.createObjectURL(img as File);
+                              return (
+                                <div key={idx} style={{ position: 'relative' }}>
+                                  <img src={src} alt={`Selected variant image ${idx + 1}`} style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 4, border: '1px solid #eee' }} />
+                                  <button type="button" onClick={() => handleVariantImageRemove(idx)} style={{ position: 'absolute', top: -6, right: -6, background: 'red', color: '#fff', border: 'none', borderRadius: '50%', width: 18, height: 18, cursor: 'pointer' }}>×</button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Attribute Management */}
+                      <div style={{ marginTop: '10px' }}>
+                        <h5>Attributes (Optional):</h5>
+
+                        {/* Current Attributes for this variant */}
+                        {currentVariant.attributes && currentVariant.attributes.length > 0 && (
+                          <div style={{ marginBottom: '10px' }}>
+                            {currentVariant.attributes.map((attr, index) => (
+                              <div key={index} style={{
                                 display: 'flex',
+                                justifyContent: 'space-between',
                                 alignItems: 'center',
-                                gap: '5px'
+                                padding: '5px',
+                                backgroundColor: '#e9ecef',
+                                marginBottom: '5px',
+                                borderRadius: '4px'
                               }}>
-                                {value}
+                                <span>{attr.type}: {attr.values.map(v => v.value).join(', ')}</span>
                                 <button
                                   type="button"
-                                  onClick={() => handleAttributeValueRemove(value)}
+                                  onClick={() => handleAttributeRemove(index)}
                                   style={{
-                                    background: 'none',
-                                    border: 'none',
+                                    background: 'orange',
                                     color: 'white',
-                                    cursor: 'pointer',
-                                    fontSize: '14px'
+                                    border: 'none',
+                                    padding: '2px 6px',
+                                    borderRadius: '3px',
+                                    cursor: 'pointer'
                                   }}
                                 >
-                                  ×
+                                  Remove
                                 </button>
-                              </span>
+                              </div>
                             ))}
                           </div>
                         )}
 
-                        <button
-                          type="button"
-                          onClick={handleAttributeAdd}
-                          disabled={!currentAttribute.attributeType || !currentAttribute.attributeValues || currentAttribute.attributeValues.length === 0}
-                          style={{
-                            padding: '6px 12px',
-                            backgroundColor: '#28a745',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            opacity: (!currentAttribute.attributeType || !currentAttribute.attributeValues || currentAttribute.attributeValues.length === 0) ? 0.5 : 1
-                          }}
-                        >
-                          Add Attribute
-                        </button>
-                      </div>
-                    </div>
+                        {/* Add New Attribute */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                          <input
+                            type="text"
+                            name="type"
+                            placeholder="Attribute Type (e.g., Color, Size)"
+                            value={currentAttribute.type}
+                            onChange={handleAttributeChange}
+                            style={{
+                              padding: '6px',
+                              borderRadius: '4px',
+                              border: '1px solid #ccc'
+                            }}
+                          />
 
-                    <button
-                      type="button"
-                      onClick={handleVariantAddOrUpdate}
-                      disabled={!currentVariant.sku || !currentVariant.price || currentVariant.price <= 0 || !currentVariant.stock || currentVariant.stock < 0}
-                      style={{
-                        padding: '10px',
-                        backgroundColor: editingVariantIndex !== null ? '#ff9800' : '#28a745',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        marginTop: '10px',
-                        opacity: (!currentVariant.sku || !currentVariant.price || currentVariant.price <= 0 || !currentVariant.stock || currentVariant.stock < 0) ? 0.5 : 1
-                      }}
-                    >
-                      {editingVariantIndex !== null ? 'Update Variant' : 'Add Variant'}
-                    </button>
-                    {editingVariantIndex !== null && (
+                          <div style={{ display: 'flex', gap: '5px' }}>
+                            <input
+                              type="text"
+                              placeholder="Attribute Value"
+                              value={currentAttributeValue}
+                              onChange={(e) => setCurrentAttributeValue(e.target.value)}
+                              style={{
+                                padding: '6px',
+                                borderRadius: '4px',
+                                border: '1px solid #ccc',
+                                flex: 1
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={handleAttributeValueAdd}
+                              style={{
+                                padding: '6px 12px',
+                                backgroundColor: '#007bff',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              Add Value
+                            </button>
+                          </div>
+
+                          {/* Current attribute values */}
+                          {currentAttribute.values && currentAttribute.values.length > 0 && (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                              {currentAttribute.values.map((valueObj, index) => (
+                                <span key={index} style={{
+                                  backgroundColor: '#007bff',
+                                  color: 'white',
+                                  padding: '2px 8px',
+                                  borderRadius: '12px',
+                                  fontSize: '12px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '5px'
+                                }}>
+                                  {valueObj.value}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAttributeValueRemove(valueObj.value)}
+                                    style={{
+                                      background: 'none',
+                                      border: 'none',
+                                      color: 'white',
+                                      cursor: 'pointer',
+                                      fontSize: '14px'
+                                    }}
+                                  >
+                                    ×
+                                  </button>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={handleAttributeAdd}
+                            disabled={!currentAttribute.type || !currentAttribute.values || currentAttribute.values.length === 0}
+                            style={{
+                              padding: '6px 12px',
+                              backgroundColor: '#28a745',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              opacity: (!currentAttribute.type || !currentAttribute.values || currentAttribute.values.length === 0) ? 0.5 : 1
+                            }}
+                          >
+                            Add Attribute
+                          </button>
+                        </div>
+                      </div>
+
                       <button
                         type="button"
-                        onClick={() => { setEditingVariantIndex(null); setCurrentVariant({ sku: '', price: 0, stock: 0, status: 'AVAILABLE', attributes: [], images: [] }); }}
+                        onClick={handleVariantAddOrUpdate}
+                        disabled={!currentVariant.sku || !currentVariant.price || currentVariant.price <= 0 || !currentVariant.stock || currentVariant.stock < 0}
                         style={{
                           padding: '10px',
-                          backgroundColor: '#6c757d',
+                          backgroundColor: editingVariantIndex !== null ? '#ff9800' : '#28a745',
                           color: 'white',
                           border: 'none',
                           borderRadius: '4px',
                           cursor: 'pointer',
                           marginTop: '10px',
-                          marginLeft: '8px'
+                          opacity: (!currentVariant.sku || !currentVariant.price || currentVariant.price <= 0 || !currentVariant.stock || currentVariant.stock < 0) ? 0.5 : 1
                         }}
                       >
-                        Cancel Edit
+                        {editingVariantIndex !== null ? 'Update Variant' : 'Add Variant'}
                       </button>
-                    )}
+                      {editingVariantIndex !== null && (
+                        <button
+                          type="button"
+                          onClick={() => { setEditingVariantIndex(null); setCurrentVariant({ sku: '', price: 0, stock: 0, status: 'AVAILABLE', attributes: [], images: [] }); }}
+                          style={{
+                            padding: '10px',
+                            backgroundColor: '#6c757d',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            marginTop: '10px',
+                            marginLeft: '8px'
+                          }}
+                        >
+                          Cancel Edit
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                {errors.variants && (
-                  <span className="product-modal__error">{errors.variants}</span>
+                  {errors['variants'] && (
+                    <span className="product-modal__error">{errors['variants']}</span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className="product-modal__section">
+              <div className="product-modal__field">
+                <label className="product-modal__label">Deal</label>
+                {dealsLoading ? (
+                  <div>Loading deals...</div>
+                ) : dealsError ? (
+                  <div className="product-modal__error">{dealsError}</div>
+                ) : (
+                  <select
+                    name="dealId"
+                    value={formData.dealId || ''}
+                    onChange={handleDealChange}
+                    className="product-modal__select"
+                  >
+                    <option value="">No Deal</option>
+                    {deals.map(deal => (
+                      <option key={deal.id} value={deal.id}>
+                        {deal.name} ({deal.discountPercentage}% off)
+                      </option>
+                    ))}
+                  </select>
                 )}
               </div>
             </div>
-          )}
-
-          <div className="product-modal__section">
-            <div className="product-modal__field">
-              <label className="product-modal__label">Deal</label>
-              {dealsLoading ? (
-                <div>Loading deals...</div>
-              ) : dealsError ? (
-                <div className="product-modal__error">{dealsError}</div>
-              ) : (
-                <select
-                  name="dealId"
-                  value={formData.dealId || ''}
-                  onChange={handleDealChange}
-                  className="product-modal__select"
-                >
-                  <option value="">No Deal</option>
-                  {deals.map(deal => (
-                    <option key={deal.id} value={deal.id}>
-                      {deal.name} ({deal.discountPercentage}% off)
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-          </div>
-        </form>
-      </div>
-      <div className="modal-footer">
-        <button
-          type="button"
-          onClick={onClose}
-          className="product-modal__btn product-modal__btn--secondary"
-          disabled={isSubmitting}
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          form="edit-product-form"
-          disabled={isSubmitting}
-          className="product-modal__btn product-modal__btn--primary"
-        >
-          {isSubmitting ? (
-            <>
-              <span className="spinner"></span>
-              Updating...
-            </>
-          ) : (
-            "Update Product"
-          )}
-        </button>
+          </form>
+        </div>
+        <div className="modal-footer">
+          <button
+            type="button"
+            onClick={onClose}
+            className="product-modal__btn product-modal__btn--secondary"
+            disabled={isSubmitting}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            form="edit-product-form"
+            disabled={isSubmitting}
+            className="product-modal__btn product-modal__btn--primary"
+          >
+            {isSubmitting ? (
+              <>
+                <span className="spinner"></span>
+                Updating...
+              </>
+            ) : (
+              "Update Product"
+            )}
+          </button>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
 };
 
 export default EditProductModal;

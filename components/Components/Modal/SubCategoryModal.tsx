@@ -32,7 +32,6 @@ const SubCategoryModal: React.FC<SubCategoryModalProps> = ({
   const [formData, setFormData] = useState<SubCategory>({
     id: "",
     name: "",
-    image: undefined,
   });
   const [imageFile, setImageFile] = useState<File | undefined>(undefined);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -46,7 +45,6 @@ const SubCategoryModal: React.FC<SubCategoryModalProps> = ({
       setFormData({
         id: "",
         name: "",
-        image: undefined,
       });
       setImagePreview(null);
       setImageFile(undefined);
@@ -127,7 +125,7 @@ const SubCategoryModal: React.FC<SubCategoryModalProps> = ({
                 onClick={() => document.getElementById('image')?.click()}
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 <span>Add Image</span>
               </button>
@@ -148,8 +146,8 @@ const SubCategoryModal: React.FC<SubCategoryModalProps> = ({
             >
               Cancel
             </button>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="category-modal__save-btn"
               disabled={isLoading}
               style={{
@@ -163,7 +161,7 @@ const SubCategoryModal: React.FC<SubCategoryModalProps> = ({
                   <span style={{ opacity: 0.5 }}>
                     {isAdding ? "Creating..." : "Saving..."}
                   </span>
-                  <span 
+                  <span
                     style={{
                       position: 'absolute',
                       right: '10px',

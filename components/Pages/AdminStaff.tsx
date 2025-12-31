@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import Header from "@/components/Components/Header";
 import { AdminSidebar } from "@/components/Components/AdminSidebar";
-import { useDocketHeight } from '../Hook/UseDockerHeight';
+import { useDocketHeight } from '@/lib/hooks/UseDockerHeight';
 import { useAuth } from "@/lib/context/AuthContext";
 import staffApi, { StaffUser, StaffRegistrationData, ApiResponse } from "@/lib/api/staff";
 import "@/styles/AdminStaff.css";
@@ -16,7 +16,7 @@ interface StaffFormData extends Omit<StaffRegistrationData, 'confirmPassword'> {
 
 const AdminStaff: React.FC = () => {
   const { token } = useAuth();
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(false);
   const [staffList, setStaffList] = useState<StaffUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -33,6 +33,9 @@ const AdminStaff: React.FC = () => {
   const docketHeight = useDocketHeight();
 
   useEffect(() => {
+    // Initialize isMobile on client side
+    setIsMobile(window.innerWidth < 768);
+
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
     };
@@ -58,14 +61,14 @@ const AdminStaff: React.FC = () => {
       if (response.success && response.data) {
         // Handle both response formats: direct array or { staff: StaffUser[] }
         let staffData: StaffUser[] = [];
-        
+
         if (Array.isArray(response.data)) {
           staffData = response.data;
         } else if (typeof response.data === 'object' && response.data !== null) {
           const data = response.data as { staff?: StaffUser[] };
           staffData = data.staff || [];
         }
-        
+
         setStaffList(staffData);
       } else if ('message' in response) {
         toast.error(response.message || 'Failed to load staff list');
@@ -102,7 +105,7 @@ const AdminStaff: React.FC = () => {
     if (!formData.confirmPassword) {
       errors.confirmPassword = 'Please confirm your password';
     } else if (formData.password !== formData.confirmPassword) {
-      errors.confirmPassword = 'Passwords do not match";
+      errors.confirmPassword = 'Passwords do not match';
     }
 
     setFormErrors(errors);
@@ -115,7 +118,7 @@ const AdminStaff: React.FC = () => {
       ...prev,
       [name]: value
     }));
-    
+
     // Clear error for this field when user starts typing
     if (formErrors[name as keyof StaffFormData]) {
       setFormErrors(prev => ({
@@ -127,7 +130,7 @@ const AdminStaff: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -142,7 +145,7 @@ const AdminStaff: React.FC = () => {
         confirmPassword: formData.confirmPassword
       };
       //('Submitting staff data:', staffData);
-      
+
       const response = await staffApi.registerStaff(staffData);
       //('Registration response:', response);
 
@@ -159,7 +162,7 @@ const AdminStaff: React.FC = () => {
       } else {
         // Clear previous errors
         setFormErrors({});
-        
+
         // Type guard to check if response is ErrorResponse
         if ('statusCode' in response) {
           // Specific conflict handling
@@ -179,7 +182,7 @@ const AdminStaff: React.FC = () => {
             } else if (typeof response.errors === 'object') {
               Object.entries(response.errors).forEach(([field, messages]) => {
                 if (!allowedFields.includes(field)) return;
-                if (Array.isArray(messages)) {
+                if (Array.isArray(messages) && messages.length > 0 && messages[0]) {
                   newErrors[field as keyof StaffFormData] = messages[0];
                 } else if (typeof messages === 'string') {
                   newErrors[field as keyof StaffFormData] = messages;
@@ -192,13 +195,13 @@ const AdminStaff: React.FC = () => {
               return;
             }
           }
-          
+
           if (response.message) {
             toast.error(response.message);
             return;
           }
         }
-        
+
         // Fallback error
         toast.error('Failed to register staff user. Please try again.');
       }
@@ -216,11 +219,11 @@ const AdminStaff: React.FC = () => {
 
   const handleConfirmDelete = async () => {
     if (!staffToDelete) return;
-    
+
     setIsDeleting(true);
     try {
       const response = await staffApi.deleteStaff(staffToDelete.id);
-      
+
       if (response.success) {
         toast.success('Staff user deleted successfully');
         fetchStaffList(); // Refresh the staff list
@@ -242,15 +245,17 @@ const AdminStaff: React.FC = () => {
 
   return (
     <div className="">
-     
-      <div className="admin-content" style={{display:'flex',height:'100vh'}}>
+
+      <div className="admin-content" style={{ display: 'flex', height: '100vh' }}>
         <AdminSidebar />
-        
-        <main className="admin-main" style={{ minHeight: docketHeight, overflow: 'auto', width:'100vw' }}>
+
+        <main className="admin-main" style={{ minHeight: docketHeight, overflow: 'auto', width: '100vw' }}>
           <div className="admin-categories__content">
-             <Header 
-          title="Staff Management"
-        />
+            <Header
+              title="Staff Management"
+              onSearch={() => { }}
+              showSearch={false}
+            />
             <div className="admin-staff__header">
               <div className="admin-staff__title-section">
                 <h1 className="admin-staff__title">Staff Management</h1>
@@ -263,7 +268,7 @@ const AdminStaff: React.FC = () => {
                 onClick={() => setShowAddForm(!showAddForm)}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 Add New Staff
               </button>
@@ -278,11 +283,11 @@ const AdminStaff: React.FC = () => {
                     onClick={() => setShowAddForm(false)}
                   >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </button>
                 </div>
-                
+
                 <form onSubmit={handleSubmit} className="admin-staff__form">
                   <div className="admin-staff__form-row">
                     <div className="admin-staff__form-group">
@@ -405,7 +410,7 @@ const AdminStaff: React.FC = () => {
                           <td>{staff.username}</td>
                           <td>{staff.email}</td>
                           <td>
-                            {staff.createdAt 
+                            {staff.createdAt
                               ? new Date(staff.createdAt).toLocaleDateString()
                               : 'N/A'
                             }
@@ -414,7 +419,7 @@ const AdminStaff: React.FC = () => {
                             <button className="admin-staff__action-btn admin-staff__action-btn--edit">
                               Edit
                             </button>
-                            <button 
+                            <button
                               className="admin-staff__action-btn admin-staff__action-btn--delete"
                               onClick={() => handleDeleteClick(staff)}
                             >
@@ -430,8 +435,8 @@ const AdminStaff: React.FC = () => {
                 <div className="admin-staff__empty">
                   <div className="admin-staff__empty-icon">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M12 14C8.13401 14 5 17.134 5 21H19C19 17.134 15.866 14 12 14Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M12 14C8.13401 14 5 17.134 5 21H19C19 17.134 15.866 14 12 14Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </div>
                   <h4>{staffList.length === 0 ? 'No Staff Users' : 'No Results Found'}</h4>
@@ -450,14 +455,14 @@ const AdminStaff: React.FC = () => {
             <h3>Delete Staff User</h3>
             <p>Are you sure you want to delete the staff user <strong>{staffToDelete.username}</strong> ({staffToDelete.email})? This action cannot be undone.</p>
             <div className="admin-staff__dialog-actions">
-              <button 
+              <button
                 className="admin-staff__btn admin-staff__btn--secondary"
                 onClick={handleCancelDelete}
                 disabled={isDeleting}
               >
                 Cancel
               </button>
-              <button 
+              <button
                 className="admin-staff__btn admin-staff__btn--danger"
                 onClick={handleConfirmDelete}
                 disabled={isDeleting}

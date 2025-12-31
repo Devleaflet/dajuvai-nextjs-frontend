@@ -125,16 +125,7 @@ const AdminOrders: React.FC = () => {
     };
 
     fetchOrders();
-  }, [authLoading, isAuthenticated, token, logout, navigate]);
-
-  useEffect(() => {
-    if (orderIdFromParams && orders.length > 0) {
-      const order = orders.find(o => o.id === orderIdFromParams);
-      if (order) {
-        viewOrderDetails(order);
-      }
-    }
-  }, [orderIdFromParams, orders]);
+  }, [authLoading, isAuthenticated, token, logout, router]);
 
   useEffect(() => {
     let results = orders.filter(
@@ -238,7 +229,7 @@ const AdminOrders: React.FC = () => {
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
-  const toModalOrder = (displayOrder: DisplayOrder): ModalOrder => {
+  const toModalOrder = useCallback((displayOrder: DisplayOrder): ModalOrder => {
     const rawOrder =
       rawOrders.find((o) => o.id.toString() === displayOrder.id) || {};
     const orderedBy = rawOrder.orderedBy || {};
@@ -251,7 +242,7 @@ const AdminOrders: React.FC = () => {
     const lastName =
       nameParts.length > 1 ? nameParts.slice(1).join(" ") : "User";
 
-    return {
+    const modalOrder: ModalOrder = {
       id: displayOrder.id,
       firstName,
       lastName,
@@ -270,22 +261,48 @@ const AdminOrders: React.FC = () => {
       town: shippingAddress.town || shippingAddress.city || "N/A",
       state: shippingAddress.state || shippingAddress.province || "N/A",
       vendorName: rawOrder.vendorName || "N/A",
-      profileImage: undefined,
     };
-  };
 
-  const viewOrderDetails = (order: DisplayOrder) => {
+    return modalOrder;
+  }, [rawOrders]);
+
+  const viewOrderDetails = useCallback((order: DisplayOrder) => {
     setSelectedOrder(toModalOrder(order));
     setShowOrderDetails(true);
-  };
+  }, [toModalOrder]);
 
-  const editOrder = (order: DisplayOrder) => {
+  const editOrder = useCallback((order: DisplayOrder) => {
     setSelectedOrder(toModalOrder(order));
     setShowEditModal(true);
-  };
+  }, [toModalOrder]);
 
-  const handleSaveOrder = async (orderId: string, newStatus: string) => {
+  useEffect(() => {
+    if (orderIdFromParams && orders.length > 0) {
+      const order = orders.find(o => o.id === orderIdFromParams);
+      if (order) {
+        viewOrderDetails(order);
+      }
+    }
+  }, [orderIdFromParams, orders, viewOrderDetails]);
+
+  useEffect(() => {
+    if (orderIdFromParams && orders.length > 0) {
+      const order = orders.find(o => o.id === orderIdFromParams);
+      if (order) {
+        viewOrderDetails(order);
+      }
+    }
+  }, [orderIdFromParams, orders, viewOrderDetails]);
+
+  const handleSaveOrder = useCallback(async (orderId: string, newStatus: string) => {
+    if (!token) {
+      toast.error("Authentication required");
+      return;
+    }
+
     try {
+      await OrderService.updateOrderStatus(orderId, newStatus, token);
+
       const updatedOrders = orders.map((order) =>
         order.id === orderId ? { ...order, status: newStatus } : order
       );
@@ -296,6 +313,7 @@ const AdminOrders: React.FC = () => {
           o.id.toString() === orderId ? { ...o, status: newStatus } : o
         )
       );
+      toast.success("Order status updated successfully");
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to update order status";
@@ -303,12 +321,12 @@ const AdminOrders: React.FC = () => {
     } finally {
       setShowEditModal(false);
     }
-  };
+  }, [orders, rawOrders, token]);
 
-  const closeOrderDetails = () => {
+  const closeOrderDetails = useCallback(() => {
     setShowOrderDetails(false);
     setSelectedOrder(null);
-  };
+  }, []);
 
   if (authLoading || isLoading) return <AdminOrdersSkeleton />;
 

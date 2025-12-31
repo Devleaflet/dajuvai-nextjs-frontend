@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import axiosInstance from "@/lib/api/axiosInstance";
-import ProductCard1 from "@/components/ALT/ProductCard1";
+import ProductCard from "@/components/Components/ProductCard";
 import "@/styles/VendorStore.css";
 import Navbar from "@/components/Components/Navbar";
 import Footer from "@/components/Components/Footer";
@@ -86,14 +86,13 @@ const VendorStore: React.FC = () => {
 					`/api/vendors/${vendorId}/products?page=${page}&limit=${limit}`
 				);
 				if (response.data.success) {
-					const products = response.data.data.product;
+					const products = response.data.data.products;
 					// Set vendor info from first product if available
-					if (products && products.length > 0 && products[0].vendor) {
+					if (products && products.length > 0 && products[0]?.vendor) {
 						const v = products[0].vendor;
 						setVendorInfo({
-							businessName: v.businessName,
-							email: v.email,
-
+							businessName: v?.businessName || "",
+							email: v?.email,
 							districtName: v?.district?.name,
 						});
 					} else {
@@ -141,7 +140,7 @@ const VendorStore: React.FC = () => {
 								discount: v.discount,
 								discountType: v.discountType,
 								images: v.variantImages || [],
-								stock: v.stock ?? undefined,
+								stock: v.stock ?? 0,
 								attributes: v.attributes || {},
 							}));
 
@@ -150,7 +149,7 @@ const VendorStore: React.FC = () => {
 								title: product.name,
 								name: product.name,
 								description: product.description || "",
-								// If product-level price is unavailable, set 0 to trigger variant-based price in ProductCard1
+								// If product-level price is unavailable, set 0 to trigger variant-based price in ProductCard
 								price: priceNum > 0 ? priceNum.toFixed(2) : 0,
 								originalPrice: originalPrice,
 								discount: discount > 0 ? String(product.discount) : undefined,
@@ -163,16 +162,13 @@ const VendorStore: React.FC = () => {
 									(Array.isArray((product as any).reviews)
 										? (product as any).reviews.length
 										: undefined) ??
-										(product as any).count ??
-										(product as any).ratingCount ??
-										0
+									(product as any).count ??
+									(product as any).ratingCount ??
+									0
 								),
 								isBestSeller: false,
 								freeDelivery: false,
-								category: {
-									id: product.subcategory.id,
-									name: product.subcategory.name,
-								},
+								category: product.subcategory.name,
 								subcategory: {
 									id: product.subcategory.id,
 									name: product.subcategory.name,
@@ -220,7 +216,7 @@ const VendorStore: React.FC = () => {
 		return title.includes(q) || desc.includes(q);
 	});
 
-	// Helper to compute effective price similar to ProductCard1
+	// Helper to compute effective price similar to ProductCard
 	const toNumber = (v: any): number => {
 		if (v === undefined || v === null) return 0;
 		const n = typeof v === "string" ? parseFloat(v) : Number(v);
@@ -505,7 +501,7 @@ const VendorStore: React.FC = () => {
 						{sortedProducts.length > 0 ? (
 							<div className="vendor-store__product-grid">
 								{sortedProducts.map((product) => (
-									<ProductCard1
+									<ProductCard
 										key={product.id}
 										product={product}
 									/>

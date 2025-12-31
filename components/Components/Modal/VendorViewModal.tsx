@@ -11,6 +11,9 @@ interface VendorViewModalProps {
 const VendorViewModal: React.FC<VendorViewModalProps> = ({ show, onClose, vendor }) => {
   if (!show || !vendor) return null;
 
+  // Cast to any to handle extended vendor properties not in base type
+  const vendorData = vendor as any;
+
   const renderDetailItem = (label: string, value: any, type: string = "default") => {
     const displayValue = value || "N/A";
     const isHighlight = type === "business" || type === "email";
@@ -43,16 +46,16 @@ const VendorViewModal: React.FC<VendorViewModalProps> = ({ show, onClose, vendor
         <div className="document-container">
           {documentArray.map((url: string, idx: number) => (
             <div key={idx} className="document-item">
-              <a 
-                href={url} 
-                target="_blank" 
-                rel="noopener noreferrer" 
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="document-link"
                 title={`View ${title} ${idx + 1}`}
               >
-                <img 
-                  src={url} 
-                  alt={`${title} ${idx + 1}`} 
+                <img
+                  src={url}
+                  alt={`${title} ${idx + 1}`}
                   className="document-image"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
@@ -83,9 +86,9 @@ const VendorViewModal: React.FC<VendorViewModalProps> = ({ show, onClose, vendor
             {renderDetailItem("Business Name: ", vendor.businessName, "business")}
             {renderDetailItem("Email: ", vendor.email, "email")}
             {renderDetailItem("Phone Number: ", vendor.phoneNumber, "contact")}
-            {renderDetailItem("District: ", vendor.district?.name, "location")}
-            {renderDetailItem("Status: ", 
-              vendor.isVerified ? (
+            {renderDetailItem("District: ", typeof vendorData.district === 'object' ? vendorData.district?.name : vendorData.district, "location")}
+            {renderDetailItem("Status: ",
+              vendorData.isVerified ? (
                 <span className="status-badge active">Active</span>
               ) : (
                 <span className="status-badge inactive">Inactive</span>
@@ -94,19 +97,19 @@ const VendorViewModal: React.FC<VendorViewModalProps> = ({ show, onClose, vendor
           </div>
 
           <div className="detail-grid">
-            {renderDetailItem("PAN Number: ", vendor.taxNumber, "business")}
-            {renderDetailItem("Business Reg Number: ", vendor.businessRegNumber, "business")}
-            {renderDetailItem("Account Name: ", vendor.accountName, "financial")}
-            {renderDetailItem("Bank Name: ", vendor.bankName, "financial")}
-            {renderDetailItem("Account Number: ", vendor.accountNumber, "financial")}
-            {renderDetailItem("Bank Branch: ", vendor.bankBranch, "financial")}
-            {renderDetailItem("Bank Code: ", vendor.bankCode, "financial")}
-    
+            {renderDetailItem("PAN Number: ", vendorData.taxNumber, "business")}
+            {renderDetailItem("Business Reg Number: ", vendorData.businessRegNumber, "business")}
+            {renderDetailItem("Account Name: ", vendorData.accountName, "financial")}
+            {renderDetailItem("Bank Name: ", vendorData.bankName, "financial")}
+            {renderDetailItem("Account Number: ", vendorData.accountNumber, "financial")}
+            {renderDetailItem("Bank Branch: ", vendorData.bankBranch, "financial")}
+            {renderDetailItem("Bank Code: ", vendorData.bankCode, "financial")}
+
           </div>
 
-          {renderDocumentSection("PAN Documents", vendor.taxDocuments)}
-          {renderDocumentSection("Citizenship Documents", vendor.citizenshipDocuments)}
-          {renderDocumentSection("Cheque Photo", vendor.chequePhoto)}
+          {renderDocumentSection("PAN Documents", vendorData.taxDocuments)}
+          {renderDocumentSection("Citizenship Documents", vendorData.citizenshipDocuments)}
+          {renderDocumentSection("Cheque Photo", vendorData.chequePhoto)}
         </div>
       </div>
     </div>

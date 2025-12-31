@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { FaStore, FaCheckCircle, FaEnvelope, FaRocket, FaChartLine, FaShieldAlt, FaClock } from "react-icons/fa";
 import "@/styles/BecomeVendor.css";
@@ -27,7 +27,9 @@ const BecomeVendor: React.FC = () => {
 
   return (
     <>
-      <Navbar />
+      <Suspense fallback={<div style={{ height: '80px' }} />}>
+        <Navbar />
+      </Suspense>
       {/* Full-height flex wrapper — uses 100% height, not vh */}
       <div className="become-vendor-page-wrapper">
         <div className={`become-vendor ${isVisible ? 'become-vendor--visible' : ''}`}>

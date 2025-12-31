@@ -141,7 +141,10 @@ const ProductBanner: React.FC = () => {
       const dy = clientY - startPos.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
       if (distance <= clickThreshold) {
-        handleBannerClick(slides[activeSlide]);
+        const slide = slides[activeSlide];
+        if (slide) {
+          handleBannerClick(slide);
+        }
       }
     }
     setStartPos(null);
@@ -167,11 +170,17 @@ const ProductBanner: React.FC = () => {
   };
 
   const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>): void => {
-    handleDragStart(e.touches[0].clientX, e.touches[0].clientY);
+    const touch = e.touches[0];
+    if (touch) {
+      handleDragStart(touch.clientX, touch.clientY);
+    }
   };
 
   const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>): void => {
-    handleDragMove(e.touches[0].clientX);
+    const touch = e.touches[0];
+    if (touch) {
+      handleDragMove(touch.clientX);
+    }
   };
 
   const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>): void => {
@@ -188,7 +197,7 @@ const ProductBanner: React.FC = () => {
         router.push('/shop');
       } catch (error) {
         console.error('❌ Navigation failed:', error);
-        window.location.href = '/shop";
+        window.location.href = '/shop';
       }
       return;
     }
@@ -244,7 +253,7 @@ const ProductBanner: React.FC = () => {
         router.push('/shop');
       } catch (error) {
         console.error('Navigation failed:', error);
-        window.location.href = '/shop";
+        window.location.href = '/shop';
       }
     }
   };
@@ -276,7 +285,7 @@ const ProductBanner: React.FC = () => {
         {slides.map((slide) => (
           <div key={slide.id} className="hero-slider__slide">
             <img
-              src={window.innerWidth < 768 ? slide.mobileImage || slide.desktopImage : slide.desktopImage}
+              src={(window.innerWidth < 768 ? slide.mobileImage || slide.desktopImage : slide.desktopImage) || ''}
               alt={slide.name}
               className="hero-slider__image"
               loading="lazy"

@@ -9,16 +9,15 @@ import Navbar from "@/components/Components/Navbar";
 import ProductBanner from "@/components/Components/ProductBanner";
 import CategorySlider from "@/components/Components/CategorySlider";
 import Footer from "@/components/Components/Footer";
-import ProductCard1 from "@/components/ALT/ProductCard1";
+import ProductCard from "@/components/Components/ProductCard";
 import ProductCardSkeleton from "@/components/skeleton/ProductCardSkeleton";
 import { useAuth } from "@/lib/context/AuthContext";
 import type { Product } from "@/components/Components/Types/Product";
 import { fetchReviewOf } from "@/lib/api/products";
 import { API_BASE_URL } from "@/lib/config";
 import "@/styles/Shop.css";
-import "@/styles/ProductCard.css";
 
-// Define interfaces (same as provided)
+// Define interfaces
 interface ApiProduct {
   id: number;
   name: string;
@@ -122,7 +121,7 @@ const apiRequest = async (endpoint: string, token: string | null | undefined = u
 const processProductWithReview = async (item: ApiProduct): Promise<Product> => {
   try {
     const { averageRating, reviews } = await fetchReviewOf(item.id);
-    const isDev = process.env.NODE_ENV === 'development';
+    const phone = "/assets/logo.webp"; // Default fallback image
 
     const processImageUrl = (imgUrl: string): string => {
       if (!imgUrl) return "";
@@ -139,7 +138,7 @@ const processProductWithReview = async (item: ApiProduct): Promise<Product> => {
     };
 
     const processedProductImages = (item.productImages || [])
-      .filter((img): img is string => !!img && typeof img === "string" && img.trim() !== "")
+      .filter((img: any): img is string => !!img && typeof img === "string" && img.trim() !== "")
       .map(processImageUrl)
       .filter(Boolean);
 
@@ -150,34 +149,31 @@ const processProductWithReview = async (item: ApiProduct): Promise<Product> => {
           ? (variant as any).variantImages
           : [];
       const normalizedImages = rawImages
-        .filter((img): img is string => !!img && typeof img === "string" && img.trim() !== "")
+        .filter((img: any): img is string => !!img && typeof img === "string" && img.trim() !== "")
         .map(processImageUrl)
         .filter(Boolean);
       const primaryImage =
         typeof (variant as any).image === "string" && (variant as any).image.trim()
           ? processImageUrl((variant as any).image)
-          : normalizedImages[0] || undefined;
-      return { ...variant, image: primaryImage, images: normalizedImages };
+          : normalizedImages[0];
+      return { ...variant, image: primaryImage || phone, images: normalizedImages };
     });
 
     const variantImagePool = processedVariants
       .flatMap((v) => [v.image, ...(v.images || [])])
       .filter((x): x is string => typeof x === "string" && x.length > 0);
 
-    const getDisplayImage = () => {
-      if (processedProductImages.length > 0) return processedProductImages[0];
-      const allVariantImages = processedVariants
-        .flatMap((v) => [v.image, ...(v.images || [])])
-        .filter((x): x is string => typeof x === "string" && x.length > 0);
-      if (allVariantImages.length > 0) return allVariantImages[0];
+    const getDisplayImage = (): string => {
+      if (processedProductImages.length > 0) return processedProductImages[0]!;
+      if (variantImagePool.length > 0) return variantImagePool[0]!;
       return phone;
     };
 
     const displayImage = getDisplayImage();
 
-    // Calculate display price (aligned with ProductCard1)
-    let displayPriceNum = 0;
+    // Calculate display price (aligned with ProductCard)
     const productPriceNum = toNumber(item.basePrice);
+    let displayPriceNum: number;
     if ((item.basePrice === null || item.basePrice === undefined || productPriceNum === 0) && (item.variants?.length || 0) > 0) {
       const first = item.variants![0] as any;
       const variantBase = first?.price ?? first?.originalPrice ?? first?.basePrice ?? item.basePrice ?? 0;
@@ -225,9 +221,8 @@ const processProductWithReview = async (item: ApiProduct): Promise<Product> => {
       status: item.status === "UNAVAILABLE" ? "OUT_OF_STOCK" : "AVAILABLE",
       stock: item.stock || 0,
     };
-  } catch (error) {
-    const isDev = process.env.NODE_ENV === 'development';
-    if (isDev) console.error("Error processing product:", error);
+  } catch (_error) {
+    const phone = "/assets/logo.webp"; // Default fallback image
     // Fallback logic (unchanged for brevity, but includes same image processing)
     const processImageUrl = (imgUrl: string): string => {
       if (!imgUrl) return "";
@@ -244,7 +239,7 @@ const processProductWithReview = async (item: ApiProduct): Promise<Product> => {
     };
 
     const processedProductImages = (item.productImages || [])
-      .filter((img): img is string => !!img && typeof img === "string" && img.trim() !== "")
+      .filter((img: any): img is string => !!img && typeof img === "string" && img.trim() !== "")
       .map(processImageUrl)
       .filter(Boolean);
 
@@ -255,52 +250,25 @@ const processProductWithReview = async (item: ApiProduct): Promise<Product> => {
           ? (variant as any).variantImages
           : [];
       const normalizedImages = rawImages
-        .filter((img): img is string => !!img && typeof img === "string" && img.trim() !== "")
+        .filter((img: any): img is string => !!img && typeof img === "string" && img.trim() !== "")
         .map(processImageUrl)
         .filter(Boolean);
       const primaryImage =
         typeof (variant as any).image === "string" && (variant as any).image.trim()
           ? processImageUrl((variant as any).image)
-          : normalizedImages[0] || undefined;
-      return { ...variant, image: primaryImage, images: normalizedImages };
+          : normalizedImages[0];
+      return { ...variant, image: primaryImage || phone, images: normalizedImages };
     });
 
-    const variantImagePool = processedVariants
-      .flatMap((v) => [v.image, ...(v.images || [])])
-      .filter((x): x is string => typeof x === "string" && x.length > 0);
-
-    const getFallbackImage = () => {
-      if (processedProductImages.length > 0) return processedProductImages[0];
+    const getFallbackImage = (): string => {
+      if (processedProductImages.length > 0) return processedProductImages[0]!;
       const allVariantImages = processedVariants
         .flatMap((v) => [v.image, ...(v.images || [])])
         .filter((x): x is string => typeof x === "string" && x.length > 0);
-      if (allVariantImages.length > 0) return allVariantImages[0];
+      if (allVariantImages.length > 0) return allVariantImages[0]!;
       return phone;
     };
     const displayImage = getFallbackImage();
-
-    // Calculate display price for fallback
-    let displayPriceNum = 0;
-    const productPriceNum = toNumber(item.basePrice);
-    if ((item.basePrice === null || item.basePrice === undefined || productPriceNum === 0) && (item.variants?.length || 0) > 0) {
-      const first = item.variants![0] as any;
-      const variantBase = first?.price ?? first?.originalPrice ?? first?.basePrice ?? item.basePrice ?? 0;
-      if (typeof first?.calculatedPrice === 'number' && isFinite(first.calculatedPrice)) {
-        displayPriceNum = first.calculatedPrice as number;
-      } else if (first?.discount && first?.discountType) {
-        displayPriceNum = calculatePrice(variantBase, first.discount, String(first.discountType));
-      } else if (item.discount && item.discountType) {
-        displayPriceNum = calculatePrice(variantBase, item.discount, String(item.discountType));
-      } else {
-        displayPriceNum = toNumber(variantBase);
-      }
-    } else {
-      if (item.discount && item.discountType) {
-        displayPriceNum = calculatePrice(productPriceNum, item.discount, String(item.discountType));
-      } else {
-        displayPriceNum = productPriceNum;
-      }
-    }
 
     return {
       id: item.id,
@@ -382,6 +350,7 @@ const SectionProducts: React.FC = () => {
           try {
             return await processProductWithReview(item);
           } catch {
+            const fallbackImage = "/assets/logo.webp";
             return {
               id: item.id,
               title: item.name || "Unknown Product",
@@ -393,7 +362,7 @@ const SectionProducts: React.FC = () => {
               ratingCount: "0",
               isBestSeller: false,
               freeDelivery: true,
-              image: phone,
+              image: fallbackImage,
               category: "Misc",
               brand: "Unknown",
             };
@@ -673,7 +642,7 @@ const SectionProducts: React.FC = () => {
                     .map((_, index) => <ProductCardSkeleton key={index} count={1} />)
                 ) : sortedProducts.length > 0 ? (
                   sortedProducts.map((product) => (
-                    <ProductCard1 key={product.id} product={product} />
+                    <ProductCard key={product.id} product={product} />
                   ))
                 ) : (
                   <div className="shop-no-products">

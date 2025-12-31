@@ -1,36 +1,37 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchAllProducts, deleteProduct } from "@/lib/api/products";
+import { fetchProducts, deleteProduct } from "@/lib/api/products";
 import { Product } from "@/components/Components/Types/EditProductTypes";
 import { toast } from 'react-hot-toast';
+import { useAuth } from '@/lib/context/AuthContext';
 // Import the correct modal component
-import AdminEditProductModal from '@/components/Components/Modal/EditProductModal';
-import './Admin.css';
+import AdminEditProductModal from '@/components/Components/Modal/AdminEditProductModal';
+import '@/components/Pages/Admin.css';
 
 const AdminProductList: React.FC = () => {
   const queryClient = useQueryClient();
+  const { token } = useAuth();
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isModalClosing, setIsModalClosing] = useState(false);
+  const [vendorId] = useState(1); // TODO: Get from auth context or props
   const productsPerPage = 10;
 
   // Fetch all products
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['admin-products', currentPage, searchQuery],
-    queryFn: () => fetchAllProducts(currentPage, productsPerPage, searchQuery),
+    queryKey: ['admin-products', vendorId, currentPage, searchQuery],
+    queryFn: () => fetchProducts(vendorId, currentPage, productsPerPage),
   });
 
   // Delete product mutation
   const deleteMutation = useMutation({
     mutationFn: async (productId: string) => {
-      // Note: This assumes the product object has categoryId and subcategoryId
-      // If not, you'll need to fetch the product details first
       const numericId = Number(productId);
-      return deleteProduct(numericId, 0, 0); // Using 0 as placeholder for category/subcategory
+      return deleteProduct(numericId, token || undefined);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
@@ -42,24 +43,24 @@ const AdminProductList: React.FC = () => {
     },
   });
 
-  const handleEdit = (product: Product) => {
+  const handleEdit = useCallback((product: Product) => {
     // Ensure the product has all required fields
     const productForEdit: Product = {
       ...product,
       id: String(product.id),
-      name: String(product.name || product.title || ''),
+      name: String(product.name || product['title'] || ''),
       description: String(product.description || ''),
       categoryId: Number(product.categoryId) || 0,
       subcategoryId: Number(product.subcategoryId) || 0,
-      hasVariants: Boolean(product.hasVariants || product.variants?.length > 0),
+      hasVariants: Boolean(product.hasVariants || product.variants && product.variants.length > 0),
       basePrice: typeof product.basePrice === 'number' ? product.basePrice :
-                typeof product.price === 'number' ? product.price :
-                typeof product.price === 'string' ? parseFloat(product.price) : 0,
+        typeof product['price'] === 'number' ? product['price'] :
+          typeof product['price'] === 'string' ? parseFloat(product['price']) : 0,
       stock: Number(product.stock) || 0,
       status: (product.status as 'AVAILABLE' | 'OUT_OF_STOCK' | 'LOW_STOCK' | 'IN_STOCK' | 'DISCONTINUED' | 'UNAVAILABLE') || 'AVAILABLE',
       images: Array.isArray(product.images) ? product.images :
-             Array.isArray(product.productImages) ? product.productImages :
-             product.image ? [product.image] : [],
+        Array.isArray(product['productImages']) ? product['productImages'] :
+          product['image'] ? [product['image']] : [],
       variants: (Array.isArray(product.variants) ? product.variants : []).map(variant => ({
         sku: String(variant.sku || ''),
         price: Number(variant.price) || 0,
@@ -69,13 +70,13 @@ const AdminProductList: React.FC = () => {
         images: Array.isArray(variant.images) ? variant.images : []
       }))
     };
-    
+
     setEditingProduct(productForEdit);
     setIsEditModalOpen(true);
     setIsModalClosing(false);
-  };
+  }, []);
 
-  const handleCloseEditModal = () => {
+  const handleCloseEditModal = useCallback(() => {
     // Start closing animation
     setIsModalClosing(true);
     // Wait for animation to complete before unmounting
@@ -84,11 +85,19 @@ const AdminProductList: React.FC = () => {
       setEditingProduct(null);
       setIsModalClosing(false);
     }, 300); // Match this with your CSS transition duration
-  };
+  }, []);
 
-  const handlePageChange = (page: number) => {
+  const handleProductUpdate = useCallback((success: boolean) => {
+    if (success) {
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      toast.success('Product updated successfully');
+      handleCloseEditModal();
+    }
+  }, [queryClient, handleCloseEditModal]);
+
+  const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
-  };
+  }, []);
 
   if (isLoading) return <div>Loading products...</div>;
   if (isError) return <div>Error loading products</div>;
@@ -96,7 +105,7 @@ const AdminProductList: React.FC = () => {
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">Product Management</h1>
-      
+
       {/* Search and Filter */}
       <div className="mb-6 flex justify-between items-center">
         <div className="relative w-64">
@@ -139,12 +148,12 @@ const AdminProductList: React.FC = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {data?.products?.map((product: Product) => (
+            {data?.data?.products?.map((product: Product) => (
               <tr key={product.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="h-10 w-10 rounded-md overflow-hidden">
                     <img
-                      src={product.image || '/placeholder-product.jpg'}
+                      src={product['image'] || '/placeholder-product.jpg'}
                       alt={product.name}
                       className="h-full w-full object-cover"
                     />
@@ -152,17 +161,17 @@ const AdminProductList: React.FC = () => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                  <div className="text-sm text-gray-500">{product.category}</div>
+                  <div className="text-sm text-gray-500">{product['category']}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {product.vendor || 'N/A'}
+                  {product['vendor'] || 'N/A'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">
-                    ${typeof product.price === 'string' ? parseFloat(product.price).toFixed(2) : (Number(product.price) || 0).toFixed(2)}
-                    {product.originalPrice && (
+                    ${typeof product['price'] === 'string' ? parseFloat(product['price']).toFixed(2) : (Number(product['price']) || 0).toFixed(2)}
+                    {product['originalPrice'] && (
                       <span className="ml-2 text-sm text-gray-500 line-through">
-                        ${typeof product.originalPrice === 'string' ? parseFloat(product.originalPrice).toFixed(2) : (Number(product.originalPrice) || 0).toFixed(2)}
+                        ${typeof product['originalPrice'] === 'string' ? parseFloat(product['originalPrice']).toFixed(2) : (Number(product['originalPrice']) || 0).toFixed(2)}
                       </span>
                     )}
                   </div>
@@ -171,13 +180,12 @@ const AdminProductList: React.FC = () => {
                   {product.stock}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    product.status === 'OUT_OF_STOCK'
-                      ? 'bg-red-100 text-red-800' 
-                      : 'bg-green-100 text-green-800'
-                  }`}>
-                    {product.status === 'OUT_OF_STOCK' 
-                      ? 'Out of Stock' 
+                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${product.status === 'OUT_OF_STOCK'
+                    ? 'bg-red-100 text-red-800'
+                    : 'bg-green-100 text-green-800'
+                    }`}>
+                    {product.status === 'OUT_OF_STOCK'
+                      ? 'Out of Stock'
                       : product.status === 'LOW_STOCK'
                         ? 'Low Stock'
                         : 'In Stock'}
@@ -209,9 +217,9 @@ const AdminProductList: React.FC = () => {
         <div className="text-sm text-gray-700">
           Showing <span className="font-medium">{(currentPage - 1) * productsPerPage + 1}</span> to{' '}
           <span className="font-medium">
-            {Math.min(currentPage * productsPerPage, data?.total || 0)}
+            {Math.min(currentPage * productsPerPage, data?.data?.total || 0)}
           </span>{' '}
-          of <span className="font-medium">{data?.total || 0}</span> products
+          of <span className="font-medium">{data?.data?.total || 0}</span> products
         </div>
         <div className="flex space-x-2">
           <button
@@ -223,13 +231,22 @@ const AdminProductList: React.FC = () => {
           </button>
           <button
             onClick={() => setCurrentPage(p => p + 1)}
-            disabled={!data?.hasMore}
+            disabled={!data?.data?.hasMore}
             className="px-3 py-1 border rounded disabled:opacity-50"
           >
             Next
           </button>
         </div>
       </div>
+      {/* Edit Product Modal */}
+      {isEditModalOpen && editingProduct && (
+        <AdminEditProductModal
+          isOpen={isEditModalOpen}
+          onClose={handleCloseEditModal}
+          onSubmit={handleProductUpdate}
+          product={editingProduct as any}
+        />
+      )}
     </div>
   );
 };

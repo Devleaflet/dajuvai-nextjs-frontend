@@ -7,6 +7,7 @@ import { toast } from 'react-hot-toast';
 import { API_BASE_URL } from '@/lib/config';
 import "@/styles/Reviews.css";
 import { Review } from "@/lib/types/review";
+import { sanitizeHtml } from '@/lib/utils/sanitize';
 
 interface ReviewsProps {
     productId: number;
@@ -171,7 +172,7 @@ const Reviews: React.FC<ReviewsProps> = ({
                 const newReviewData: Review = {
                     id: data.data.id,
                     userId: data.data.userId,
-                    userName: user.username || user.email.split('@')[0],
+                    userName: user.username || user.email?.split('@')[0] || 'Anonymous',
                     rating: newReview.rating,
                     comment: newReview.comment,
                     createdAt: new Date().toISOString(),
@@ -1300,7 +1301,7 @@ const Reviews: React.FC<ReviewsProps> = ({
                                 )}
                             </div>
 
-                            <p className="review-content">{review.comment}</p>
+                            <p className="review-content" dangerouslySetInnerHTML={{ __html: sanitizeHtml(review.comment) }} />
 
                             {review.images && review.images.length > 0 && (
                                 <div className="review-images">

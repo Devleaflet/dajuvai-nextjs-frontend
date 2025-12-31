@@ -1,7 +1,7 @@
 'use client';
 
 // About.tsx
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { FaEnvelope, FaInfoCircle, FaMapMarkerAlt, FaPhone } from 'react-icons/fa';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -23,6 +23,22 @@ interface FormErrors {
   message?: string;
 }
 
+interface AxiosErrorResponse {
+  response?: {
+    data?: {
+      errors?: Record<string, string[]>;
+      message?: string;
+    };
+  };
+}
+
+// ===============================
+// CONSTANTS
+// ===============================
+
+const NEPALI_PHONE_PREFIXES = ['98', '97', '96', '01'];
+const PHONE_LENGTH = 10;
+
 // ===============================
 // MAIN COMPONENT
 // ===============================
@@ -31,8 +47,8 @@ const About = () => {
   // ===============================
   // STATE MANAGEMENT
   // ===============================
-  
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  const [windowWidth, setWindowWidth] = useState<number>(0);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -48,8 +64,11 @@ const About = () => {
   // ===============================
   // EFFECTS AND EVENT HANDLERS
   // ===============================
-  
+
+  // Initialize window width on client side only
   useEffect(() => {
+    setWindowWidth(window.innerWidth);
+
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -63,16 +82,16 @@ const About = () => {
         if (value.length < 2) return "Must be at least 2 characters";
         if (!/^[a-zA-Z\s]+$/.test(value)) return "Only letters and spaces allowed";
         return "";
-      
+
       case "email":
         if (!value) return "Email is required";
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Invalid email format";
         return "";
-      
+
       case "phone":
         if (!value.trim()) return "Phone number is required";
         const cleanPhone = value.replace(/\D/g, '');
-        
+
         if (cleanPhone.length < 10) {
           return "Phone number must be at least 10 digits";
         }
@@ -86,17 +105,17 @@ const About = () => {
           return "Enter valid Nepali phone number (98XXXXXXXX, 97XXXXXXXX, 96XXXXXXXX, or 01XXXXXXXX)";
         }
         return "";
-      
+
       case "subject":
         if (!value.trim()) return "Subject is required";
         if (value.length < 5) return "Subject must be at least 5 characters";
         return "";
-      
+
       case "message":
         if (!value.trim()) return "Message is required";
         if (value.length < 10) return "Message must be at least 10 characters";
         return "";
-      
+
       default:
         return "";
     }
@@ -105,7 +124,7 @@ const About = () => {
   const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setTouched(prev => ({ ...prev, [name]: true }));
-    
+
     const error = validateField(name, value);
     setErrors(prev => ({ ...prev, [name]: error }));
   };
@@ -117,7 +136,7 @@ const About = () => {
     if (errors[name as keyof FormErrors]) {
       setErrors(prev => ({ ...prev, [name]: "" }));
     }
-    
+
     if (touched[name]) {
       const error = validateField(name, value);
       setErrors(prev => ({ ...prev, [name]: error }));
@@ -137,12 +156,12 @@ const About = () => {
     });
 
     setErrors(newErrors);
-    
+
     const allTouched = Object.keys(formData).reduce((acc, key) => {
       acc[key] = true;
       return acc;
     }, {} as Record<string, boolean>);
-    
+
     setTouched(allTouched);
     return isValid;
   };
@@ -165,8 +184,8 @@ const About = () => {
     setLoading(true);
     try {
       await axiosInstance.post('/api/contact', formData);
-      toast.success("Your message has been sent successfully! We'll get back to you soon.", { 
-        position: 'top-right', 
+      toast.success("Your message has been sent successfully! We'll get back to you soon.", {
+        position: 'top-right',
         autoClose: 5000,
         hideProgressBar: false,
         closeOnClick: true,
@@ -178,20 +197,20 @@ const About = () => {
       setTouched({});
     } catch (err: unknown) {
       let errorMessage = "Oops! Something went wrong. Please try again later.";
-      
+
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosError = err as any;
         if (axiosError.response?.data) {
           if (axiosError.response.data.errors) {
             const serverErrors = axiosError.response.data.errors;
             const newErrors: FormErrors = {};
-            
+
             Object.keys(serverErrors).forEach(key => {
               if (serverErrors[key] && serverErrors[key][0]) {
                 newErrors[key as keyof FormErrors] = serverErrors[key][0];
               }
             });
-            
+
             setErrors(newErrors);
             errorMessage = "Please correct the validation errors";
           } else if (axiosError.response.data.message) {
@@ -200,8 +219,8 @@ const About = () => {
         }
       }
 
-      toast.error(errorMessage, { 
-        position: 'top-right', 
+      toast.error(errorMessage, {
+        position: 'top-right',
         autoClose: 5000,
         hideProgressBar: false,
         closeOnClick: true,
@@ -216,10 +235,12 @@ const About = () => {
   // ===============================
   // RENDER
   // ===============================
-  
+
   return (
     <>
-      <Navbar />
+      <Suspense fallback={<div style={{ height: '80px' }} />}>
+        <Navbar />
+      </Suspense>
       <div className="about-max-width-container">
         {/* ===============================
              CONTACT SECTION
@@ -236,7 +257,7 @@ const About = () => {
                   We're here to help! Have questions, feedback, or need assistance?
                   Reach out via email, phone, or the form and we'll respond promptly.
                 </p>
-                
+
                 <div className="contact-info">
                   <div className="contact-info-item">
                     <FaPhone className="contact-icon" />
@@ -275,135 +296,135 @@ const About = () => {
                   <div className="form-row">
                     <div className="form-group">
                       <label htmlFor="firstName">First Name *</label>
-                      <input 
+                      <input
                         id="firstName"
-                        name="firstName" 
+                        name="firstName"
                         placeholder="Enter your first name"
-                        value={formData.firstName} 
+                        value={formData.firstName}
                         onChange={handleInputChange}
                         onBlur={handleBlur}
-                        className={errors.firstName && touched.firstName ? 'input-error' : ''}
-                        required 
+                        className={errors['firstName'] && touched['firstName'] ? 'input-error' : ''}
+                        required
                       />
-                      {errors.firstName && touched.firstName && (
+                      {errors['firstName'] && touched['firstName'] && (
                         <div className="error-message">
                           <FaInfoCircle className="error-icon" />
-                          {errors.firstName}
+                          {errors['firstName']}
                         </div>
                       )}
                     </div>
                     <div className="form-group">
                       <label htmlFor="lastName">Last Name *</label>
-                      <input 
+                      <input
                         id="lastName"
-                        name="lastName" 
+                        name="lastName"
                         placeholder="Enter your last name"
-                        value={formData.lastName} 
+                        value={formData.lastName}
                         onChange={handleInputChange}
                         onBlur={handleBlur}
-                        className={errors.lastName && touched.lastName ? 'input-error' : ''}
-                        required 
+                        className={errors['lastName'] && touched['lastName'] ? 'input-error' : ''}
+                        required
                       />
-                      {errors.lastName && touched.lastName && (
+                      {errors['lastName'] && touched['lastName'] && (
                         <div className="error-message">
                           <FaInfoCircle className="error-icon" />
-                          {errors.lastName}
+                          {errors['lastName']}
                         </div>
                       )}
                     </div>
                   </div>
-                  
+
                   {/* Email */}
                   <div className="form-group">
                     <label htmlFor="email">Email *</label>
-                    <input 
+                    <input
                       id="email"
-                      type="email" 
-                      name="email" 
+                      type="email"
+                      name="email"
                       placeholder="Enter your email address"
-                      value={formData.email} 
+                      value={formData.email}
                       onChange={handleInputChange}
                       onBlur={handleBlur}
-                      className={errors.email && touched.email ? 'input-error' : ''}
-                      required 
+                      className={errors['email'] && touched['email'] ? 'input-error' : ''}
+                      required
                     />
-                    {errors.email && touched.email && (
+                    {errors['email'] && touched['email'] && (
                       <div className="error-message">
                         <FaInfoCircle className="error-icon" />
-                        {errors.email}
+                        {errors['email']}
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Phone */}
                   <div className="form-group">
                     <label htmlFor="phone">Phone *</label>
-                    <input 
+                    <input
                       id="phone"
-                      type="tel" 
-                      name="phone" 
+                      type="tel"
+                      name="phone"
                       placeholder="Enter phone number"
-                      value={formData.phone} 
+                      value={formData.phone}
                       onChange={handleInputChange}
                       onBlur={handleBlur}
-                      className={errors.phone && touched.phone ? 'input-error' : ''}
-                      required 
+                      className={errors['phone'] && touched['phone'] ? 'input-error' : ''}
+                      required
                     />
-                    {errors.phone && touched.phone && (
+                    {errors['phone'] && touched['phone'] && (
                       <div className="error-message">
                         <FaInfoCircle className="error-icon" />
-                        {errors.phone}
+                        {errors['phone']}
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Subject */}
                   <div className="form-group">
                     <label htmlFor="subject">Subject *</label>
-                    <input 
+                    <input
                       id="subject"
-                      name="subject" 
+                      name="subject"
                       placeholder="Enter the subject of your message"
-                      value={formData.subject} 
+                      value={formData.subject}
                       onChange={handleInputChange}
                       onBlur={handleBlur}
-                      className={errors.subject && touched.subject ? 'input-error' : ''}
-                      required 
+                      className={errors['subject'] && touched['subject'] ? 'input-error' : ''}
+                      required
                     />
-                    {errors.subject && touched.subject && (
+                    {errors['subject'] && touched['subject'] && (
                       <div className="error-message">
                         <FaInfoCircle className="error-icon" />
-                        {errors.subject}
+                        {errors['subject']}
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Message */}
                   <div className="form-group">
                     <label htmlFor="message">Message *</label>
-                    <textarea 
+                    <textarea
                       id="message"
-                      rows={windowWidth < 576 ? 5 : 7} 
-                      name="message" 
+                      rows={windowWidth < 576 ? 5 : 7}
+                      name="message"
                       placeholder="Enter your message here..."
-                      value={formData.message} 
+                      value={formData.message}
                       onChange={handleInputChange}
                       onBlur={handleBlur}
-                      className={errors.message && touched.message ? 'input-error' : ''}
+                      className={errors['message'] && touched['message'] ? 'input-error' : ''}
                       required
                     />
-                    {errors.message && touched.message && (
+                    {errors['message'] && touched['message'] && (
                       <div className="error-message">
                         <FaInfoCircle className="error-icon" />
-                        {errors.message}
+                        {errors['message']}
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Submit Button */}
-                  <button 
-                    type="submit" 
-                    className="btn btn--primary" 
+                  <button
+                    type="submit"
+                    className="btn btn--primary"
                     disabled={loading}
                     aria-busy={loading}
                   >
@@ -421,7 +442,7 @@ const About = () => {
         </section>
       </div>
       <Footer />
-      <ToastContainer 
+      <ToastContainer
         position="top-right"
         autoClose={5000}
         hideProgressBar={false}

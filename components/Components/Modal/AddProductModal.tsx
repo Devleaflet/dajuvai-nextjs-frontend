@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { API_BASE_URL } from "@/lib/config";
-import { ProductFormData, ProductVariant, Attribute } from "../../types/product";
-import { useVendorAuth } from "../../context/VendorAuthContext";
+import { ProductFormData, ProductVariant, Attribute } from "@/lib/types/product";
+import { useVendorAuth } from "@/lib/context/VendorAuthContext";
 
 enum InventoryStatus {
   AVAILABLE = "AVAILABLE",
@@ -82,7 +82,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
   });
 
   // Attribute management for variants
-  const [currentAttribute, setCurrentAttribute] = useState<Partial<Attribute>>({
+  const [currentAttribute, setCurrentAttribute] = useState<any>({
     attributeType: "",
     attributeValues: [],
   });
@@ -176,12 +176,12 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
 
   const handleAttributeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setCurrentAttribute((prev) => ({ ...prev, [name]: value }));
+    setCurrentAttribute((prev: any) => ({ ...prev, [name]: value }));
   };
 
   const handleAttributeValueAdd = () => {
     if (currentAttributeValue.trim()) {
-      setCurrentAttribute((prev) => ({
+      setCurrentAttribute((prev: any) => ({
         ...prev,
         attributeValues: [...(prev.attributeValues || []), currentAttributeValue.trim()]
       }));
@@ -190,9 +190,9 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
   };
 
   const handleAttributeValueRemove = (valueToRemove: string) => {
-    setCurrentAttribute((prev) => ({
+    setCurrentAttribute((prev: any) => ({
       ...prev,
-      attributeValues: (prev.attributeValues || []).filter(v => v !== valueToRemove)
+      attributeValues: (prev.attributeValues || []).filter((v: string) => v !== valueToRemove)
     }));
   };
 
@@ -240,7 +240,8 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
       status: currentVariant.status,
       attributes: currentVariant.attributes || [],
       images: currentVariant.images || [],
-    };
+      variantImages: [],
+    } as any;
 
     setVariants((prev) => [...prev, newVariant]);
     setCurrentVariant({
@@ -286,6 +287,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
       // Validate each variant
       for (let i = 0; i < variants.length; i++) {
         const variant = variants[i];
+        if (!variant) continue;
         if (!variant.sku) {
           return `Variant ${i + 1} missing SKU`;
         }
@@ -345,7 +347,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
         vendorId: String(authState.vendor.id),
         categoryId: selectedCategoryId!,
         subcategoryId: selectedSubcategoryId!,
-        variants: formData.hasVariants ? variants : undefined,
+        variants: formData.hasVariants ? variants : [],
       };
 
       //("AddProductModal: Final payload:", payload);
@@ -703,7 +705,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
                         {variant.attributes && variant.attributes.length > 0 && (
                           <div>
                             <strong>Attributes:</strong>
-                            {variant.attributes.map((attr, attrIndex) => (
+                            {variant.attributes.map((attr: any, attrIndex) => (
                               <div key={attrIndex} style={{ marginLeft: '10px' }}>
                                 {attr.attributeType}: {attr.attributeValues.join(', ')}
                               </div>
@@ -789,7 +791,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
                       {/* Current Attributes for this variant */}
                       {currentVariant.attributes && currentVariant.attributes.length > 0 && (
                         <div style={{ marginBottom: '10px' }}>
-                          {currentVariant.attributes.map((attr, index) => (
+                          {currentVariant.attributes.map((attr: any, index) => (
                             <div key={index} style={{
                               display: 'flex',
                               justifyContent: 'space-between',
@@ -866,7 +868,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
                         {/* Current attribute values */}
                         {currentAttribute.attributeValues && currentAttribute.attributeValues.length > 0 && (
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                            {currentAttribute.attributeValues.map((value, index) => (
+                            {currentAttribute.attributeValues.map((value: string, index: number) => (
                               <span key={index} style={{
                                 backgroundColor: '#007bff',
                                 color: 'white',

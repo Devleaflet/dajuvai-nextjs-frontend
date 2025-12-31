@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { getWishlist } from '@/lib/api/wishlist';
 import { useAuth } from '@/lib/context/AuthContext';
 
@@ -18,7 +18,7 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const [wishlist, setWishlist] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
-    const refreshWishlist = async () => {
+    const refreshWishlist = useCallback(async () => {
         if (!isAuthenticated || !token) {
             setWishlist([]);
             return;
@@ -33,27 +33,41 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         } finally {
             setLoading(false);
         }
-    };
+    }, [isAuthenticated, token]);
 
     useEffect(() => {
         refreshWishlist();
-    }, [isAuthenticated, token]);
+    }, [refreshWishlist]);
 
     // auto-refresh every 30s or on focus
     useEffect(() => {
         if (!isAuthenticated) return;
         const interval = setInterval(refreshWishlist, 30_000);
         return () => clearInterval(interval);
-    }, [isAuthenticated]);
+    }, [isAuthenticated, refreshWishlist]);
 
-    const wishlistMap = new Map();
-    wishlist.forEach(item => {
-        const key = item.variantId ? `${item.productId}_${item.variantId}` : item.productId;
-        wishlistMap.set(key, item);
-    });
+    const wishlistMap = useMemo(() => {
+        const map = new Map();
+        wishlist.forEach(item => {
+            const key = item.variantId ? `${item.productId}_${item.variantId}` : item.productId;
+            map.set(key, item);
+        });
+        return map;
+    }, [wishlist]);
+
+    // Memoize context value to prevent unnecessary re-renders
+    const contextValue = useMemo(
+        () => ({
+            wishlist,
+            wishlistMap,
+            loading,
+            refreshWishlist,
+        }),
+        [wishlist, wishlistMap, loading, refreshWishlist]
+    );
 
     return (
-        <WishlistContext.Provider value={{ wishlist, wishlistMap, loading, refreshWishlist }}>
+        <WishlistContext.Provider value={contextValue}>
             {children}
         </WishlistContext.Provider>
     );

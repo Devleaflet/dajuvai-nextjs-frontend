@@ -54,35 +54,35 @@ const RevenueByCategory = () => {
 	}));
 
 	return (
-		<div style={styles.container}>
-			<h1 style={styles.title}>Revenue by Category</h1>
+		<div style={styles['container']}>
+			<h1 style={styles['title']}>Revenue by Category</h1>
 
-			<div style={styles.filterRow}>
-				<div style={styles.labelGroup}>
-					<label style={styles.label}>Start Date:</label>
+			<div style={styles['filterRow']}>
+				<div style={styles['labelGroup']}>
+					<label style={styles['label']}>Start Date:</label>
 					<input
 						type="date"
 						value={startDate}
 						onChange={(e) => setStartDate(e.target.value)}
 						max={endDate}
-						style={styles.dateInput}
+						style={styles['dateInput']}
 					/>
 				</div>
-				<div style={styles.labelGroup}>
-					<label style={styles.label}>End Date:</label>
+				<div style={styles['labelGroup']}>
+					<label style={styles['label']}>End Date:</label>
 					<input
 						type="date"
 						value={endDate}
 						onChange={(e) => setEndDate(e.target.value)}
 						min={startDate}
 						max={today}
-						style={styles.dateInput}
+						style={styles['dateInput']}
 					/>
 				</div>
 			</div>
 
 			{chartData.length === 0 ? (
-				<div style={styles.noData}>
+				<div style={styles['noData']}>
 					<p>No Data Available</p>
 				</div>
 			) : (

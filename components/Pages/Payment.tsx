@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import jsPDF from 'jspdf';
 import { API_BASE_URL } from "@/lib/config";
 import "@/styles/PaymentNPX.css";
-import { ChevronDown } from "lucide-react";  
+import { ChevronDown } from "lucide-react";
 
 
 // TypeScript Interfaces
@@ -62,7 +62,16 @@ const NepalPaymentGateway: React.FC = () => {
   const [statusLoading, setStatusLoading] = useState<boolean>(false);
 
   const pathname = usePathname();
-  const orderDetails = location.state?.orderDetails;
+  const searchParams = useSearchParams();
+
+  // Get order details from URL params
+  const totalAmountParam = searchParams?.get('totalAmount');
+  const orderIdParam = searchParams?.get('orderId');
+
+  const orderDetails = totalAmountParam && orderIdParam ? {
+    totalAmount: Number(totalAmountParam),
+    orderId: orderIdParam
+  } : null;
 
   //("---------------------Order details----------------------")
   //(orderDetails)
@@ -89,7 +98,7 @@ const NepalPaymentGateway: React.FC = () => {
   useEffect(() => {
     const statusParam = getUrlParam('status');
     const txnId = getUrlParam('txnId');
-    
+
     if (statusParam || txnId) {
       setStatusMode(true);
       if (txnId) {
@@ -120,12 +129,13 @@ const NepalPaymentGateway: React.FC = () => {
       } else {
         setError('Failed to load payment methods: ' + (data.message || 'Unknown error'));
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading payment instruments:', error);
-      if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+      const err = error as any;
+      if (err.name === 'TypeError' && err.message?.includes('Failed to fetch')) {
         setError('Cannot connect to payment server. Please check if the backend is running on port 5000.');
       } else {
-        setError('Failed to load payment methods: ' + error.message);
+        setError('Failed to load payment methods: ' + (err.message || 'Unknown error'));
       }
       loadMockData();
     }
@@ -172,9 +182,10 @@ const NepalPaymentGateway: React.FC = () => {
       } else {
         setServiceCharge('<p class="error-text">Unable to calculate service charge</p>');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error getting service charge:', error);
-      if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+      const err = error as any;
+      if (err.name === 'TypeError' && err.message?.includes('Failed to fetch')) {
         const mockCharge = (parseFloat(amount) * 0.02).toFixed(2);
         const totalAmount = (parseFloat(amount) + parseFloat(mockCharge)).toFixed(2);
         setServiceCharge(`
@@ -225,7 +236,7 @@ const NepalPaymentGateway: React.FC = () => {
         setIsLoading(false);
         setError(data.error || 'Payment initiation failed');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setIsLoading(false);
       console.error('Payment error:', error);
       setError('Payment initiation failed');
@@ -242,7 +253,7 @@ const NepalPaymentGateway: React.FC = () => {
       const input = document.createElement('input');
       input.type = 'hidden';
       input.name = key;
-      input.value = formData[key];
+      input.value = formData[key] || '';
       form.appendChild(input);
     });
     document.body.appendChild(form);
@@ -350,7 +361,7 @@ const NepalPaymentGateway: React.FC = () => {
     const transaction = transactionStatus.data;
     const doc = new jsPDF();
     let y = 20;
-    
+
     // Add logo (if possible and safe)
     const logoImg = document.querySelector('.logo-header img');
     if (logoImg && logoImg instanceof HTMLImageElement && logoImg.src.startsWith(window.location.origin)) {
@@ -360,7 +371,7 @@ const NepalPaymentGateway: React.FC = () => {
         //(e)
       }
     }
-    
+
     doc.setFontSize(18);
     doc.text('Payment Bill', 105, y, { align: 'center' });
     y += 10;
@@ -406,7 +417,7 @@ const NepalPaymentGateway: React.FC = () => {
         <div className="logo-header">
           <img src="/assets/logo.webp" alt="Company Logo" />
         </div>
-        
+
         {!statusMode ? (
           // Payment Form Section
           <div className="payment-card">
@@ -459,8 +470,8 @@ const NepalPaymentGateway: React.FC = () => {
                       disabled={paymentInstruments.length === 0}
                     >
                       <option value="" disabled hidden>
-                        {paymentInstruments.length > 0 
-                          ? "Choose your preferred payment method..." 
+                        {paymentInstruments.length > 0
+                          ? "Choose your preferred payment method..."
                           : "No banks available"}
                       </option>
                       {paymentInstruments.length > 0 ? (
@@ -520,17 +531,17 @@ const NepalPaymentGateway: React.FC = () => {
           <div className="payment-card">
             <h1 className="status-header">Payment Status</h1>
             {renderTransactionStatus()}
-            
+
             {transactionStatus && transactionStatus.code === '0' && (
-              <button 
-                onClick={handleDownloadPDF} 
+              <button
+                onClick={handleDownloadPDF}
                 className="pay-button download-bill-btn"
               >
                 <span>📄</span>
                 <span>Download Bill (PDF)</span>
               </button>
             )}
-            
+
             <button
               onClick={() => window.location.href = '/'}
               className="pay-button return-home"
@@ -546,3 +557,4 @@ const NepalPaymentGateway: React.FC = () => {
 };
 
 export default NepalPaymentGateway;
+

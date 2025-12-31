@@ -191,7 +191,7 @@ const AdminCategories: React.FC = () => {
               setIsLoading(false);
               return; // Exit early if valid cache is used
             }
-          } catch {}
+          } catch { }
         }
 
         // Fetch fresh data
@@ -253,7 +253,7 @@ const AdminCategories: React.FC = () => {
           } else {
             setError(
               (err.response?.data as ApiErrorResponse)?.message ||
-                "Failed to fetch categories"
+              "Failed to fetch categories"
             );
             setCategories(mockCategories);
             setFilteredCategories(mockCategories);
@@ -504,7 +504,7 @@ const AdminCategories: React.FC = () => {
   const handleSaveSubCategory = async (categoryId: string, subCategory: SubCategory, imageFile?: File) => {
     setIsSubCategoryLoading(true);
     setError(null);
-    
+
     // Show loading toast
     const loadingToast = toast.loading(
       isAddingSubCategory ? 'Creating subcategory...' : 'Updating subcategory...',
@@ -512,7 +512,7 @@ const AdminCategories: React.FC = () => {
         position: 'top-right',
       }
     );
-    
+
     try {
       if (isAddingSubCategory) {
         const formData = new FormData();
@@ -549,7 +549,7 @@ const AdminCategories: React.FC = () => {
           CACHE_KEY,
           JSON.stringify({ data: updatedCategories, timestamp: Date.now() })
         );
-        
+
         // Dismiss loading toast and show success
         toast.dismiss(loadingToast);
         toast.success('Subcategory created successfully! 🎉', {
@@ -583,11 +583,11 @@ const AdminCategories: React.FC = () => {
         const updatedCategories = categories.map((category) =>
           category.id === categoryId
             ? {
-                ...category,
-                subCategories: category.subCategories.map((sub) =>
-                  sub.id === subCategory.id ? updatedSubCategory : sub
-                ),
-              }
+              ...category,
+              subCategories: category.subCategories.map((sub) =>
+                sub.id === subCategory.id ? updatedSubCategory : sub
+              ),
+            }
             : category
         );
         setCategories(updatedCategories);
@@ -596,7 +596,7 @@ const AdminCategories: React.FC = () => {
           CACHE_KEY,
           JSON.stringify({ data: updatedCategories, timestamp: Date.now() })
         );
-        
+
         // Dismiss loading toast and show success
         toast.dismiss(loadingToast);
         toast.success('Subcategory updated successfully! ✨', {
@@ -606,15 +606,15 @@ const AdminCategories: React.FC = () => {
       }
     } catch (err) {
       console.error("Save subcategory error:", err);
-      
+
       // Dismiss loading toast
       toast.dismiss(loadingToast);
-      
+
       if (axios.isAxiosError(err)) {
         const status = err.response?.status;
         const message = (err.response?.data as ApiErrorResponse)?.message || "Unknown error";
         let errorMessage = "Failed to save subcategory";
-        
+
         if (status === 400) {
           errorMessage = "Invalid subcategory name or ID.";
         } else if (status === 401) {
@@ -626,7 +626,7 @@ const AdminCategories: React.FC = () => {
         } else {
           errorMessage = message || "Failed to save subcategory";
         }
-        
+
         setError(errorMessage);
         toast.error(errorMessage, {
           position: 'top-right',
@@ -637,9 +637,9 @@ const AdminCategories: React.FC = () => {
           const updatedCategories = categories.map((category) =>
             category.id === categoryId
               ? {
-                  ...category,
-                  subCategories: [...category.subCategories, { ...subCategory, id: newSubCategoryId }],
-                }
+                ...category,
+                subCategories: [...category.subCategories, { ...subCategory, id: newSubCategoryId }],
+              }
               : category
           );
           setCategories(updatedCategories);
@@ -652,11 +652,11 @@ const AdminCategories: React.FC = () => {
           const updatedCategories = categories.map((category) =>
             category.id === categoryId
               ? {
-                  ...category,
-                  subCategories: category.subCategories.map((sub) =>
-                    sub.id === subCategory.id ? subCategory : sub
-                  ),
-                }
+                ...category,
+                subCategories: category.subCategories.map((sub) =>
+                  sub.id === subCategory.id ? subCategory : sub
+                ),
+              }
               : category
           );
           setCategories(updatedCategories);
@@ -764,12 +764,12 @@ const AdminCategories: React.FC = () => {
     } catch (err) {
       console.error('Update category image error:', err);
       toast.dismiss(loadingToast);
-      
+
       if (axios.isAxiosError(err)) {
         const status = err.response?.status;
         const message = (err.response?.data as ApiErrorResponse)?.message || 'Unknown error';
         let errorMessage = 'Failed to update category image';
-        
+
         if (status === 400) {
           errorMessage = 'Invalid image file.';
         } else if (status === 401) {
@@ -781,7 +781,7 @@ const AdminCategories: React.FC = () => {
         } else {
           errorMessage = message || 'Failed to update category image';
         }
-        
+
         toast.error(errorMessage, {
           position: 'top-right',
           duration: 4000,
@@ -850,13 +850,13 @@ const AdminCategories: React.FC = () => {
         const updatedCategories = categories.map((category) =>
           category.id === categoryId
             ? {
-                ...category,
-                subCategories: category.subCategories.map((sub) =>
-                  sub.id === subcategoryId
-                    ? { ...sub, image: response.data.data.image }
-                    : sub
-                ),
-              }
+              ...category,
+              subCategories: category.subCategories.map((sub) =>
+                sub.id === subcategoryId
+                  ? { ...sub, image: response.data.data.image }
+                  : sub
+              ),
+            }
             : category
         );
         setCategories(updatedCategories);
@@ -875,12 +875,12 @@ const AdminCategories: React.FC = () => {
     } catch (err) {
       console.error('Update subcategory image error:', err);
       toast.dismiss(loadingToast);
-      
+
       if (axios.isAxiosError(err)) {
         const status = err.response?.status;
         const message = (err.response?.data as ApiErrorResponse)?.message || 'Unknown error';
         let errorMessage = 'Failed to update subcategory image';
-        
+
         if (status === 400) {
           errorMessage = 'Invalid image file.';
         } else if (status === 401) {
@@ -892,7 +892,7 @@ const AdminCategories: React.FC = () => {
         } else {
           errorMessage = message || 'Failed to update subcategory image';
         }
-        
+
         toast.error(errorMessage, {
           position: 'top-right',
           duration: 4000,
@@ -942,11 +942,11 @@ const AdminCategories: React.FC = () => {
         const updatedCategories = categories.map((category) =>
           category.id === subCategoryToDelete.categoryId
             ? {
-                ...category,
-                subCategories: category.subCategories.filter(
-                  (sub) => sub.id !== subCategoryToDelete.subCategoryId
-                ),
-              }
+              ...category,
+              subCategories: category.subCategories.filter(
+                (sub) => sub.id !== subCategoryToDelete.subCategoryId
+              ),
+            }
             : category
         );
         setCategories(updatedCategories);
@@ -980,11 +980,11 @@ const AdminCategories: React.FC = () => {
           const updatedCategories = categories.map((category) =>
             category.id === subCategoryToDelete.categoryId
               ? {
-                  ...category,
-                  subCategories: category.subCategories.filter(
-                    (sub) => sub.id !== subCategoryToDelete.subCategoryId
-                  ),
-                }
+                ...category,
+                subCategories: category.subCategories.filter(
+                  (sub) => sub.id !== subCategoryToDelete.subCategoryId
+                ),
+              }
               : category
           );
           setCategories(updatedCategories);
@@ -1031,9 +1031,9 @@ const AdminCategories: React.FC = () => {
               <button
                 className="admin-categories__add-btn"
                 onClick={() => setShowHomepageModal(true)}
-                style={{ marginLeft: "10px",backgroundColor:"#f56a2c",color:"white" }}
+                style={{ marginLeft: "10px", backgroundColor: "#f56a2c", color: "white" }}
               >
-              Manage Homepage Categories
+                Manage Homepage Categories
               </button>
             </div>
           </div>
@@ -1059,22 +1059,22 @@ const AdminCategories: React.FC = () => {
                             <div className="admin-categories__category-image">
                               {(categoryImagePreview && categoryImageChanging === category.id) || category.image ? (
                                 <img
-                                  src={(categoryImagePreview && categoryImageChanging === category.id) ? categoryImagePreview : (category.image || placeholder || "/placeholder.svg")}
+                                  src={(categoryImagePreview && categoryImageChanging === category.id) ? categoryImagePreview : (category.image || "/placeholder.svg")}
                                   alt={category.name}
                                 />
                               ) : (
                                 <div className="admin-categories__no-image">No Image</div>
                               )}
-                              <button 
+                              <button
                                 className="admin-categories__change-image-btn"
                                 onClick={() => handleChangeCategoryImage(category.id)}
                                 title="Change image"
                               >
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 4H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <circle cx="12" cy="13" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
-                            </button>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 4H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                  <circle cx="12" cy="13" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                              </button>
                             </div>
                           </div>
                           <span>{category.name}</span>
@@ -1276,8 +1276,8 @@ const AdminCategories: React.FC = () => {
           categoryToDelete
             ? `Category: ${categoryToDelete.name}`
             : subCategoryToDelete
-            ? `Subcategory from ${categories.find((c) => c.id === subCategoryToDelete.categoryId)?.name || ""}`
-            : "Item"
+              ? `Subcategory from ${categories.find((c) => c.id === subCategoryToDelete.categoryId)?.name || ""}`
+              : "Item"
         }
       />
     </div>

@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { OrderService, DetailedOrder } from '../../services/orderService';
-import { useAuth } from '../../context/AuthContext';
+import { OrderService, DetailedOrder } from '@/lib/services/orderService';
+import { useAuth } from '@/lib/context/AuthContext';
 import { toast } from 'react-hot-toast';
 import "@/styles/OrderModals.css";
 import { API_BASE_URL } from "@/lib/config";
@@ -134,7 +134,7 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
     e.preventDefault();
 
     if (!detailedOrder || orderStatus === detailedOrder.status) {
-      toast.info('No changes to save');
+      toast('No changes to save');
       onClose();
       return;
     }
@@ -233,7 +233,7 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 </div>
                 <div className="order-modal__customer-name">
                   <h3 style={{ fontSize: '18px', fontWeight: 600, margin: 0, color: '#222' }}>
-                    {detailedOrder?.orderedBy?.name || `${order.firstName || 'Unknown'} ${order.lastName || 'User'}`}
+                    {detailedOrder?.orderedBy?.username || `${order.firstName || 'Unknown'} ${order.lastName || 'User'}`}
                   </h3>
                   <p className="order-modal__order-id" style={{ fontSize: '14px', color: '#666', margin: '4px 0 0' }}>Order ID: {order.id}</p>
                 </div>
@@ -262,7 +262,7 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
                 <div className="order-modal__detail-item">
                   <span className="order-modal__label" style={{ fontSize: '14px', color: '#666', display: 'block', marginBottom: '4px' }}>Phone Number</span>
                   <span className="order-modal__value" style={{ fontSize: '14px', color: '#222', fontWeight: 500 }}>
-                    {order.phoneNumber || detailedOrder?.phoneNumber || 'N/A'}
+                    {order.phoneNumber || 'N/A'}
                   </span>
                 </div>
 
@@ -347,9 +347,9 @@ const OrderEditModal: React.FC<OrderEditModalProps> = ({
                             boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
                           }}
                         >
-                          {item.product?.productImages && item.product.productImages.length > 0 ? (
+                          {(item.product as any)?.productImages && (item.product as any).productImages.length > 0 ? (
                             <img
-                              src={item.product.productImages[0]}
+                              src={(item.product as any).productImages[0]}
                               alt={item.product.name || 'Product'}
                               style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #eee' }}
                             />

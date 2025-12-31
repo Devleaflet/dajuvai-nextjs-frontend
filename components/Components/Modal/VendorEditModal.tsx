@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, FC } from 'react';
-import { Vendor, District, VendorUpdateRequest } from "@/lib/types/vendor";
+import { Vendor, VendorUpdateRequest } from "@/lib/types/vendor";
+import { District } from "@/components/Components/Types/vendor";
 import "@/styles/AdminVendor.css";
 import "@/styles/AddVendorModal.css";
 import { toast } from 'react-hot-toast';
@@ -108,9 +109,10 @@ const VendorEditModal: FC<VendorEditModalProps> = ({ show, onClose, onSave, vend
       }
       //(`File uploaded successfully: ${file.name} -> ${response.data.data}`);
       return response.data.data;
-    } catch (error: any) {
-      console.error(`Failed to upload file ${file.name}:`, error.response?.data || error.message);
-      throw new Error(`Failed to upload file ${file.name}: ${error.response?.data?.message || error.message}`);
+    } catch (error: unknown) {
+      const axiosError = error as any;
+      console.error(`Failed to upload file ${file.name}:`, axiosError.response?.data || (error instanceof Error ? error.message : 'Unknown error'));
+      throw new Error(`Failed to upload file ${file.name}: ${axiosError.response?.data?.message || (error instanceof Error ? error.message : 'Unknown error')}`);
     }
   };
 
@@ -121,8 +123,8 @@ const VendorEditModal: FC<VendorEditModalProps> = ({ show, onClose, onSave, vend
     if (files.length > 0) {
       if (field === "taxDocuments") setTaxFiles((prev) => [...prev, ...files]);
       if (field === "citizenshipDocuments") setCitizenshipFiles((prev) => [...prev, ...files]);
-      if (field === "chequePhoto") setChequeFile(files[0]);
-      if (field === "profilePicture") setProfileFile(files[0]);
+      if (field === "chequePhoto") setChequeFile(files[0] || null);
+      if (field === "profilePicture") setProfileFile(files[0] || null);
     }
   };
 
@@ -136,15 +138,16 @@ const VendorEditModal: FC<VendorEditModalProps> = ({ show, onClose, onSave, vend
 
   useEffect(() => {
     if (vendor) {
+      const vendorAny = vendor as any;
       let districtName = '';
       let districtId = 0;
 
-      if (typeof vendor.district === 'object' && vendor.district) {
-        districtId = vendor.district.id;
-        districtName = vendor.district.name || '';
-      } else if (typeof vendor.district === 'string') {
-        districtName = vendor.district;
-        const foundDistrict = districts.find(d => d.name === vendor.district);
+      if (typeof vendorAny.district === 'object' && vendorAny.district) {
+        districtId = vendorAny.district.id;
+        districtName = vendorAny.district.name || '';
+      } else if (typeof vendorAny.district === 'string') {
+        districtName = vendorAny.district;
+        const foundDistrict = districts.find(d => d.name === vendorAny.district);
         districtId = foundDistrict?.id || 0;
       }
 
@@ -153,23 +156,23 @@ const VendorEditModal: FC<VendorEditModalProps> = ({ show, onClose, onSave, vend
         businessName: vendor.businessName || '',
         email: vendor.email || '',
         phoneNumber: vendor.phoneNumber || '',
-        telePhone: vendor.telePhone || '',
-        businessRegNumber: vendor.businessRegNumber || '',
+        telePhone: vendorAny.telePhone || '',
+        businessRegNumber: vendorAny.businessRegNumber || '',
         districtId: districtId,
         district: districtName,
-        taxNumber: vendor.taxNumber || '',
-        taxDocuments: vendor.taxDocuments || [],
-        citizenshipDocuments: vendor.citizenshipDocuments || [],
-        chequePhoto: vendor.chequePhoto || '',
+        taxNumber: vendorAny.taxNumber || '',
+        taxDocuments: vendorAny.taxDocuments || [],
+        citizenshipDocuments: vendorAny.citizenshipDocuments || [],
+        chequePhoto: vendorAny.chequePhoto || '',
         bankDetails: {
-          accountName: vendor.accountName || '',
-          bankName: vendor.bankName || '',
-          accountNumber: vendor.accountNumber || '',
-          bankBranch: vendor.bankBranch || '',
-          bankCode: vendor.bankCode || '',
+          accountName: vendorAny.accountName || '',
+          bankName: vendorAny.bankName || '',
+          accountNumber: vendorAny.accountNumber || '',
+          bankBranch: vendorAny.bankBranch || '',
+          bankCode: vendorAny.bankCode || '',
         },
-        businessAddress: vendor.businessAddress || '',
-        profilePicture: vendor.profilePicture || '',
+        businessAddress: vendorAny.businessAddress || '',
+        profilePicture: vendorAny.profilePicture || '',
       });
     }
   }, [vendor, districts]);
@@ -199,13 +202,15 @@ const VendorEditModal: FC<VendorEditModalProps> = ({ show, onClose, onSave, vend
 
     if (name.startsWith('bankDetails.')) {
       const bankField = name.split('.')[1];
-      setFormData((prev) => ({
-        ...prev,
-        bankDetails: {
-          ...prev.bankDetails,
-          [bankField]: value,
-        },
-      }));
+      if (bankField) {
+        setFormData((prev) => ({
+          ...prev,
+          bankDetails: {
+            ...prev.bankDetails,
+            [bankField]: value,
+          },
+        }));
+      }
     } else if (name === 'districtId') {
       const selectedDistrict = districts.find(d => d.id === parseInt(value));
       setFormData((prev) => ({
@@ -308,7 +313,7 @@ const VendorEditModal: FC<VendorEditModalProps> = ({ show, onClose, onSave, vend
       //('🔍 DEBUG: Final uploadedChequePhoto type:', typeof uploadedChequePhoto);
       //('🔍 DEBUG: Is uploadedChequePhoto an array?', Array.isArray(uploadedChequePhoto));
 
-      const apiData: Partial<VendorUpdateRequest> = {
+      const apiData: any = {
         businessName: formData.businessName,
         phoneNumber: formData.phoneNumber,
         telePhone: formData.telePhone,
@@ -351,9 +356,10 @@ const VendorEditModal: FC<VendorEditModalProps> = ({ show, onClose, onSave, vend
       //('🔍 DEBUG: Is final apiData.chequePhoto an array?', Array.isArray(apiData.chequePhoto));
       //('Sending API data:', apiData);
       await onSave(apiData);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error uploading files:', error);
-      toast.error(`Failed to upload files: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Failed to upload files: ${errorMessage}`);
     } finally {
       setIsUploading(false);
       setIsSaving(false);
@@ -829,3 +835,4 @@ const VendorEditModal: FC<VendorEditModalProps> = ({ show, onClose, onSave, vend
 };
 
 export default VendorEditModal;
+

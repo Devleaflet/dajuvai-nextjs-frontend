@@ -2,17 +2,18 @@
 
 // Checkout.tsx - Updated for Total Price and Payment Section
 import CryptoJS from 'crypto-js';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { FaInfoCircle } from 'react-icons/fa';
-import Link from "next/link";`nimport { useRouter, usePathname } from "next/navigation";
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
-import Footer from "@/components/Components/Footer";
-import AlertModal from "@/components/Components/Modal/AlertModal";
-import Navbar from "@/components/Components/Navbar";
-import "@/styles/CheckOut.css";
-import { API_BASE_URL } from "@/lib/config";
-import { useAuth } from "@/lib/context/AuthContext";
-import { useCart } from "@/lib/context/CartContext";
+import Footer from '@/components/Components/Footer';
+import AlertModal from '@/components/Components/Modal/AlertModal';
+import Navbar from '@/components/Components/Navbar';
+import '@/styles/CheckOut.css';
+import { API_BASE_URL } from '@/lib/config';
+import { useAuth } from '@/lib/context/AuthContext';
+import { useCart } from '@/lib/context/CartContext';
 
 interface PromoCode {
 	id: number;
@@ -20,37 +21,8 @@ interface PromoCode {
 	discountPercentage: number;
 }
 
-interface CartItem {
-	id: number;
-	quantity: number;
-	price: string;
-	name: string;
-	description?: string;
-	image: string | null;
-	variantId?: number;
-	variant?: {
-		id?: number;
-		name?: string;
-		sku?: string;
-		attributes?: any;
-		attributeValues?: any;
-		attrs?: any;
-		attributeSpecs?: any;
-		stock?: number;
-	};
-	attributes?: any;
-	variantAttributes?: any;
-	product?: {
-		id: number;
-		name: string;
-		vendorId?: number;
-		vendor?: {
-			id?: number;
-			businessName?: string;
-			district?: { name: string };
-		};
-	};
-}
+// Import CartItem type from context to avoid conflicts
+type CartItem = ReturnType<typeof useCart>['cartItems'][number];
 
 interface ShippingGroup {
 	vendorDistrict: string;
@@ -76,58 +48,58 @@ const OrderSuccessModal: React.FC<{
 	totalAmount,
 	paymentMethod,
 }) => {
-	if (!open) return null;
+		if (!open) return null;
 
-	return (
-		<div className="checkout-success-modal-overlay">
-			<div className="checkout-success-modal">
-				<div className="checkout-success-modal__content">
-					<div className="checkout-success-modal__header">
-						<div className="checkout-success-modal__icon-wrapper">
-							<div className="checkout-success-modal__icon">✓</div>
+		return (
+			<div className="checkout-success-modal-overlay">
+				<div className="checkout-success-modal">
+					<div className="checkout-success-modal__content">
+						<div className="checkout-success-modal__header">
+							<div className="checkout-success-modal__icon-wrapper">
+								<div className="checkout-success-modal__icon">✓</div>
+							</div>
+							<button
+								className="checkout-success-modal__close"
+								onClick={onClose}
+							>
+								×
+							</button>
 						</div>
-						<button
-							className="checkout-success-modal__close"
-							onClick={onClose}
-						>
-							×
-						</button>
-					</div>
-					<h2 className="checkout-success-modal__title">Order Confirmed!</h2>
-					<p className="checkout-success-modal__message'>
-						Thank you for your purchase! Your order has been successfully placed
-						and is being processed. You'll receive a confirmation email with
-						your order details shortly.
-					</p>
-					<div className="checkout-success-modal__order-info">
-						<div className="checkout-success-modal__info-item">
-							<span>Order Total:</span>
-							<span>Rs {totalAmount.toLocaleString()}</span>
+						<h2 className="checkout-success-modal__title">Order Confirmed!</h2>
+						<p className="checkout-success-modal__message">
+							Thank you for your purchase! Your order has been successfully placed
+							and is being processed. You'll receive a confirmation email with
+							your order details shortly.
+						</p>
+						<div className="checkout-success-modal__order-info">
+							<div className="checkout-success-modal__info-item">
+								<span>Order Total:</span>
+								<span>Rs {totalAmount.toLocaleString()}</span>
+							</div>
+							<div className="checkout-success-modal__info-item">
+								<span>Payment Method:</span>
+								<span>{paymentMethod.replace(/_/g, ' ')}</span>
+							</div>
 						</div>
-						<div className="checkout-success-modal__info-item">
-							<span>Payment Method:</span>
-							<span>{paymentMethod.replace(/_/g, ' ')}</span>
+						<div className="checkout-success-modal__actions">
+							<button
+								className="checkout-success-modal__btn checkout-success-modal__btn--primary"
+								onClick={onViewOrder}
+							>
+								View Order Details
+							</button>
+							<button
+								className="checkout-success-modal__btn checkout-success-modal__btn--secondary"
+								onClick={onContinueShopping}
+							>
+								Continue Shopping
+							</button>
 						</div>
-					</div>
-					<div className="checkout-success-modal__actions">
-						<button
-							className="checkout-success-modal__btn checkout-success-modal__btn--primary"
-							onClick={onViewOrder}
-						>
-							View Order Details
-						</button>
-						<button
-							className="checkout-success-modal__btn checkout-success-modal__btn--secondary"
-							onClick={onContinueShopping}
-						>
-							Continue Shopping
-						</button>
 					</div>
 				</div>
 			</div>
-		</div>
-	);
-};
+		);
+	};
 
 const Checkout: React.FC = () => {
 	useEffect(() => {
@@ -141,13 +113,22 @@ const Checkout: React.FC = () => {
 		return () => window.removeEventListener('message', listener);
 	}, []);
 
-	const pathname = usePathname();
+	const router = useRouter();
+	const searchParams = useSearchParams();
 	const {
 		cartItems: contextCartItems,
 		handleIncreaseQuantity,
 		handleDecreaseQuantity,
 	} = useCart();
 	let cartItems: CartItem[] = contextCartItems;
+
+	// Get buyNow state from URL params if present
+	const buyNowParam = searchParams?.get('buyNow');
+	const productDataParam = searchParams?.get('productData');
+	const locationState = buyNowParam && productDataParam ? {
+		buyNow: true,
+		products: [JSON.parse(decodeURIComponent(productDataParam))]
+	} : null;
 
 	// State for managing Buy Now quantities
 	const [buyNowQuantities, setBuyNowQuantities] = useState<{
@@ -157,47 +138,28 @@ const Checkout: React.FC = () => {
 	const [touched, setTouched] = useState<Record<string, boolean>>({});
 
 	// Handle "Buy Now" case
-	if (location.state?.buyNow && location.state?.products?.length > 0) {
-		const buyNowProduct = location.state.products[0];
+	if (locationState?.buyNow && locationState?.products?.length > 0) {
+		const buyNowProduct = locationState.products[0];
 		const { product, quantity } = buyNowProduct;
 		cartItems = [
 			{
 				id: product.id,
+				productId: product.id,
 				quantity,
-				price: product.price,
+				price: Number(product.price),
 				name: product.name,
-				description: product.description || '',
-				image: product.image || null,
+				image: product.image || '',
 				variantId: product.selectedVariant?.id,
 				variant: product.selectedVariant
 					? {
-							id: product.selectedVariant.id,
-							attributes: product.selectedVariant.attributes,
-							calculatedPrice: product.selectedVariant.calculatedPrice,
-							originalPrice: product.selectedVariant.originalPrice,
-							stock: product.selectedVariant.stock,
-							variantImgUrls: product.selectedVariant.variantImgUrls,
-					  }
+						id: product.selectedVariant.id,
+						attributes: product.selectedVariant.attributes,
+						stock: product.selectedVariant.stock,
+					}
 					: undefined,
-				product: {
-					id: product.id,
-					name: product.name,
-					vendorId: product.vendor?.id,
-					vendor: product.vendor
-						? {
-								id: product.vendor.id,
-								businessName: product.vendor.businessName || 'Unknown Vendor',
-								district: product.vendor.district || {
-									name: 'Unknown District',
-								},
-						  }
-						: undefined,
-				},
 			},
 		];
 	}
-
-	const router = useRouter();
 	const [billingDetails, setBillingDetails] = useState({
 		fullName: '',
 		province: '',
@@ -215,15 +177,9 @@ const Checkout: React.FC = () => {
 		useState('CASH_ON_DELIVERY');
 
 	const availablePaymentMethods = [
-		{ id: 'CASH_ON_DELIVERY', name: 'Cash on Delivery' },
-		// {
-		// 	id: 'ESEWA',
-		// 	name: 'eSewa',
-		// 	disabled: true,
-		// 	message: 'Currently unavailable. Please choose another method.',
-		// },
-		{ id: "ESEWA", name: "eSewa" },
-		{ id: 'NPX', name: 'Nepal Payment System' },
+		{ id: 'CASH_ON_DELIVERY', name: 'Cash on Delivery', disabled: false, message: '' },
+		{ id: "ESEWA", name: "eSewa", disabled: false, message: '' },
+		{ id: 'NPX', name: 'Nepal Payment System', disabled: false, message: '' },
 	];
 
 	const [isPlacingOrder, setIsPlacingOrder] = useState(false);
@@ -464,7 +420,7 @@ const Checkout: React.FC = () => {
 					streetAddress: data.data.address?.localAddress || '',
 					phoneNumber:
 						data.data.phoneNumber &&
-						validateField('phoneNumber', data.data.phoneNumber) === ''
+							validateField('phoneNumber', data.data.phoneNumber) === ''
 							? data.data.phoneNumber
 							: '',
 					city: data.data.address?.city || '',
@@ -545,15 +501,21 @@ const Checkout: React.FC = () => {
 
 		try {
 			let orderData;
-			if (location.state?.buyNow && cartItems.length === 1) {
+			if (locationState?.buyNow && cartItems.length === 1) {
 				const buyNowItem = cartItems[0];
+				if (!buyNowItem) {
+					setAlertMessage('Invalid buy now item');
+					setShowAlert(true);
+					setIsPlacingOrder(false);
+					return;
+				}
 				const finalQuantity =
 					buyNowQuantities[buyNowItem.id] || buyNowItem.quantity;
 
 				orderData = {
 					isBuyNow: true,
 					productId: buyNowItem.id,
-					variantId: buyNowItem.variantId || undefined,
+					variantId: buyNowItem.variantId,
 					quantity: finalQuantity,
 					shippingAddress: {
 						province: billingDetails.province,
@@ -568,7 +530,7 @@ const Checkout: React.FC = () => {
 				};
 
 				if (!orderData.variantId) {
-					delete orderData.variantId;
+					delete (orderData as any).variantId;
 				}
 			} else {
 				const orderItems = cartItems.map((item) => ({
@@ -628,9 +590,8 @@ const Checkout: React.FC = () => {
 						{
 							label: 'Go to Order Details',
 							action: () => {
-								router.push('/user-profile', {
-									state: { activeTab: 'orders', orderDetails },
-								});
+								router.push('/profile');
+
 								setShowAlert(false);
 							},
 							style: { backgroundColor: '#ff6b35', color: 'white' },
@@ -655,14 +616,7 @@ const Checkout: React.FC = () => {
 				}
 				// } else if (selectedPaymentMethod === 'NPX') {
 				//   //('Redirecting to NPX payment page');
-				//   router.push('/order-page', {
-				//     state: {
-				//       orderDetails: {
-				//         orderId: result.data?.id || null,
-				//         totalAmount: finalTotal,
-				//       },
-				//     },
-				//   });
+				//   router.push('/order');
 				// }
 
 				setTimeout(() => {
@@ -670,14 +624,7 @@ const Checkout: React.FC = () => {
 						selectedPaymentMethod !== 'CASH_ON_DELIVERY' &&
 						selectedPaymentMethod !== 'ESEWA'
 					) {
-						router.push('/order-page', {
-							state: {
-								orderDetails: {
-									orderId: result.data?.id || null,
-									totalAmount: finalTotal,
-								},
-							},
-						});
+						router.push('/order');
 					}
 				}, 1500);
 			} else {
@@ -766,27 +713,30 @@ const Checkout: React.FC = () => {
 		};
 
 		cartItems.forEach((item) => {
-			if (item.product?.vendorId && !vendorCache[item.product.vendorId]) {
-				fetchVendorDetails(item.product.vendorId);
+			const vendorId = (item.product as any)?.vendorId;
+			if (vendorId && !vendorCache[vendorId]) {
+				fetchVendorDetails(vendorId);
 			}
 		});
-	}, [cartItems, token]);
+	}, [cartItems, token, vendorCache]);
 
 	const getVendorInfo = (item: CartItem) => {
-		if (item.product?.vendorId && vendorCache[item.product.vendorId]) {
+		const vendorId = (item.product as any)?.vendorId;
+		if (vendorId && vendorCache[vendorId]) {
 			return {
-				businessName: vendorCache[item.product.vendorId].businessName,
-				district: vendorCache[item.product.vendorId].district.name,
+				businessName: vendorCache[vendorId].businessName,
+				district: vendorCache[vendorId].district.name,
 			};
 		}
+		const vendor = (item.product as any)?.vendor;
 		return {
-			businessName: item.product?.vendor?.businessName || 'Unknown Vendor',
-			district: item.product?.vendor?.district?.name || 'Unknown District',
+			businessName: vendor?.businessName || 'Unknown Vendor',
+			district: vendor?.district?.name || 'Unknown District',
 		};
 	};
 
 	const getCurrentQuantity = (item: CartItem): number => {
-		if (location.state?.buyNow) {
+		if (locationState?.buyNow) {
 			return buyNowQuantities[item.id] || item.quantity;
 		}
 		return item.quantity;
@@ -816,7 +766,19 @@ const Checkout: React.FC = () => {
 				return sum + Number(item.price) * quantity;
 			}, 0);
 
-			const vendorInfo = getVendorInfo(items[0]);
+			const firstItem = items[0];
+			if (!firstItem) {
+				return {
+					vendorDistrict: 'Unknown District',
+					vendorName: 'Unknown Vendor',
+					items,
+					shippingCost: 0,
+					subtotal,
+					lineTotal: subtotal,
+				};
+			}
+
+			const vendorInfo = getVendorInfo(firstItem);
 			let shippingCost = 0;
 
 			if (billingDetails.district) {
@@ -862,10 +824,10 @@ const Checkout: React.FC = () => {
 	const finalTotal = total - discountAmount;
 
 	const getVariantLabel = (item: CartItem): string => {
-		const v = item?.variant || item?.selectedVariant || null;
+		const v = item?.variant || null;
 		if (!v) {
 			const rootAttrs =
-				(item && (item.variantAttributes || item.attributes)) || null;
+				(item && ((item as any).variantAttributes || (item as any).attributes)) || null;
 			return rootAttrs ? formatAttributes(rootAttrs) : '';
 		}
 		if (typeof v.name === 'string' && v.name.trim()) return v.name.trim();
@@ -919,7 +881,7 @@ const Checkout: React.FC = () => {
 	};
 
 	const handleIncrease = (item: CartItem) => {
-		if (location.state?.buyNow) {
+		if (locationState?.buyNow) {
 			const currentQty = buyNowQuantities[item.id] || item.quantity;
 			const stock = item.variant?.stock ?? Infinity;
 			if (currentQty + 1 > stock) {
@@ -937,7 +899,7 @@ const Checkout: React.FC = () => {
 	};
 
 	const handleDecrease = (item: CartItem) => {
-		if (location.state?.buyNow) {
+		if (locationState?.buyNow) {
 			const currentQty = buyNowQuantities[item.id] || item.quantity;
 			if (currentQty > 1) {
 				setBuyNowQuantities((prev) => ({
@@ -970,15 +932,17 @@ const Checkout: React.FC = () => {
 
 	return (
 		<>
-			<Navbar />
+			<Suspense fallback={<div style={{ height: '80px' }} />}>
+				<Navbar />
+			</Suspense>
 			{/* <AlertModal open={showAlert} message={alertMessage} onClose={() => setShowAlert(false)} /> */}
 			{showAlert && alertMessage.includes('Your order has been placed') ? (
 				<OrderSuccessModal
 					open={showAlert}
 					onClose={() => setShowAlert(false)}
 					onViewOrder={() => {
-						router.push('/user-profile', { state: { activeTab: 'orders' } });
-						setShowAlert(false);
+						router.push('/profile');
+
 					}}
 					onContinueShopping={() => {
 						router.push('/shop');
@@ -1088,15 +1052,14 @@ const Checkout: React.FC = () => {
 								onChange={handleInputChange}
 								onBlur={handleBlur}
 								placeholder="Enter your Full Name"
-								className={`checkout-container__form-group-input ${
-									errors.fullName && touched.fullName ? 'error' : ''
-								}`}
+								className={`checkout-container__form-group-input ${errors['fullName'] && touched['fullName'] ? 'error' : ''
+									}`}
 								required
 							/>
-							{errors.fullName && touched.fullName && (
+							{errors['fullName'] && touched['fullName'] && (
 								<div className="error-message">
 									<FaInfoCircle className="error-icon" />
-									{errors.fullName}
+									{errors['fullName']}
 								</div>
 							)}
 						</div>
@@ -1110,9 +1073,8 @@ const Checkout: React.FC = () => {
 								value={billingDetails.province}
 								onChange={handleInputChange}
 								onBlur={handleBlur}
-								className={`checkout-container__form-group-select ${
-									errors.province && touched.province ? 'error' : ''
-								}`}
+								className={`checkout-container__form-group-select ${errors['province'] && touched['province'] ? 'error' : ''
+									}`}
 								required
 							>
 								<option value="">Select Province</option>
@@ -1125,10 +1087,10 @@ const Checkout: React.FC = () => {
 									</option>
 								))}
 							</select>
-							{errors.province && touched.province && (
+							{errors['province'] && touched['province'] && (
 								<div className="error-message">
 									<FaInfoCircle className="error-icon" />
-									{errors.province}
+									{errors['province']}
 								</div>
 							)}
 						</div>
@@ -1142,9 +1104,8 @@ const Checkout: React.FC = () => {
 								value={billingDetails.district}
 								onChange={handleInputChange}
 								onBlur={handleBlur}
-								className={`checkout-container__form-group-select ${
-									errors.district && touched.district ? 'error' : ''
-								}`}
+								className={`checkout-container__form-group-select ${errors['district'] && touched['district'] ? 'error' : ''
+									}`}
 								required
 							>
 								<option value="">Select District</option>
@@ -1157,10 +1118,10 @@ const Checkout: React.FC = () => {
 									</option>
 								))}
 							</select>
-							{errors.district && touched.district && (
+							{errors['district'] && touched['district'] && (
 								<div className="error-message">
 									<FaInfoCircle className="error-icon" />
-									{errors.district}
+									{errors['district']}
 								</div>
 							)}
 						</div>
@@ -1174,15 +1135,14 @@ const Checkout: React.FC = () => {
 								onChange={handleInputChange}
 								onBlur={handleBlur}
 								placeholder="Enter your city"
-								className={`checkout-container__form-group-input ${
-									errors.city && touched.city ? 'error' : ''
-								}`}
+								className={`checkout-container__form-group-input ${errors['city'] && touched['city'] ? 'error' : ''
+									}`}
 								required
 							/>
-							{errors.city && touched.city && (
+							{errors['city'] && touched['city'] && (
 								<div className="error-message">
 									<FaInfoCircle className="error-icon" />
-									{errors.city}
+									{errors['city']}
 								</div>
 							)}
 						</div>
@@ -1198,15 +1158,14 @@ const Checkout: React.FC = () => {
 								onChange={handleInputChange}
 								onBlur={handleBlur}
 								placeholder="Enter your street address"
-								className={`checkout-container__form-group-input ${
-									errors.streetAddress && touched.streetAddress ? 'error' : ''
-								}`}
+								className={`checkout-container__form-group-input ${errors['streetAddress'] && touched['streetAddress'] ? 'error' : ''
+									}`}
 								required
 							/>
-							{errors.streetAddress && touched.streetAddress && (
+							{errors['streetAddress'] && touched['streetAddress'] && (
 								<div className="error-message">
 									<FaInfoCircle className="error-icon" />
-									{errors.streetAddress}
+									{errors['streetAddress']}
 								</div>
 							)}
 						</div>
@@ -1222,14 +1181,13 @@ const Checkout: React.FC = () => {
 								onChange={handleInputChange}
 								onBlur={handleBlur}
 								placeholder="Enter Nearest Landmark (Eg: Apartments, Hospital, School etc)"
-								className={`checkout-container__form-group-input ${
-									errors.landmark && touched.landmark ? 'error' : ''
-								}`}
+								className={`checkout-container__form-group-input ${errors['landmark'] && touched['landmark'] ? 'error' : ''
+									}`}
 							/>
-							{errors.landmark && touched.landmark && (
+							{errors['landmark'] && touched['landmark'] && (
 								<div className="error-message">
 									<FaInfoCircle className="error-icon" />
-									{errors.landmark}
+									{errors['landmark']}
 								</div>
 							)}
 						</div>
@@ -1245,16 +1203,15 @@ const Checkout: React.FC = () => {
 								onChange={handleInputChange}
 								onBlur={handleBlur}
 								placeholder="9xxxxxxxxx"
-								className={`checkout-container__form-group-input ${
-									errors.phoneNumber && touched.phoneNumber ? 'error' : ''
-								}`}
+								className={`checkout-container__form-group-input ${errors['phoneNumber'] && touched['phoneNumber'] ? 'error' : ''
+									}`}
 								maxLength={10}
 								required
 							/>
-							{errors.phoneNumber && touched.phoneNumber && (
+							{errors['phoneNumber'] && touched['phoneNumber'] && (
 								<div className="error-message">
 									<FaInfoCircle className="error-icon" />
-									{errors.phoneNumber}
+									{errors['phoneNumber']}
 								</div>
 							)}
 						</div>
@@ -1414,7 +1371,7 @@ const Checkout: React.FC = () => {
 												className="checkout-container__product-item"
 											>
 												<img
-													src={item.image || logo}
+													src={item.image || '/assets/logo.png'}
 													alt={item.name}
 													className="checkout-container__product-item-img"
 												/>
@@ -1472,8 +1429,8 @@ const Checkout: React.FC = () => {
 														Rs {group.shippingCost.toLocaleString()}
 														{normalizeDistrict(billingDetails.district) ===
 															normalizeDistrict(group.vendorDistrict) && (
-															<small> (Same district)</small>
-														)}
+																<small> (Same district)</small>
+															)}
 													</span>
 													<div className="checkout-container__delivery-time">
 														<small>
@@ -1551,9 +1508,8 @@ const Checkout: React.FC = () => {
 							{availablePaymentMethods.map((method) => (
 								<label
 									key={method.id}
-									className={`checkout-container__payment-methods-label ${
-										selectedPaymentMethod === method.id ? 'selected' : ''
-									} ${method.disabled ? 'disabled' : ''}`}
+									className={`checkout-container__payment-methods-label ${selectedPaymentMethod === method.id ? 'selected' : ''
+										} ${method.disabled ? 'disabled' : ''}`}
 								>
 									<input
 										type="radio"
@@ -1603,7 +1559,7 @@ const Checkout: React.FC = () => {
 								<span className="checkout-container__terms-checkbox-text">
 									I have read and agree to the website{' '}
 									<Link
-										to="/terms"
+										href="/terms"
 										rel="noopener noreferrer"
 									>
 										terms and conditions
@@ -1613,17 +1569,16 @@ const Checkout: React.FC = () => {
 							</span>
 						</label>
 
-						{errors.terms && !termsAgreed && (
+						{errors['terms'] && !termsAgreed && (
 							<div className="error-message">
 								<FaInfoCircle className="error-icon" />
-								{errors.terms}
+								{errors['terms']}
 							</div>
 						)}
 
 						<button
-							className={`checkout-container__place-order-btn${
-								!termsAgreed || isPlacingOrder ? '--disabled' : ''
-							}`}
+							className={`checkout-container__place-order-btn${!termsAgreed || isPlacingOrder ? '--disabled' : ''
+								}`}
 							disabled={!termsAgreed || isPlacingOrder}
 							onClick={handlePlaceOrder}
 						>
@@ -1647,3 +1602,4 @@ const Checkout: React.FC = () => {
 };
 
 export default Checkout;
+

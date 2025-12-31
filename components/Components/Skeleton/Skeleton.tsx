@@ -2,7 +2,7 @@ import React from 'react';
 import "@/styles/Skeleton.css";
 
 interface SkeletonProps {
-  type: 'text' | 'title' | 'avatar' | 'thumbnail' | 'button";
+  type: 'text' | 'title' | 'avatar' | 'thumbnail' | 'button';
   width?: string;
   height?: string;
   className?: string;

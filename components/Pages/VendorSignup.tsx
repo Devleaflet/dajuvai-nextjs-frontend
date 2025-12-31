@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import Link from "next/link";
 import { API_BASE_URL } from "@/lib/config";
 import "@/styles/AuthModal.css";
 import { Toaster, toast } from "react-hot-toast";
 import { FaInfoCircle } from "react-icons/fa";
+import Link from "next/link";
 
 interface VendorSignupProps {
 	isOpen: boolean;
@@ -480,12 +480,12 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 
 		if (currentStep === 3) {
 			if (taxDocuments.length === 0) {
-				newErrors.taxDocuments = "At least one PAN/VAT document is required";
+				newErrors['taxDocuments'] = "At least one PAN/VAT document is required";
 				isValid = false;
 			} else {
 				const error = validateField("taxDocuments", taxDocuments);
 				if (error) {
-					newErrors.taxDocuments = error;
+					newErrors['taxDocuments'] = error;
 					isValid = false;
 				}
 			}
@@ -552,7 +552,7 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 		if (currentStep === 3 && taxDocuments.length > 0) {
 			setErrors((prev) => {
 				const newErrors = { ...prev };
-				delete newErrors.taxDocuments;
+				delete newErrors['taxDocuments'];
 				return newErrors;
 			});
 			setTouched((prev) => ({ ...prev, taxDocuments: true }));
@@ -563,7 +563,7 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 		if (currentStep === 3 && citizenshipDocuments.length >= 0) {
 			setErrors((prev) => {
 				const newErrors = { ...prev };
-				delete newErrors.citizenshipDocuments;
+				delete newErrors['citizenshipDocuments'];
 				return newErrors;
 			});
 			setTouched((prev) => ({ ...prev, citizenshipDocuments: true }));
@@ -705,7 +705,10 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 				}
 			}
 		} else if (documentType === "cheque" && files.length > 0) {
-			if (files[0].size > 5 * 1024 * 1024) {
+			const file = files[0];
+			if (!file) return;
+
+			if (file.size > 5 * 1024 * 1024) {
 				setErrors((prev) => ({
 					...prev,
 					blankChequePhoto: "File size exceeds 5MB limit",
@@ -713,7 +716,7 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 				toast.error("File size exceeds 5MB limit");
 				return;
 			}
-			if (!/\.(jpg|jpeg|png)$/i.test(files[0].name)) {
+			if (!/\.(jpg|jpeg|png)$/i.test(file.name)) {
 				setErrors((prev) => ({
 					...prev,
 					blankChequePhoto: "Blank cheque photo must be JPG, JPEG, or PNG",
@@ -741,10 +744,13 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 			const error = validateField("citizenshipDocuments", newFiles);
 			setErrors((prev) => ({ ...prev, citizenshipDocuments: error }));
 		} else if (documentType === "cheque" && files.length > 0) {
-			setBlankChequePhoto(files[0]);
-			setTouched((prev) => ({ ...prev, blankChequePhoto: true }));
-			const error = validateField("blankChequePhoto", files[0]);
-			setErrors((prev) => ({ ...prev, blankChequePhoto: error }));
+			const file = files[0];
+			if (file) {
+				setBlankChequePhoto(file);
+				setTouched((prev) => ({ ...prev, blankChequePhoto: true }));
+				const error = validateField("blankChequePhoto", file);
+				setErrors((prev) => ({ ...prev, blankChequePhoto: error }));
+			}
 		}
 	};
 
@@ -1206,6 +1212,14 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 			return;
 		}
 
+		if (!chequePhotoUrl || !chequePhotoUrl[0]) {
+			setError("Blank cheque photo is required");
+			toast.error("Blank cheque photo is required");
+			//("Cheque photo missing after upload");
+			setIsLoading(false);
+			return;
+		}
+
 		const userData = {
 			businessName: businessName.trim(),
 			email: email.trim(),
@@ -1218,22 +1232,16 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 			taxNumber: taxNumber.trim(),
 			taxDocuments: taxDocumentUrls,
 			citizenshipDocuments: citizenshipDocumentUrls || [],
-			chequePhoto: chequePhotoUrl ? chequePhotoUrl[0] : null,
-			accountName: accountName.trim(),
-			bankName: bankName.trim(),
-			accountNumber: accountNumber.trim(),
-			bankBranch: bankBranch.trim(),
-			bankCode: bankCode.trim() || undefined,
-			bankAddress: bankAddress.trim() || undefined,
+			chequePhoto: chequePhotoUrl[0],
+			bankDetails: {
+				accountName: accountName.trim(),
+				bankName: bankName.trim(),
+				accountNumber: accountNumber.trim(),
+				bankBranch: bankBranch.trim(),
+				...(bankCode.trim() && { bankCode: bankCode.trim() }),
+				...(bankAddress.trim() && { bankAddress: bankAddress.trim() }),
+			},
 		};
-
-		if (!userData.chequePhoto) {
-			setError("Blank cheque photo is required");
-			toast.error("Blank cheque photo is required");
-			//("Cheque photo missing after upload");
-			setIsLoading(false);
-			return;
-		}
 
 		await handleSignup(userData);
 	};
@@ -1343,7 +1351,7 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 								<div className="auth-modal__form-group">
 									<input
 										type="text"
-										className={`auth-modal__input auth-modal__input--verification ${errors.verificationToken && touched.verificationToken
+										className={`auth-modal__input auth-modal__input--verification ${errors['verificationToken'] && touched['verificationToken']
 											? "error"
 											: ""
 											}`}
@@ -1355,7 +1363,7 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 												.replace(/\D/g, "")
 												.slice(0, 6);
 											setVerificationToken(value);
-											if (touched.verificationToken) {
+											if (touched['verificationToken']) {
 												const error = validateField("verificationToken", value);
 												setErrors((prev) => ({
 													...prev,
@@ -1412,7 +1420,7 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 												</label>
 												<input
 													type="text"
-													className={`auth-modal__input ${errors.businessName && touched.businessName
+													className={`auth-modal__input ${errors['businessName'] && touched['businessName']
 														? "error"
 														: ""
 														}`}
@@ -1436,7 +1444,7 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 												</label>
 												<input
 													type="text"
-													className={`auth-modal__input ${errors.phoneNumber && touched.phoneNumber
+													className={`auth-modal__input ${errors['phoneNumber'] && touched['phoneNumber']
 														? "error"
 														: ""
 														}`}
@@ -1462,7 +1470,7 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 												</label>
 												<input
 													type="text"
-													className={`auth-modal__input ${errors.telePhone && touched.telePhone ? "error" : ""
+													className={`auth-modal__input ${errors['telePhone'] && touched['telePhone'] ? "error" : ""
 														}`}
 													placeholder="Enter telephone number"
 													name="telePhone"
@@ -1480,7 +1488,7 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 											<div>
 												<label className="auth-modal__label">Province</label>
 												<select
-													className={`auth-modal__input ${errors.province && touched.province ? "error" : ""
+													className={`auth-modal__input ${errors['province'] && touched['province'] ? "error" : ""
 														}`}
 													name="province"
 													value={province}
@@ -1510,7 +1518,7 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 											<div>
 												<label className="auth-modal__label">District</label>
 												<select
-													className={`auth-modal__input ${errors.district && touched.district ? "error" : ""
+													className={`auth-modal__input ${errors['district'] && touched['district'] ? "error" : ""
 														}`}
 													name="district"
 													value={district}
@@ -1573,7 +1581,7 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 											>
 												I accept the{" "}
 												<Link
-													to="/vendor/terms"
+													href="/vendor/terms"
 													target="_blank"
 												>
 													terms and conditions
@@ -1592,8 +1600,8 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 												</label>
 												<input
 													type="text"
-													className={`auth-modal__input ${errors.businessRegNumber &&
-														touched.businessRegNumber
+													className={`auth-modal__input ${errors['businessRegNumber'] &&
+														touched['businessRegNumber']
 														? "error"
 														: ""
 														}`}
@@ -1620,7 +1628,7 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 												</label>
 												<input
 													type="text"
-													className={`auth-modal__input ${errors.taxNumber && touched.taxNumber ? "error" : ""
+													className={`auth-modal__input ${errors['taxNumber'] && touched['taxNumber'] ? "error" : ""
 														}`}
 													placeholder="Enter pan/vat number"
 													name="taxNumber"
@@ -1642,7 +1650,7 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 												<label className="auth-modal__label">Email</label>
 												<input
 													type="email"
-													className={`auth-modal__input ${errors.email && touched.email ? "error" : ""
+													className={`auth-modal__input ${errors['email'] && touched['email'] ? "error" : ""
 														}`}
 													placeholder="Enter email"
 													name="email"
@@ -1662,7 +1670,7 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 												<label className="auth-modal__label">Password</label>
 												<input
 													type={showPassword ? "text" : "password"}
-													className={`auth-modal__input ${errors.password && touched.password ? "error" : ""
+													className={`auth-modal__input ${errors['password'] && touched['password'] ? "error" : ""
 														}`}
 													placeholder="Enter password"
 													name="password"
@@ -1753,7 +1761,7 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 												</label>
 												<input
 													type={showConfirmPassword ? "text" : "password"}
-													className={`auth-modal__input ${errors.confirmPassword && touched.confirmPassword
+													className={`auth-modal__input ${errors['confirmPassword'] && touched['confirmPassword']
 														? "error"
 														: ""
 														}`}
@@ -1946,7 +1954,7 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 												</label>
 												<input
 													type="text"
-													className={`auth-modal__input ${errors.accountName && touched.accountName
+													className={`auth-modal__input ${errors['accountName'] && touched['accountName']
 														? "error"
 														: ""
 														}`}
@@ -1968,7 +1976,7 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 												<label className="auth-modal__label">Bank Name</label>
 												<input
 													type="text"
-													className={`auth-modal__input ${errors.bankName && touched.bankName ? "error" : ""
+													className={`auth-modal__input ${errors['bankName'] && touched['bankName'] ? "error" : ""
 														}`}
 													placeholder="Enter bank name"
 													name="bankName"
@@ -1992,7 +2000,7 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 												</label>
 												<input
 													type="text"
-													className={`auth-modal__input ${errors.accountNumber && touched.accountNumber
+													className={`auth-modal__input ${errors['accountNumber'] && touched['accountNumber']
 														? "error"
 														: ""
 														}`}
@@ -2014,7 +2022,7 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 												<label className="auth-modal__label">Bank Branch</label>
 												<input
 													type="text"
-													className={`auth-modal__input ${errors.bankBranch && touched.bankBranch
+													className={`auth-modal__input ${errors['bankBranch'] && touched['bankBranch']
 														? "error"
 														: ""
 														}`}
@@ -2038,7 +2046,7 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 												<label className="auth-modal__label">Bank Code</label>
 												<input
 													type="text"
-													className={`auth-modal__input ${errors.bankCode && touched.bankCode ? "error" : ""
+													className={`auth-modal__input ${errors['bankCode'] && touched['bankCode'] ? "error" : ""
 														}`}
 													placeholder="Enter bank code"
 													name="bankCode"
@@ -2059,7 +2067,7 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 												</label>
 												<input
 													type="text"
-													className={`auth-modal__input ${errors.bankAddress && touched.bankAddress
+													className={`auth-modal__input ${errors['bankAddress'] && touched['bankAddress']
 														? "error"
 														: ""
 														}`}
@@ -2141,7 +2149,7 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 											>
 												I accept the listing fee (
 												<Link
-													to="/commission-list"
+													href="/commission-list"
 													target="_blank"
 													className="auth-modal__link"
 												>
@@ -2186,3 +2194,4 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 };
 
 export default VendorSignup;
+

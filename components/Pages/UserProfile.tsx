@@ -2,7 +2,7 @@
 
 import axios from "axios";
 import React, { useCallback, useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useRouter, usePathname } from "next/navigation";
 import Popup from "reactjs-popup";
 import "reactjs-popup/dist/index.css";
 import Footer from "@/components/Components/Footer";
@@ -52,15 +52,7 @@ type CredentialsMode = "change" | "forgot" | "reset";
 const UserProfile: React.FC = () => {
 	const pathname = usePathname();
 	const router = useRouter();
-	const [activeTab, setActiveTab] = useState<Tab>(() => {
-		if (location.state && typeof location.state.activeTab === "string") {
-			const tab = location.state.activeTab;
-			if (["details", "credentials", "orders"].includes(tab)) {
-				return tab as Tab;
-			}
-		}
-		return "details";
-	});
+	const [activeTab, setActiveTab] = useState<Tab>("details");
 	const [expandedOrders, setExpandedOrders] = useState<Set<number>>(new Set());
 	const [expandedOrderDetails, setExpandedOrderDetails] = useState<Set<number>>(
 		new Set()
@@ -225,7 +217,7 @@ const UserProfile: React.FC = () => {
 	const calculateDeliveryTime = (customerDistrict: string, vendorDistrict: string): string => {
 		const normalizedCustomerDistrict = normalizeDistrict(customerDistrict);
 		const normalizedVendorDistrict = normalizeDistrict(vendorDistrict);
-		
+
 		if (normalizedCustomerDistrict === normalizedVendorDistrict) {
 			return '1-2 days';
 		} else {
@@ -243,7 +235,7 @@ const UserProfile: React.FC = () => {
 			if (!token) return null;
 			const vendorService = VendorService.getInstance();
 			const vendor = await vendorService.getVendorById(vendorId, token);
-			
+
 			// Cache the vendor info
 			setVendorCache(prev => ({ ...prev, [vendorId]: vendor }));
 			return vendor;
@@ -262,27 +254,27 @@ const UserProfile: React.FC = () => {
 
 		try {
 			// Get unique vendor IDs from order items
-			const vendorIds = [...new Set(order.orderItems.map(item => item.vendorId))];
-			
+			const vendorIds = [...new Set(order.orderItems.map(item => item.vendor?.id).filter(Boolean))];
+
 			// Fetch vendor info for all vendors
-			const vendorPromises = vendorIds.map(vendorId => fetchVendorInfo(vendorId));
+			const vendorPromises = vendorIds.map(vendorId => fetchVendorInfo(vendorId as number));
 			const vendors = await Promise.all(vendorPromises);
-			
+
 			// Calculate delivery times for each vendor
 			const deliveryTimes = vendors
 				.filter(vendor => vendor !== null)
 				.map(vendor => calculateDeliveryTime(customerDistrict, vendor!.district.name));
-			
+
 			// If any vendor requires 3-5 days, the overall delivery is 3-5 days
 			if (deliveryTimes.some(time => time === '3-5 days')) {
 				return '3-5 days';
 			}
-			
+
 			// If all vendors are same district (1-2 days), return 1-2 days
 			if (deliveryTimes.length > 0 && deliveryTimes.every(time => time === '1-2 days')) {
 				return '1-2 days';
 			}
-			
+
 			// Default fallback
 			return '3-5 days';
 		} catch (error) {
@@ -347,15 +339,15 @@ const UserProfile: React.FC = () => {
 			//("[UserProfile] fetchUserDetails - Starting fetch");
 			//("[UserProfile] fetchUserDetails - User ID:", userId);
 			//("[UserProfile] fetchUserDetails - Token:", token);
-			
+
 			setIsLoading((prev) => ({ ...prev, fetchUser: true }));
 			try {
 				const headers: Record<string, string> = {};
 				const authToken = token || localStorage.getItem("authToken");
 
 				if (authToken) {
-					headers.Authorization = `Bearer ${authToken}`;
-					
+					headers['Authorization'] = `Bearer ${authToken}`;
+
 				}
 
 				const response = await axiosInstance.get(`/api/auth/users/${userId}`, {
@@ -393,7 +385,7 @@ const UserProfile: React.FC = () => {
 			}
 		};
 		fetchUserDetails();
-	}, [userId, isAuthLoading, login, token]);
+	}, [userId, isAuthLoading, login, token, router]);
 
 	//("💀💀", userDetails);
 
@@ -439,19 +431,19 @@ const UserProfile: React.FC = () => {
 			.then(async ({ data }) => {
 				if (data.success) {
 					setOrders(data.data);
-					
+
 					// Calculate delivery times for all orders
 					const deliveryTimePromises = data.data.map(async (order: OrderDetail) => {
 						const deliveryTime = await getOrderDeliveryTime(order);
 						return { orderId: order.id, deliveryTime };
 					});
-					
+
 					const deliveryTimeResults = await Promise.all(deliveryTimePromises);
 					const deliveryTimesMap = deliveryTimeResults.reduce((acc, { orderId, deliveryTime }) => {
 						acc[orderId] = deliveryTime;
 						return acc;
 					}, {} as { [key: number]: string });
-					
+
 					setOrderDeliveryTimes(deliveryTimesMap);
 				} else {
 					setOrdersError(data.message || "Failed to load orders");
@@ -465,13 +457,13 @@ const UserProfile: React.FC = () => {
 	}, [user, token]);
 
 	useEffect(() => {
-		if (location.state && typeof location.state.activeTab === "string") {
-			const tab = location.state.activeTab;
-			if (["details", "credentials", "orders"].includes(tab)) {
-				setActiveTab(tab as Tab);
-			}
+		// Handle tab from URL query params if needed
+		const searchParams = new URLSearchParams(window.location.search);
+		const tabParam = searchParams.get('tab');
+		if (tabParam && ["details", "credentials", "orders"].includes(tabParam)) {
+			setActiveTab(tabParam as Tab);
 		}
-	}, [location.state]);
+	}, [pathname]);
 
 	const handleInputChange = (
 		e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -543,7 +535,7 @@ const UserProfile: React.FC = () => {
 			};
 			const authToken = token || localStorage.getItem("authToken");
 			if (authToken) {
-				headers.Authorization = `Bearer ${authToken}`;
+				headers['Authorization'] = `Bearer ${authToken}`;
 				//("[UserProfile] handleSave - Using token:", authToken);
 			}
 
@@ -655,7 +647,7 @@ const UserProfile: React.FC = () => {
 	};
 
 	const renderUserDetails = () => {
-		if (isLoading.fetchUser) {
+		if (isLoading['fetchUser']) {
 			return (
 				<div className="profile-form">
 					{[...Array(9)].map((_, i) => (
@@ -850,9 +842,9 @@ const UserProfile: React.FC = () => {
 						<button
 							className="btn-edit--primary"
 							onClick={handleSave}
-							disabled={isLoading.saveUser}
+							disabled={isLoading['saveUser']}
 						>
-							{isLoading.saveUser ? "Saving..." : "Save Changes"}
+							{isLoading['saveUser'] ? "Saving..." : "Save Changes"}
 						</button>
 						<button
 							className="btn-edit--secondary"
@@ -877,7 +869,7 @@ const UserProfile: React.FC = () => {
 	};
 
 	const renderCredentials = () => {
-		if (isLoading.fetchUser) {
+		if (isLoading['fetchUser']) {
 			return (
 				<div className="credentials">
 					{[...Array(5)].map((_, i) => (
@@ -900,9 +892,8 @@ const UserProfile: React.FC = () => {
 					</p>
 					<div className="credentials__actions">
 						<button
-							className={`profile-form__help ${
-								credentialsMode === "forgot" ? "active" : ""
-							}`}
+							className={`profile-form__help ${credentialsMode === "forgot" ? "active" : ""
+								}`}
 							onClick={() => setCredentialsMode("forgot")}
 						>
 							Forgot Password
@@ -923,9 +914,9 @@ const UserProfile: React.FC = () => {
 						<button
 							className="btn btn--primary"
 							onClick={handleForgotPassword}
-							disabled={isLoading.forgot}
+							disabled={isLoading['forgot']}
 						>
-							{isLoading.forgot ? "Sending..." : "Send Reset Email"}
+							{isLoading['forgot'] ? "Sending..." : "Send Reset Email"}
 						</button>
 					</div>
 				)}
@@ -975,9 +966,9 @@ const UserProfile: React.FC = () => {
 							<button
 								className="btn btn--primary"
 								onClick={handleResetPassword}
-								disabled={isLoading.reset}
+								disabled={isLoading['reset']}
 							>
-								{isLoading.reset ? "Resetting..." : "Reset Password"}
+								{isLoading['reset'] ? "Resetting..." : "Reset Password"}
 							</button>
 						</div>
 					</div>
@@ -1057,13 +1048,14 @@ const UserProfile: React.FC = () => {
 											{order.orderItems && order.orderItems.length > 0 ? (
 												<div className="order-mobile-product">
 													{(() => {
-														const firstProduct = order.orderItems[0]
-															.product as Product;
+														const firstItem = order.orderItems[0];
+														if (!firstItem) return null;
+														const firstProduct = firstItem.product as Product;
 														return (
 															<>
 																{firstProduct &&
-																firstProduct.productImages &&
-																firstProduct.productImages.length > 0 ? (
+																	firstProduct.productImages &&
+																	firstProduct.productImages.length > 0 ? (
 																	<img
 																		src={firstProduct.productImages[0]}
 																		alt={firstProduct.name}
@@ -1140,8 +1132,8 @@ const UserProfile: React.FC = () => {
 																	className="order-product"
 																>
 																	{product &&
-																	product.productImages &&
-																	product.productImages.length > 0 ? (
+																		product.productImages &&
+																		product.productImages.length > 0 ? (
 																		<img
 																			src={product.productImages[0]}
 																			alt={product.name}
@@ -1193,17 +1185,17 @@ const UserProfile: React.FC = () => {
 												data-label="Total"
 											>
 												<div className="order-total__amount">
-												Rs. {parseFloat(order.totalPrice).toLocaleString()}
-											</div>
-											<div className="order-total__shipping">
-												Shipping: Rs.{" "}
-												{parseFloat(order.shippingFee).toLocaleString()}
-											</div>
-											<div className="order-total__delivery">
-															<small>
-																Delivery: {orderDeliveryTimes[order.id] || '3-5 days'}
-															</small>
-														</div>
+													Rs. {parseFloat(order.totalPrice).toLocaleString()}
+												</div>
+												<div className="order-total__shipping">
+													Shipping: Rs.{" "}
+													{parseFloat(order.shippingFee).toLocaleString()}
+												</div>
+												<div className="order-total__delivery">
+													<small>
+														Delivery: {orderDeliveryTimes[order.id] || '3-5 days'}
+													</small>
+												</div>
 											</div>
 										</div>
 									)}
@@ -1250,8 +1242,8 @@ const UserProfile: React.FC = () => {
 															className="order-product"
 														>
 															{product &&
-															product.productImages &&
-															product.productImages.length > 0 ? (
+																product.productImages &&
+																product.productImages.length > 0 ? (
 																<img
 																	src={product.productImages[0]}
 																	alt={product.name}
@@ -1310,10 +1302,10 @@ const UserProfile: React.FC = () => {
 											{parseFloat(order.shippingFee).toLocaleString()}
 										</div>
 										<div className="order-total__delivery">
-															<small>
-																Delivery: {orderDeliveryTimes[order.id] || '3-5 days'}
-															</small>
-														</div>
+											<small>
+												Delivery: {orderDeliveryTimes[order.id] || '3-5 days'}
+											</small>
+										</div>
 									</div>
 								</>
 							)}
@@ -1411,16 +1403,15 @@ const UserProfile: React.FC = () => {
 			</Popup>
 			<div className="profile">
 				<div
-					className={`profile-card ${
-						activeTab === "details" ||
+					className={`profile-card ${activeTab === "details" ||
 						activeTab === "credentials" ||
 						activeTab === "orders"
-							? "profile-card--wide"
-							: ""
-					}`}
+						? "profile-card--wide"
+						: ""
+						}`}
 				>
 					<div className="profile-sidebar">
-						{isLoading.fetchUser ? (
+						{isLoading['fetchUser'] ? (
 							<>
 								<div className="skeleton skeleton-avatar" />
 								{[...Array(3)].map((_, i) => (
@@ -1442,54 +1433,52 @@ const UserProfile: React.FC = () => {
 								>
 									{userDetails?.username?.[0]?.toUpperCase() || "?"}
 								</div>
-								{userDetails.provider === "google"
+								{userDetails?.provider === "google"
 									? (["details", "orders"] as Tab[]).map((tab) => {
-											if (tab === "credentials" && user?.provider === "google")
+										if (tab === "credentials" && user?.provider === "google")
+											return null;
+										return (
+											<button
+												key={tab}
+												onClick={() => handleTabChange(tab)}
+												className={`profile-sidebar__button ${activeTab === tab
+													? "profile-sidebar__button--primary"
+													: "profile-sidebar__button--secondary"
+													}`}
+											>
+												{tab === "details"
+													? "Manage Details"
+													: tab === "credentials"
+														? "Change Credentials"
+														: "Order History"}
+											</button>
+										);
+									})
+									: (["details", "credentials", "orders"] as Tab[]).map(
+										(tab) => {
+											if (
+												tab === "credentials" &&
+												user?.provider === "google"
+											)
 												return null;
 											return (
 												<button
 													key={tab}
 													onClick={() => handleTabChange(tab)}
-													className={`profile-sidebar__button ${
-														activeTab === tab
-															? "profile-sidebar__button--primary"
-															: "profile-sidebar__button--secondary"
-													}`}
+													className={`profile-sidebar__button ${activeTab === tab
+														? "profile-sidebar__button--primary"
+														: "profile-sidebar__button--secondary"
+														}`}
 												>
 													{tab === "details"
 														? "Manage Details"
 														: tab === "credentials"
-														? "Change Credentials"
-														: "Order History"}
-												</button>
-											);
-									  })
-									: (["details", "credentials", "orders"] as Tab[]).map(
-											(tab) => {
-												if (
-													tab === "credentials" &&
-													user?.provider === "google"
-												)
-													return null;
-												return (
-													<button
-														key={tab}
-														onClick={() => handleTabChange(tab)}
-														className={`profile-sidebar__button ${
-															activeTab === tab
-																? "profile-sidebar__button--primary"
-																: "profile-sidebar__button--secondary"
-														}`}
-													>
-														{tab === "details"
-															? "Manage Details"
-															: tab === "credentials"
 															? "Change Credentials"
 															: "Order History"}
-													</button>
-												);
-											}
-									  )}
+												</button>
+											);
+										}
+									)}
 							</>
 						)}
 					</div>
@@ -1506,3 +1495,5 @@ const UserProfile: React.FC = () => {
 };
 
 export default UserProfile;
+
+

@@ -2,23 +2,23 @@
 
 export interface Product {
   id: number;
-  title?: string;
+  title?: string | undefined;
   description: string;
   price: string | number;
-  basePrice?: string | number;
-  originalPrice?: string;
-  discount?: string;
+  basePrice?: string | number | undefined;
+  originalPrice?: string | undefined;
+  discount?: string | undefined;
   rating: number;
   ratingCount: string | number;
-  isBestSeller?: boolean;
-  freeDelivery?: boolean;
+  isBestSeller?: boolean | undefined;
+  freeDelivery?: boolean | undefined;
   image: string;
-  stock?: number;
-  created_at?:string
-  brand?: string;
-  name?: string;
-  category?: any;
-  subcategory?: { id: number; name: string; category?: any };
+  stock?: number | undefined;
+  created_at?: string | undefined;
+  brand?: string | undefined;
+  name?: string | undefined;
+  category?: string | undefined;
+  subcategory?: { id: number; name: string; category?: any } | undefined;
   vendor?: string;
   piece?: string | number;
   availableColor?: string;

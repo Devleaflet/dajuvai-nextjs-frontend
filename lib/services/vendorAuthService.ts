@@ -1,13 +1,53 @@
 import { API_BASE_URL } from "@/lib/config";
-import type { Vendor, VendorSignupRequest, VendorLoginRequest, ApiResponse, VendorUpdateRequest } from "@/components/Components/Types/vendor";
+import type { Vendor, VendorSignupRequest, VendorLoginRequest, ApiResponse } from "@/components/Components/Types/vendor";
+
+export interface VendorUpdateRequest {
+  id: number;
+  businessName?: string;
+  email?: string;
+  phoneNumber?: string;
+  businessAddress?: string;
+  taxNumber?: string;
+  businessRegNumber?: string;
+  chequePhoto?: string | string[];
+  citizenshipDocuments?: string[];
+  taxDocuments?: string[];
+  accountName?: string;
+  bankName?: string;
+  accountNumber?: string;
+  bankBranch?: string;
+  bankCode?: string;
+  district?: string;
+}
+
+interface VendorSignupData {
+  businessName: string;
+  email: string;
+  password: string;
+  phoneNumber: string;
+  telePhone: string;
+  businessRegNumber: string;
+  province: string;
+  district: string;
+  taxNumber: string;
+  taxDocuments: string[];
+  citizenshipDocuments: string[];
+  chequePhoto: string;
+  accountName: string;
+  bankName: string;
+  accountNumber: string;
+  bankBranch: string;
+  bankCode?: string;
+  bankAddress?: string;
+}
 
 export class VendorAuthService {
-  private static async setAuthToken(token: string) {
+  private static async setAuthToken(token: string): Promise<void> {
     localStorage.setItem("vendorToken", token);
     document.cookie = `vendorToken=${token}; HttpOnly; Secure; SameSite=Strict; Max-Age=7200`;
   }
 
-  static async signup(vendorData: VendorSignupRequest, token: string | null): Promise<ApiResponse<Vendor>> {
+  static async signup(vendorData: VendorSignupData, token: string | null): Promise<ApiResponse<Vendor>> {
     try {
       if (!token) {
         return {
@@ -16,7 +56,7 @@ export class VendorAuthService {
         };
       }
 
-      const payload = {
+      const payload: VendorSignupRequest = {
         businessName: vendorData.businessName,
         email: vendorData.email,
         password: vendorData.password,
@@ -27,9 +67,13 @@ export class VendorAuthService {
         businessRegNumber: vendorData.businessRegNumber,
         citizenshipDocuments: vendorData.citizenshipDocuments,
         chequePhoto: vendorData.chequePhoto,
-        bankDetails: vendorData.bankDetails,
-        businessAddress: vendorData.businessAddress,
-        profilePicture: vendorData.profilePicture,
+        accountName: vendorData.accountName,
+        bankName: vendorData.bankName,
+        accountNumber: vendorData.accountNumber,
+        bankBranch: vendorData.bankBranch,
+        bankCode: vendorData.bankCode || "",
+        ...(vendorData.bankAddress && { businessAddress: vendorData.bankAddress }),
+        profilePicture: "",
       };
       //("API Request Payload:", JSON.stringify(payload, null, 2));
 
@@ -118,7 +162,7 @@ export class VendorAuthService {
     }
   }
 
-  static async adminsignup(vendorData: VendorSignupRequest, token: string | null): Promise<ApiResponse<Vendor>> {
+  static async adminsignup(vendorData: VendorSignupData, token: string | null): Promise<ApiResponse<Vendor>> {
     try {
       if (!token) {
         return {
@@ -127,7 +171,7 @@ export class VendorAuthService {
         };
       }
 
-      const payload = {
+      const payload: VendorSignupRequest = {
         businessName: vendorData.businessName,
         email: vendorData.email,
         password: vendorData.password,
@@ -138,9 +182,13 @@ export class VendorAuthService {
         businessRegNumber: vendorData.businessRegNumber,
         citizenshipDocuments: vendorData.citizenshipDocuments,
         chequePhoto: vendorData.chequePhoto,
-        bankDetails: vendorData.bankDetails,
-        businessAddress: vendorData.businessAddress,
-        profilePicture: vendorData.profilePicture,
+        accountName: vendorData.accountName,
+        bankName: vendorData.bankName,
+        accountNumber: vendorData.accountNumber,
+        bankBranch: vendorData.bankBranch,
+        bankCode: vendorData.bankCode || "",
+        ...(vendorData.bankAddress && { businessAddress: vendorData.bankAddress }),
+        profilePicture: "",
       };
       //("API Request Payload:", JSON.stringify(payload, null, 2));
 
@@ -274,9 +322,9 @@ export class VendorAuthService {
         };
       }
 
-      const formattedPhoneNumber = vendorData.phoneNumber.startsWith('+')
-        ? vendorData.phoneNumber
-        : `+977${vendorData.phoneNumber}`;
+      const formattedPhoneNumber = vendorData.phoneNumber 
+        ? (vendorData.phoneNumber.startsWith('+') ? vendorData.phoneNumber : `+977${vendorData.phoneNumber}`)
+        : '';
 
       // Debug: Log what we received
       //("🔍 VendorAuthService.updateVendor - Received vendorData:", vendorData);
@@ -342,7 +390,7 @@ export class VendorAuthService {
         success: true,
         vendor: data.data || data.vendor,
         message: data.message,
-      };
+      } as ApiResponse<Vendor>;
     } catch (error) {
       console.error("Error in updateVendor:", error);
       return {

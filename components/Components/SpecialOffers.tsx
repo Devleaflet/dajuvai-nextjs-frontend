@@ -7,6 +7,17 @@ import "@/styles/SpecialOffers.css";
 import OffersSkeleton from "@/components/skeleton/OffersSkeleton";
 import { API_BASE_URL } from '@/lib/config';
 
+interface Category {
+  id: number;
+  name: string;
+}
+
+interface Subcategory {
+  id: number;
+  name: string;
+  category: Category;
+}
+
 interface Offer {
   id: number;
   name: string;
@@ -18,9 +29,9 @@ interface Offer {
   startDate?: string;
   endDate?: string;
   productSource?: string;
-  selectedCategory?: number | null;
-  selectedSubcategory?: number | null;
-  externalLink?: string | null
+  selectedCategory?: Category | null;
+  selectedSubcategory?: Subcategory | null;
+  externalLink?: string | null;
 }
 
 const fetchSpecialDeals = async (): Promise<Offer[]> => {
@@ -29,17 +40,17 @@ const fetchSpecialDeals = async (): Promise<Offer[]> => {
     throw new Error(`Failed to fetch banners: ${response.statusText}`);
   }
   const data = await response.json();
-  //("special', data);
+
   // Filter for active SPECIAL_DEALS banners that are not expired and map to Offer interface
   const colors = ['#FFF3EA', '#F4F2ED', '#131313', '#FCE9E4', '#E2FFE2', '#E0F2FF'];
   return data.data
-    .filter((banner: Offer & { type: string; status: string; startDate?: string; endDate?: string }) =>
+    .filter((banner: any) =>
       banner.type === 'SPECIAL_DEALS' &&
       banner.status === 'ACTIVE' &&
       (!banner.startDate || new Date(banner.startDate) <= new Date()) &&
       (!banner.endDate || new Date(banner.endDate) >= new Date())
     )
-    .map((banner: Offer, index: number) => ({
+    .map((banner: any, index: number) => ({
       id: banner.id,
       name: banner.name,
       desktopImage: banner.desktopImage,
@@ -73,15 +84,13 @@ const SpecialOffers: React.FC = () => {
   });
 
   const handleOfferClick = (offer: Offer) => {
-    //('hipeee')
-    //(offer)
     if (offer.productSource === 'category' && offer.selectedCategory) {
       router.push(`/shop?categoryId=${offer.selectedCategory.id}`);
     } else if (offer.productSource === 'subcategory' && offer.selectedSubcategory) {
       router.push(`/shop?categoryId=${offer.selectedSubcategory.category.id}&subcategoryId=${offer.selectedSubcategory.id}`);
     } else if (offer.productSource === 'manual') {
       router.push(`/shop?bannerId=${offer.id}`);
-    } else if (offer.productSource === 'external') {
+    } else if (offer.productSource === 'external' && offer.externalLink) {
       window.open(offer.externalLink, "_blank");
     }
   };

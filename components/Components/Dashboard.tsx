@@ -2,16 +2,26 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useQuery } from '@tanstack/react-query';
+import dynamic from 'next/dynamic';
 import "@/styles/Dashboard.css";
 import { Sidebar } from "./Sidebar";
 import { Chart } from "chart.js/auto";
-import { useDocketHeight } from "../Hook/UseDockerHeight";
+import { useDocketHeight } from "@/lib/hooks/UseDockerHeight";
 import { useVendorAuth } from "@/lib/context/VendorAuthContext";
 import VendorHeader from "./VendorHeader";
 import axiosInstance from "@/lib/api/axiosInstance";
-import TopProducts from "./VendorDashboard/TopProducts";
-import VendorRevenueByCategory from "./VendorDashboard/RevenueByCategory";
-import VendorRevenueBySubCategory from "./VendorDashboard/RevenueBySubcategory";
+
+const TopProducts = dynamic(() => import("./VendorDashboard/TopProducts"), {
+  ssr: false
+});
+
+const VendorRevenueByCategory = dynamic(() => import("./VendorDashboard/RevenueByCategory"), {
+  ssr: false
+});
+
+const VendorRevenueBySubCategory = dynamic(() => import("./VendorDashboard/RevenueBySubcategory"), {
+  ssr: false
+});
 
 interface DashboardProps {
   version?: string;
@@ -338,8 +348,8 @@ export function Dashboard({ version = "123456" }: DashboardProps) {
               <div className="section-card revenue-analytics">
                 <h3
                   style={{
-                    marginBottom:"5px",
-                    textAlign:"center"
+                    marginBottom: "5px",
+                    textAlign: "center"
                   }}
                 >Total Sales</h3>
                 <div className="revenue-analytics__legend">
@@ -370,10 +380,10 @@ export function Dashboard({ version = "123456" }: DashboardProps) {
           </div>
           <div className="dashboard__two-columns">
             <div className="dashboard__column">
-          <TopProducts />
+              <TopProducts />
             </div>
             <div className="dashboard__column">
-          <VendorRevenueBySubCategory />
+              <VendorRevenueBySubCategory />
 
             </div>
           </div>
@@ -422,7 +432,7 @@ export function Dashboard({ version = "123456" }: DashboardProps) {
             </div>
           </div>
 
-          
+
         </main>
       </div>
     </div>

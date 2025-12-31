@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useVendorAuth } from "@/lib/context/VendorAuthContext";
 
@@ -26,8 +26,8 @@ const AuthRedirect: React.FC = () => {
       "/vendor/", // Allows /vendor/{id}
     ];
 
-    const isPublicRoute = publicRoutes.some(route => 
-      pathname === route || 
+    const isPublicRoute = publicRoutes.some(route =>
+      pathname === route ||
       pathname.startsWith('/product-page/') ||
       pathname.startsWith('/shop/') ||
       pathname.startsWith('/vendor/')
@@ -38,9 +38,9 @@ const AuthRedirect: React.FC = () => {
 
     if (!isAuthenticated && !isLoading && !isPublicRoute && pathname !== '/') {
       //("User logged out, redirecting to home from:", pathname);
-      router.push("/", { replace: true });
+      router.push("/");
     }
-  }, [isAuthAuthenticated, isVendorAuthenticated, authLoading, vendorLoading, pathname, navigate]);
+  }, [isAuthAuthenticated, isVendorAuthenticated, authLoading, vendorLoading, pathname, router]);
 
   return null;
 };

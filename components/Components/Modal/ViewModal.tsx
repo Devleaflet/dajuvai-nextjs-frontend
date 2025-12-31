@@ -1,5 +1,5 @@
 import React from "react";
-import { Order } from "@/lib/types/Order";
+import { Order } from "@/lib/types/entities/order";
 import "./ViewModal.css";
 
 interface OrderDetail {
@@ -38,10 +38,10 @@ const ViewModal: React.FC<ViewModalProps> = ({ show, onClose, order, orderDetail
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-container" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>Order #{order.orderId}</h2>
+          <h2>Order #{order.id}</h2>
           <button className="close-button" onClick={onClose}>×</button>
         </div>
-        
+
         <div className="modal-body">
           <div className="modal-section">
             <h3>Order Summary</h3>

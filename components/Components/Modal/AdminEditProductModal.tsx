@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import { useQuery } from '@tanstack/react-query';
-import { fetchProductCategories, fetchProductSubcategories } from '../../api/products';
+import { fetchCategories as fetchProductCategories, fetchSubcategories as fetchProductSubcategories } from '@/lib/api/categories';
 
 // Types
 type InventoryStatus = 'IN_STOCK' | 'OUT_OF_STOCK' | 'LOW_STOCK' | 'DISCONTINUED' | 'AVAILABLE' | 'UNAVAILABLE';
@@ -157,14 +157,14 @@ const AdminEditProductModal: React.FC<AdminEditProductModalProps> = ({
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!product) {
       toast.error('No product to update');
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
       const productData = {
         ...formData,
@@ -244,7 +244,7 @@ const AdminEditProductModal: React.FC<AdminEditProductModalProps> = ({
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 >
                   <option value="">Select Category</option>
-                  {categories.map((category) => (
+                  {categories.map((category: any) => (
                     <option key={category.id} value={category.id}>
                       {category.name}
                     </option>
@@ -349,7 +349,7 @@ const AdminEditProductModal: React.FC<AdminEditProductModalProps> = ({
                     <input
                       type="number"
                       name="discount"
-                      value={formData.discount}
+                      value={formData.discount || ''}
                       onChange={handleChange}
                       min="0"
                       step="0.01"

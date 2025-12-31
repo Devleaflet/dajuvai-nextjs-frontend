@@ -83,7 +83,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
 	};
 
 	const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>): void => {
-		if (scrollContainerRef.current) {
+		if (scrollContainerRef.current && e.touches[0]) {
 			setIsDragging(true);
 			setStartX(e.touches[0].clientX);
 			setScrollLeft(scrollContainerRef.current.scrollLeft);
@@ -91,7 +91,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
 	};
 
 	const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>): void => {
-		if (!isDragging || !scrollContainerRef.current) return;
+		if (!isDragging || !scrollContainerRef.current || !e.touches[0]) return;
 		e.preventDefault();
 		const x = e.touches[0].clientX;
 		const walk = (startX - x) * 2;

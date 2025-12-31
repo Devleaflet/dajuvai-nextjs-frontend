@@ -26,9 +26,10 @@ interface Subcategory {
 }
 
 import React from "react";
+import Image from "next/image";
+import dynamic from "next/dynamic";
 import axiosInstance from "@/lib/api/axiosInstance";
 import { addToWishlist } from "@/lib/api/wishlist";
-import AuthModal from "@/components/Components/AuthModal";
 import Footer from "@/components/Components/Footer";
 import Navbar from "@/components/Components/Navbar";
 import Preloader from "@/components/Components/Preloader";
@@ -38,6 +39,11 @@ import { useAuth } from "@/lib/context/AuthContext";
 import { useCart } from "@/lib/context/CartContext";
 import "@/styles/ProductPage.css";
 import ScrollToTop from "@/components/Components/ScrollToTop";
+import { sanitizeRichText } from "@/lib/utils/sanitize";
+
+const AuthModal = dynamic(() => import("@/components/Components/AuthModal"), {
+	ssr: false
+});
 
 const CACHE_KEY_REVIEWS = "productReviewsData";
 
@@ -118,8 +124,8 @@ const ProductPage = () => {
 			}
 
 			const variantImages: string[] = [];
-			let allVariants = [];
-			let defaultVariant = null;
+			let allVariants: any[] = [];
+			let defaultVariant: any = null;
 
 			if (apiProduct.variants && Array.isArray(apiProduct.variants)) {
 				allVariants = apiProduct.variants.map((variant: any) => {
@@ -567,7 +573,7 @@ const ProductPage = () => {
 		setSelectedVariant(variant);
 		if (variant.variantImgUrls && variant.variantImgUrls.length > 0) {
 			setSelectedImageIndex(0);
-		} else if (product?.productImages?.length > 0) {
+		} else if (product?.productImages && product.productImages.length > 0) {
 			setSelectedImageIndex(0);
 		}
 	};
@@ -614,7 +620,12 @@ const ProductPage = () => {
 		}
 		if (!product) return;
 		const variantId = selectedVariant?.id;
-		handleCartOnAdd(product, quantity, variantId);
+		// Convert category object to string if needed for cart
+		const productForCart = {
+			...product,
+			category: typeof product.category === 'object' ? product.category?.name : product.category
+		};
+		handleCartOnAdd(productForCart as any, quantity, variantId);
 		// showNotification("");
 	};
 
@@ -624,15 +635,16 @@ const ProductPage = () => {
 			return;
 		}
 		try {
-			const variantId = selectedVariant?.id;
-			await addToWishlist(product.id, variantId, token);
+			const variantId = selectedVariant?.id || undefined;
+			await addToWishlist(product.id, variantId, token || undefined);
 			toast.success("Added to wishlist");
-		} catch (e: any) {
-			const status = e?.response?.status;
+		} catch (e: unknown) {
+			const err = e as any;
+			const status = err?.response?.status;
 			const msg: string =
-				e?.response?.data?.message ||
-				e?.response?.data?.error ||
-				e?.message ||
+				err?.response?.data?.message ||
+				err?.response?.data?.error ||
+				err?.message ||
 				"";
 			if (status === 409 || /already/i.test(msg)) {
 				toast("Already present in the wishlist");
@@ -648,35 +660,37 @@ const ProductPage = () => {
 			return;
 		}
 		if (!product) return;
-		router.push("/checkout", {
-			state: {
-				buyNow: true,
-				products: [
-					{
-						product: {
-							...product,
-							selectedColor,
-							price: getCurrentPrice().toFixed(2),
-							originalPrice:
-								getOriginalPrice() > getCurrentPrice()
-									? getOriginalPrice().toFixed(2)
-									: undefined,
-							selectedVariant: selectedVariant
-								? {
-									id: selectedVariant.id,
-									attributes: selectedVariant.attributes,
-									calculatedPrice: selectedVariant.calculatedPrice,
-									originalPrice: selectedVariant.originalPrice,
-									stock: selectedVariant.stock,
-									variantImgUrls: selectedVariant.variantImgUrls,
-								}
-								: undefined,
-						},
-						quantity,
-					},
-				],
+
+		// Encode product data as URL params for Next.js
+		const productData = {
+			product: {
+				...product,
+				selectedColor,
+				price: getCurrentPrice().toFixed(2),
+				originalPrice:
+					getOriginalPrice() > getCurrentPrice()
+						? getOriginalPrice().toFixed(2)
+						: undefined,
+				selectedVariant: selectedVariant
+					? {
+						id: selectedVariant.id,
+						attributes: selectedVariant.attributes,
+						calculatedPrice: selectedVariant.calculatedPrice,
+						originalPrice: selectedVariant.originalPrice,
+						stock: selectedVariant.stock,
+						variantImgUrls: selectedVariant.variantImgUrls,
+					}
+					: undefined,
 			},
+			quantity,
+		};
+
+		const params = new URLSearchParams({
+			buyNow: 'true',
+			productData: encodeURIComponent(JSON.stringify(productData))
 		});
+
+		router.push(`/checkout?${params.toString()}`);
 	};
 
 	const handleQuantityChange = (increment: boolean) => {
@@ -840,12 +854,16 @@ const ProductPage = () => {
 									id="imageZoom"
 								>
 									{currentImage ? (
-										<img
+										<Image
 											src={currentImage}
 											alt={product.name}
+											width={600}
+											height={600}
+											priority
 											onError={() => handleImageError(selectedImageIndex)}
 											onLoad={handleImageLoad}
 											draggable={false}
+											style={{ objectFit: 'contain', width: '100%', height: 'auto' }}
 										/>
 									) : (
 										<div className="product-gallery__no-image">
@@ -872,16 +890,19 @@ const ProductPage = () => {
 											<button
 												key={index}
 												className={`product-gallery__thumbnail ${selectedImageIndex === index
-														? "product-gallery__thumbnail--active"
-														: ""
+													? "product-gallery__thumbnail--active"
+													: ""
 													}`}
 												onClick={() => handleImageSelect(index)}
 											>
 												{image && !imageError[index] ? (
-													<img
+													<Image
 														src={image}
 														alt={`Product view ${index + 1}`}
+														width={100}
+														height={100}
 														onError={() => handleImageError(index)}
+														style={{ objectFit: 'cover', width: '100%', height: 'auto' }}
 													/>
 												) : (
 													<div className="product-gallery__thumbnail-no-image">
@@ -920,7 +941,7 @@ const ProductPage = () => {
 							{product.description && (
 								<div className="product-info__description">
 									<h3>Description</h3>
-									<p>{product.description}</p>
+									<div dangerouslySetInnerHTML={{ __html: sanitizeRichText(product.description) }} />
 								</div>
 							)}
 
@@ -980,7 +1001,7 @@ const ProductPage = () => {
 												);
 
 												return orderedTypes.map((attrType, idx) => {
-													const optionValues = [...attributeOptions[attrType]];
+													const optionValues = [...(attributeOptions[attrType] || [])];
 													const hasMultipleOptions = optionValues.length > 4;
 
 													// Special logic for color buttons
@@ -1001,8 +1022,8 @@ const ProductPage = () => {
 																</span>
 																<div
 																	className={`product-options__variant-row ${hasMultipleOptions
-																			? "product-options__variant-row--many"
-																			: ""
+																		? "product-options__variant-row--many"
+																		: ""
 																		}`}
 																>
 																	{optionValues.map((optionValue) => {
@@ -1020,8 +1041,8 @@ const ProductPage = () => {
 																			<button
 																				key={optionValue}
 																				className={`product-options__button${isSelected
-																						? " product-options__button--active"
-																						: ""
+																					? " product-options__button--active"
+																					: ""
 																					}${isOutOfStock
 																						? " product-options__button--disabled"
 																						: ""
@@ -1079,8 +1100,8 @@ const ProductPage = () => {
 															</span>
 															<div
 																className={`product-options__variant-row ${hasMultipleOptions
-																		? "product-options__variant-row--many"
-																		: ""
+																	? "product-options__variant-row--many"
+																	: ""
 																	}`}
 															>
 																{optionValues.map((optionValue) => {
@@ -1104,8 +1125,8 @@ const ProductPage = () => {
 																		<button
 																			key={optionValue}
 																			className={`product-options__button${isSelected
-																					? " product-options__button--active"
-																					: ""
+																				? " product-options__button--active"
+																				: ""
 																				}${isOutOfStock
 																					? " product-options__button--disabled"
 																					: ""
@@ -1344,8 +1365,8 @@ const ProductPage = () => {
 					<RecommendedProducts
 						products={recommendedProducts ?? []}
 						currentProductId={product.id}
-						fallbackCategoryId={effectiveCategoryId}
-						fallbackSubcategoryId={effectiveSubcategoryId}
+						{...(effectiveCategoryId ? { fallbackCategoryId: effectiveCategoryId } : {})}
+						{...(effectiveSubcategoryId ? { fallbackSubcategoryId: effectiveSubcategoryId } : {})}
 						isLoading={isLoadingRecommended}
 					/>
 				</div>
@@ -1372,3 +1393,4 @@ const ProductPage = () => {
 };
 
 export default ProductPage;
+

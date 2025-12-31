@@ -3,14 +3,13 @@
 import React, { useEffect, useState } from "react";
 import { toast } from 'react-hot-toast';
 import "@/styles/NewProductModal.css";
-import axiosInstance from '../../api/axiosInstance';
-import { Category, fetchCategories, fetchSubcategories, Subcategory } from '../../api/categories';
-import { updateProduct, uploadProductImages } from '../../api/products';
+import axiosInstance from '@/lib/api/axiosInstance';
+import { Category, fetchCategories, fetchSubcategories, Subcategory } from '@/lib/api/categories';
+import { updateProduct, uploadProductImages } from '@/lib/api/products';
 import { API_BASE_URL } from "@/lib/config";
-import { dealApiService } from '../../services/apiDeals';
-import { Attribute, ProductFormData, ProductVariant } from "../../types/product";
-import { ApiProduct } from "@/lib/types/ApiProduct";
-import { Deal } from "@/lib/types/Deal";
+import { dealApiService } from '@/lib/services/apiDeals';
+import { Attribute, ProductFormData, ProductVariant, ApiProduct } from "@/lib/types/product";
+import type { Deal } from "@/lib/types/Deal";
 
 export enum InventoryStatus {
   AVAILABLE = 'AVAILABLE',
@@ -172,10 +171,10 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
       sku: `SKU-${combo.map(p => p.replace(/\s+/g, '-').toUpperCase()).join('-')}`,
       price: 0,
       stock: 0,
-      status: InventoryStatus.AVAILABLE,
+      status: 'AVAILABLE' as const,
       attributes: cleanSpecs.map((spec, i) => ({
         type: spec.type,
-        values: [{ value: combo[i], nestedAttributes: [] }]
+        values: [{ value: combo[i] || '', nestedAttributes: [] }]
       })),
       images: [],
       variantImages: []
@@ -469,14 +468,17 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   const addAttribute = (variantIndex: number) => {
     if (newAttribute.type && newAttribute.values[0]?.value) {
       const updatedVariants = [...variants];
-      if (!updatedVariants[variantIndex].attributes) {
-        updatedVariants[variantIndex].attributes = [];
+      const variant = updatedVariants[variantIndex];
+      if (!variant) return;
+
+      if (!variant.attributes) {
+        variant.attributes = [];
       }
       const normalized: Attribute = {
         type: newAttribute.type,
         values: newAttribute.values.map(v => ({ value: v.value, nestedAttributes: v.nestedAttributes || [] }))
       };
-      updatedVariants[variantIndex].attributes!.push(normalized);
+      variant.attributes.push(normalized);
       setVariants(updatedVariants);
       setNewAttribute({ type: '', values: [{ value: '', nestedAttributes: [] }] });
     }
@@ -484,7 +486,10 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
 
   const removeAttribute = (variantIndex: number, attributeIndex: number) => {
     const updatedVariants = [...variants];
-    updatedVariants[variantIndex].attributes!.splice(attributeIndex, 1);
+    const variant = updatedVariants[variantIndex];
+    if (!variant?.attributes) return;
+
+    variant.attributes.splice(attributeIndex, 1);
     setVariants(updatedVariants);
   };
 
@@ -577,7 +582,8 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
 
     // Validate discount if provided
     if (formData.discount !== undefined && formData.discount !== null) {
-      if (formData.discount < 0) return 'Discount cannot be negative';
+      const discountNum = typeof formData.discount === 'string' ? parseFloat(formData.discount) : formData.discount;
+      if (discountNum < 0) return 'Discount cannot be negative';
       if (!formData.discountType) return 'Discount type is required when discount amount is provided';
     }
 
@@ -717,9 +723,10 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
       } else {
         throw new Error('Failed to update product');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating product:', error);
-      toast.error(error.message || 'Failed to update product');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update product';
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -1011,8 +1018,11 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                           value={spec.type}
                           onChange={(e) => {
                             const next = [...attributeSpecs];
-                            next[i].type = e.target.value;
-                            setAttributeSpecs(next);
+                            const spec = next[i];
+                            if (spec) {
+                              spec.type = e.target.value;
+                              setAttributeSpecs(next);
+                            }
                           }}
                         />
                         <div className="label-hint">Examples: Color, Size, Material</div>
@@ -1026,8 +1036,11 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                           value={spec.valuesText}
                           onChange={(e) => {
                             const next = [...attributeSpecs];
-                            next[i].valuesText = e.target.value;
-                            setAttributeSpecs(next);
+                            const spec = next[i];
+                            if (spec) {
+                              spec.valuesText = e.target.value;
+                              setAttributeSpecs(next);
+                            }
                           }}
                         />
                         <div className="label-hint">Tip: press comma to separate values. Duplicates are ignored.</div>

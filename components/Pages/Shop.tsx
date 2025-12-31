@@ -5,7 +5,7 @@ import { toInteger } from 'lodash';
 import { ChevronDown, ChevronUp, Search, Settings2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from "next/navigation";
-import ProductCard1 from "@/components/ALT/ProductCard1";
+import ProductCard from "@/components/Components/ProductCard";
 import { fetchReviewOf } from "@/lib/api/products";
 import CategorySlider from "@/components/Components/CategorySlider";
 import Footer from "@/components/Components/Footer";
@@ -17,9 +17,9 @@ import { useAuth } from "@/lib/context/AuthContext";
 import { useUI } from "@/lib/context/UIContext";
 import CategoryService from "@/lib/services/categoryService";
 import ProductCardSkeleton from "@/components/skeleton/ProductCardSkeleton";
-import "@/styles/Shop.css";
 import HeroSlider from "@/components/Components/HeroSlider";
 import ProductBannerSlider from '@/components/Components/ProductBannerSlider';
+import '@/styles/Shop.css';
 // Interfaces (unchanged)
 interface Category {
 	id: number;
@@ -278,7 +278,7 @@ const fetchProductsWithFilters = async (
 const processProductWithReview = async (item: ApiProduct): Promise<Product> => {
 	try {
 		const { averageRating, reviews } = await fetchReviewOf(item.id);
-		const isDev = Boolean((import.meta as any)?.env?.DEV);
+		const isDev = process.env.NODE_ENV === 'development';
 
 		const processImageUrl = (imgUrl: string): string => {
 			if (!imgUrl) return '';
@@ -331,14 +331,14 @@ const processProductWithReview = async (item: ApiProduct): Promise<Product> => {
 		const variantImagePool = processedVariants
 			.flatMap((v) => [v.image, ...(v.images || [])])
 			.filter((x): x is string => typeof x === 'string' && x.length > 0);
-		const getDisplayImage = () => {
+		const getDisplayImage = (): string => {
 			if (processedProductImages.length > 0) {
-				return processedProductImages[0];
+				return processedProductImages[0]!;
 			}
 			const allVariantImages = processedVariants
 				.flatMap((v) => [v.image, ...(v.images || [])])
 				.filter((x): x is string => typeof x === 'string' && x.length > 0);
-			if (allVariantImages.length > 0) return allVariantImages[0];
+			if (allVariantImages.length > 0) return allVariantImages[0]!;
 			if (isDev) {
 				//('No valid images found for product, using default image');
 			}
@@ -385,10 +385,10 @@ const processProductWithReview = async (item: ApiProduct): Promise<Product> => {
 		}
 		return {
 			id: item.id,
-			title: item.name,
-			description: item.description,
+			title: item.name as string,
+			description: item.description as string,
 			originalPrice: originalPriceNum.toString(),
-			discount: item.discount ? `${item.discount}` : undefined,
+			...(item.discount ? { discount: `${item.discount}` } : {}),
 			discountPercentage: item.discount ? `${item.discount}%` : '0%',
 			price: displayPriceNum.toString(),
 			rating: Number(averageRating) || 0,
@@ -403,15 +403,15 @@ const processProductWithReview = async (item: ApiProduct): Promise<Product> => {
 						? variantImagePool
 						: ['/placeholder-product.png'],
 			variants: processedVariants,
-			category: item.subcategory?.category?.name || 'Misc',
-			subcategory: item.subcategory,
-			brand: item.brand?.name || 'Unknown',
-			brand_id: item.brand?.id || null,
+			...(item.subcategory?.category?.name ? { category: item.subcategory.category.name } : { category: 'Misc' }),
+			...(item.subcategory ? { subcategory: item.subcategory } : {}),
+			...(item.brand?.name ? { brand: item.brand.name } : { brand: 'Unknown' }),
+			brand_id: item.brand?.id ?? null,
 			status: item.status === 'UNAVAILABLE' ? 'OUT_OF_STOCK' : 'AVAILABLE',
 			stock: item.stock || 0,
 		};
 	} catch (error) {
-		const isDev = Boolean((import.meta as any)?.env?.DEV);
+		const isDev = process.env.NODE_ENV === 'development';
 		if (isDev) console.error('Error processing product:', error);
 		const processImageUrl = (imgUrl: string): string => {
 			if (!imgUrl) return '';
@@ -464,14 +464,14 @@ const processProductWithReview = async (item: ApiProduct): Promise<Product> => {
 		const variantImagePool = processedVariants
 			.flatMap((v) => [v.image, ...(v.images || [])])
 			.filter((x): x is string => typeof x === 'string' && x.length > 0);
-		const getFallbackImage = () => {
+		const getFallbackImage = (): string => {
 			if (processedProductImages.length > 0) {
-				return processedProductImages[0];
+				return processedProductImages[0]!;
 			}
 			const allVariantImages = processedVariants
 				.flatMap((v) => [v.image, ...(v.images || [])])
 				.filter((x): x is string => typeof x === 'string' && x.length > 0);
-			if (allVariantImages.length > 0) return allVariantImages[0];
+			if (allVariantImages.length > 0) return allVariantImages[0]!;
 			return '/placeholder-product.png';
 		};
 		const displayImage = getFallbackImage();
@@ -514,7 +514,7 @@ const processProductWithReview = async (item: ApiProduct): Promise<Product> => {
 			title: item.name || 'Unknown Product',
 			description: item.description || 'No description available',
 			originalPrice: originalPriceNum.toString(),
-			discount: item.discount ? `${item.discount}` : undefined,
+			...(item.discount ? { discount: `${item.discount}` } : {}),
 			discountPercentage: item.discount ? `${item.discount}%` : '0%',
 			price: displayPriceNum.toString(),
 			rating: 0,
@@ -529,10 +529,10 @@ const processProductWithReview = async (item: ApiProduct): Promise<Product> => {
 						? variantImagePool
 						: ['/placeholder-product.png'],
 			variants: processedVariants,
-			category: item.subcategory?.category?.name || 'Misc',
-			subcategory: item.subcategory,
-			brand: item.brand?.name || 'Unknown',
-			brand_id: item.brand?.id || null,
+			...(item.subcategory?.category?.name ? { category: item.subcategory.category.name } : { category: 'Misc' }),
+			...(item.subcategory ? { subcategory: item.subcategory } : {}),
+			...(item.brand?.name ? { brand: item.brand.name } : { brand: 'Unknown' }),
+			brand_id: item.brand?.id ?? null,
 			status: item.status === 'UNAVAILABLE' ? 'OUT_OF_STOCK' : 'AVAILABLE',
 			stock: item.stock || 0,
 		};
@@ -754,16 +754,19 @@ const Shop: React.FC = () => {
 								title: item.name || 'Unknown Product',
 								description: item.description || 'No description available',
 								originalPrice: '0',
-								discount: item.discount ? `${item.discount}` : undefined,
 								discountPercentage: item.discount ? `${item.discount}%` : '0%',
 								price: '0',
 								rating: 0,
 								ratingCount: '0',
 								isBestSeller: false,
 								freeDelivery: true,
-								// image: phone,
+								image: '/placeholder-product.png',
+								productImages: ['/placeholder-product.png'],
 								category: 'Misc',
 								brand: 'Unknown',
+								brand_id: null,
+								status: 'AVAILABLE' as const,
+								stock: 0,
 							};
 						}
 					})
@@ -818,7 +821,6 @@ const Shop: React.FC = () => {
 										title: item.name || 'Unknown Product',
 										description: item.description || 'No description available',
 										originalPrice: '0',
-										discount: item.discount ? `${item.discount}` : undefined,
 										discountPercentage: item.discount
 											? `${item.discount}%`
 											: '0%',
@@ -827,9 +829,13 @@ const Shop: React.FC = () => {
 										ratingCount: '0',
 										isBestSeller: false,
 										freeDelivery: true,
-										// image: phone,
+										image: '/placeholder-product.png',
+										productImages: ['/placeholder-product.png'],
 										category: 'Misc',
 										brand: 'Unknown',
+										brand_id: null,
+										status: 'AVAILABLE' as const,
+										stock: 0,
 									};
 								}
 							})
@@ -893,9 +899,13 @@ const Shop: React.FC = () => {
 												ratingCount: '0',
 												isBestSeller: false,
 												freeDelivery: true,
-												// image: phone,
+												image: '/placeholder-product.png',
+												productImages: ['/placeholder-product.png'],
 												category: 'Misc',
 												brand: 'Unknown',
+												brand_id: null,
+												status: 'AVAILABLE' as const,
+												stock: 0,
 											};
 										}
 									})
@@ -1495,7 +1505,7 @@ const Shop: React.FC = () => {
 											))
 									) : pagination.total_items > 0 ? (
 										productsData.map((product) => (
-											<ProductCard1
+											<ProductCard
 												key={product.id}
 												product={product}
 											/>
@@ -1566,3 +1576,4 @@ const Shop: React.FC = () => {
 	);
 };
 export default Shop;
+

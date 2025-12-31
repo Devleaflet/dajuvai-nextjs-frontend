@@ -59,7 +59,7 @@ interface TransformedBanner {
   selectedCategory?: number | null;
   selectedSubcategory?: number | null;
   selectedDeal?: number | null;
-  externalLink?: string;
+  externalLink?: string | undefined;
 }
 
 interface ApiResponse<T> {
@@ -122,7 +122,6 @@ const createBannerAPI = (token: string | null) => ({
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const result: ApiResponse<Banner[]> = await response.json();
-      //("Banners", result.data);
       return result.data || [];
     } catch (error) {
       console.error("Error fetching banners:", error);
@@ -409,7 +408,7 @@ const AdminBannerWithTabs = () => {
             setBanners(data);
             setLoading(false);
           }
-        } catch {}
+        } catch { }
       }
       loadBanners();
     }
@@ -417,22 +416,24 @@ const AdminBannerWithTabs = () => {
 
   const transformBanner = (banner: Banner): TransformedBanner => {
     // Extract categoryId and subcategoryId from the first product in selectedProducts
-    let selectedCategory: number | null = banner.selectedCategory || null;
-    if (typeof selectedCategory === 'object' && selectedCategory !== null) {
-      selectedCategory = selectedCategory.id;
+    let selectedCategory: number | null = null;
+    if (banner.selectedCategory) {
+      selectedCategory = typeof banner.selectedCategory === 'object' ? banner.selectedCategory.id : banner.selectedCategory;
     }
-    let selectedSubcategory: number | null = banner.selectedSubcategory || null;
-    if (typeof selectedSubcategory === 'object' && selectedSubcategory !== null) {
-      selectedSubcategory = selectedSubcategory.id;
+
+    let selectedSubcategory: number | null = null;
+    if (banner.selectedSubcategory) {
+      selectedSubcategory = typeof banner.selectedSubcategory === 'object' ? banner.selectedSubcategory.id : banner.selectedSubcategory;
     }
-    let selectedDeal: number | null = banner.selectedDeal || null;
-    if (typeof selectedDeal === 'object' && selectedDeal !== null) {
-      selectedDeal = selectedDeal.id;
+
+    let selectedDeal: number | null = null;
+    if (banner.selectedDeal) {
+      selectedDeal = typeof banner.selectedDeal === 'object' ? banner.selectedDeal.id : banner.selectedDeal;
     }
 
     if (banner.productSource === "manual" && Array.isArray(banner.selectedProducts) && banner.selectedProducts.length > 0) {
       const firstProduct = banner.selectedProducts[0];
-      if (typeof firstProduct !== "number" && firstProduct.subcategory) {
+      if (firstProduct && typeof firstProduct !== "number" && firstProduct.subcategory) {
         selectedSubcategory = firstProduct.subcategory.id;
         selectedCategory = firstProduct.subcategory.category.id;
       }
@@ -446,19 +447,19 @@ const AdminBannerWithTabs = () => {
         banner.startDate && banner.endDate
           ? `${new Date(banner.startDate).toLocaleDateString()} - ${new Date(banner.endDate).toLocaleDateString()}`
           : banner.startDate
-          ? `From ${new Date(banner.startDate).toLocaleDateString()}`
-          : "Not scheduled",
+            ? `From ${new Date(banner.startDate).toLocaleDateString()}`
+            : "Not scheduled",
       color: banner.color || getDefaultColor(mapApiTypeToDisplay(banner.type)),
       createdBy: banner.createdBy ? banner.createdBy.username : "System",
       selectedProducts: Array.isArray(banner.selectedProducts)
         ? banner.selectedProducts.map((product) =>
-            typeof product === "number" ? product : product.id
-          )
+          typeof product === "number" ? product : product.id
+        )
         : [],
       selectedCategory,
       selectedSubcategory,
       selectedDeal,
-      externalLink: banner.externalLink,
+      externalLink: banner.externalLink || undefined,
     };
   };
 
@@ -582,7 +583,6 @@ const AdminBannerWithTabs = () => {
       if (!banner) {
         throw new Error("Banner not found");
       }
-      //("Editing banner:", banner);
       setEditingBanner(banner);
       setShowCreateForm(true);
     } catch (error) {
@@ -731,7 +731,7 @@ const AdminBannerWithTabs = () => {
     <div className="admin-banner" style={{ display: "flex" }}>
       <AdminSidebar />
       <div className="admin-banner__content">
-        <Header onSearch={() => {}} showSearch={false} title="Banner Management" />
+        <Header onSearch={() => { }} showSearch={false} title="Banner Management" />
         {error && (
           <div className="admin-banner__error">
             {error}
@@ -937,10 +937,10 @@ const CreateBannerForm: React.FC<CreateBannerFormProps> = ({
   const [bannerName, setBannerName] = useState(editingBanner?.name || "");
   const [bannerType, setBannerType] = useState(editingBanner?.type || "Hero Banner");
   const [startDate, setStartDate] = useState(
-    editingBanner?.startDate ? new Date(editingBanner.startDate).toISOString().split("T")[0] : new Date().toISOString().split("T")[0]
+    editingBanner?.startDate && editingBanner.startDate ? new Date(editingBanner.startDate).toISOString().split("T")[0] : new Date().toISOString().split("T")[0]
   );
   const [endDate, setEndDate] = useState(
-    editingBanner?.endDate ? new Date(editingBanner.endDate).toISOString().split("T")[0] : ""
+    editingBanner?.endDate && editingBanner.endDate ? new Date(editingBanner.endDate).toISOString().split("T")[0] : ""
   );
   const [productSource, setProductSource] = useState(editingBanner?.productSource || "manual");
   const [selectedProducts, setSelectedProducts] = useState<number[]>(
@@ -1155,9 +1155,8 @@ const CreateBannerForm: React.FC<CreateBannerFormProps> = ({
                       {products.map((product) => (
                         <div
                           key={product.id}
-                          className={`create-banner__product-item ${
-                            selectedProducts.includes(product.id) ? "create-banner__product-item--selected" : ""
-                          }`}
+                          className={`create-banner__product-item ${selectedProducts.includes(product.id) ? "create-banner__product-item--selected" : ""
+                            }`}
                         >
                           <input
                             type="checkbox"
@@ -1444,7 +1443,7 @@ const CreateBannerForm: React.FC<CreateBannerFormProps> = ({
       return;
     }
 
-    if (endDate && new Date(endDate) < new Date(startDate)) {
+    if (endDate && endDate.trim() && startDate && new Date(endDate) < new Date(startDate)) {
       onError("End date must be >= start date");
       return;
     }
@@ -1483,45 +1482,45 @@ const CreateBannerForm: React.FC<CreateBannerFormProps> = ({
       const bannerData: Record<string, any> = {
         name: bannerName.trim(),
         type: mapDisplayTypeToApi(bannerType),
-        startDate: new Date(startDate).toISOString(),
+        startDate: startDate ? new Date(startDate).toISOString() : new Date().toISOString(),
       };
 
-      if (endDate) {
-        bannerData.endDate = new Date(endDate).toISOString();
+      if (endDate && endDate.trim()) {
+        bannerData['endDate'] = new Date(endDate).toISOString();
       }
 
-      bannerData.productSource = productSource;
+      bannerData['productSource'] = productSource;
 
       if (productSource === "manual") {
-        bannerData.selectedProducts = selectedProducts;
+        bannerData['selectedProducts'] = selectedProducts;
       }
       if (productSource === "category") {
-        bannerData.selectedCategoryId = selectedCategory;
+        bannerData['selectedCategoryId'] = selectedCategory;
       }
       if (productSource === "subcategory") {
-        bannerData.selectedCategoryId = selectedCategory;
-        bannerData.selectedSubcategoryId = selectedSubcategory;
+        bannerData['selectedCategoryId'] = selectedCategory;
+        bannerData['selectedSubcategoryId'] = selectedSubcategory;
       }
       if (productSource === "deal") {
-        bannerData.selectedDeal = selectedDeal;
+        bannerData['selectedDeal'] = selectedDeal;
       }
       if (productSource === "external") {
-        bannerData.externalLink = externalLink;
+        bannerData['externalLink'] = externalLink;
       }
 
       // Upload images and get URLs
       if (desktopImages) {
         const desktopImageUrl = await imageAPI.uploadImage(desktopImages);
-        bannerData.desktopImage = desktopImageUrl;
+        bannerData['desktopImage'] = desktopImageUrl;
       } else if (editingBanner?.desktopImage) {
-        bannerData.desktopImage = editingBanner.desktopImage;
+        bannerData['desktopImage'] = editingBanner.desktopImage;
       }
 
       if (mobileImage && bannerType !== "Special Deals Banner") {
         const mobileImageUrl = await imageAPI.uploadImage(mobileImage);
-        bannerData.mobileImage = mobileImageUrl;
+        bannerData['mobileImage'] = mobileImageUrl;
       } else if (editingBanner?.mobileImage && bannerType !== "Special Deals Banner") {
-        bannerData.mobileImage = editingBanner.mobileImage;
+        bannerData['mobileImage'] = editingBanner.mobileImage;
       }
 
       // Log the payload for debugging
@@ -1558,12 +1557,12 @@ const CreateBannerForm: React.FC<CreateBannerFormProps> = ({
               className={`create-banner__step-indicator ${currentStep === index ? "create-banner__step-indicator--active" : ""}`}
               onClick={() => setCurrentStep(index)}
             >
-              Step {index + 1}: {step.title}
+              Step {index + 1}: {step?.title || ''}
             </div>
           ))}
         </div>
 
-        <div className="create-banner__step-content">{steps[currentStep].content}</div>
+        <div className="create-banner__step-content">{steps[currentStep]?.content}</div>
 
         <div className="create-banner__actions">
           <button className="create-banner__button create-banner__button--cancel" onClick={onClose} disabled={loading || fetching}>

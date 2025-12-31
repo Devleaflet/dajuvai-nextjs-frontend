@@ -2,9 +2,9 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { IoIosArrowDropleftCircle, IoIosArrowDroprightCircle } from "react-icons/io";
-import { ApiProduct } from '../../types/product';
-import ProductCard1 from '../../ALT/ProductCard1';
-import type { Product as UIProduct } from "@/lib/types/Product";
+import { ApiProduct } from '@/lib/types/product';
+import ProductCard from '../ProductCard';
+import type { Product as UIProduct } from "@/lib/types/product";
 import "@/styles/RecommendedProducts.css";
 
 interface RecommendedProductsProps {
@@ -81,7 +81,7 @@ const RecommendedProducts: React.FC<RecommendedProductsProps> = ({
   };
 
   const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>): void => {
-    if (scrollContainerRef.current) {
+    if (scrollContainerRef.current && e.touches[0]) {
       setIsDragging(true);
       setStartX(e.touches[0].clientX);
       setScrollLeft(scrollContainerRef.current.scrollLeft);
@@ -89,7 +89,7 @@ const RecommendedProducts: React.FC<RecommendedProductsProps> = ({
   };
 
   const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>): void => {
-    if (!isDragging || !scrollContainerRef.current) return;
+    if (!isDragging || !scrollContainerRef.current || !e.touches[0]) return;
     e.preventDefault();
     const x = e.touches[0].clientX;
     const walk = (startX - x) * 2;
@@ -155,39 +155,50 @@ const RecommendedProducts: React.FC<RecommendedProductsProps> = ({
     // Map ApiProduct to UI Product expected by ProductCard
     return {
       id: apiProduct.id,
+      name: apiProduct.name,
       title: apiProduct.name,
       description: apiProduct.description || '',
       price: (apiProduct as any).price ?? apiProduct.basePrice ?? 0,
-      basePrice: apiProduct.basePrice ?? undefined,
-      originalPrice: undefined,
-      discount: (apiProduct as any).discount ?? undefined,
-      discountType: apiProduct.discountType ?? undefined,
+      basePrice: apiProduct.basePrice ?? null,
+      discount: (apiProduct as any).discount ?? null,
+      discountType: apiProduct.discountType ?? null,
+      size: [],
+      status: apiProduct.status || 'AVAILABLE',
       rating: Number((apiProduct as any).avgRating?.avg ?? (apiProduct as any).rating ?? 0) || 0,
       ratingCount: String(
         (Array.isArray((apiProduct as any).reviews) ? (apiProduct as any).reviews.length : undefined) ??
-          (apiProduct as any).avgRating?.count ??
-          (apiProduct as any).ratingCount ??
-          0
+        (apiProduct as any).avgRating?.count ??
+        (apiProduct as any).ratingCount ??
+        0
       ),
       isBestSeller: false,
       freeDelivery: false,
       image: apiProduct.image || (apiProduct.productImages && apiProduct.productImages[0]) || '',
-      stock: (apiProduct as any).stock ?? undefined,
+      stock: (apiProduct as any).stock ?? 0,
       category: categoryId != null ? { id: Number(categoryId) } as any : undefined,
-      subcategory: subcatId != null ? { id: Number(subcatId), name: (apiProduct as any)?.subcategory?.name || '' } : undefined,
+      subcategory: subcatId != null
+        ? { id: Number(subcatId), name: (apiProduct as any)?.subcategory?.name || '', image: null, createdAt: '', updatedAt: '' }
+        : { id: 0, name: '', image: null, createdAt: '', updatedAt: '' },
       productImages: apiProduct.productImages || [],
-      variants: (apiProduct.variants || []).map((v: any) => ({
-        id: v.id,
-        price: v.price ?? v.basePrice,
-        originalPrice: v.originalPrice ?? v.basePrice,
-        stock: v.stock,
-        sku: v.sku,
-        image: Array.isArray(v.variantImages) ? v.variantImages[0] : v.image,
-        images: Array.isArray(v.variantImages) ? v.variantImages : Array.isArray(v.images) ? v.images : undefined,
-        discount: v.discount,
-        discountType: v.discountType,
-        attributes: v.attributes,
-      })),
+      vendor: {
+        id: (apiProduct as any).vendorId ?? 0,
+        businessName: (apiProduct as any).vendor?.businessName ?? '',
+        email: (apiProduct as any).vendor?.email ?? '',
+        phoneNumber: (apiProduct as any).vendor?.phoneNumber ?? '',
+        districtId: (apiProduct as any).vendor?.districtId ?? 0,
+        isVerified: (apiProduct as any).vendor?.isVerified ?? false,
+        createdAt: (apiProduct as any).vendor?.createdAt ?? '',
+        updatedAt: (apiProduct as any).vendor?.updatedAt ?? '',
+        district: {
+          id: (apiProduct as any).vendor?.district?.id ?? 0,
+          name: (apiProduct as any).vendor?.district?.name ?? '',
+        },
+      },
+      inventory: [],
+      vendorId: (apiProduct as any).vendorId ?? 0,
+      created_at: (apiProduct as any).created_at ?? '',
+      updated_at: (apiProduct as any).updated_at ?? '',
+      deal: (apiProduct as any).deal ?? null,
     };
   };
 
@@ -259,9 +270,8 @@ const RecommendedProducts: React.FC<RecommendedProductsProps> = ({
         )}
         <div
           ref={scrollContainerRef}
-          className={`recommended-products__slider ${
-            isDragging ? "recommended-products__slider--dragging" : ""
-          }`}
+          className={`recommended-products__slider ${isDragging ? "recommended-products__slider--dragging" : ""
+            }`}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
@@ -274,7 +284,7 @@ const RecommendedProducts: React.FC<RecommendedProductsProps> = ({
             const uiProduct = convertToUIProduct(product);
             return (
               <div key={product.id} className="recommended-product-card__wrapper">
-                <ProductCard1 product={uiProduct} />
+                <ProductCard product={uiProduct as any} />
               </div>
             );
           })}

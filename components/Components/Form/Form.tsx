@@ -24,13 +24,13 @@ interface SelectFieldProps extends FormFieldBaseProps {
 }
 
 interface CheckboxFieldProps extends FormFieldBaseProps {
-  type: 'checkbox";
+  type: 'checkbox';
   checked: boolean;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 interface TextareaFieldProps extends FormFieldBaseProps {
-  type: 'textarea";
+  type: 'textarea';
   value: string;
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   placeholder?: string;

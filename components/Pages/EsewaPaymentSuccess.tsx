@@ -98,7 +98,7 @@ const PaymentSuccess: React.FC = () => {
   }, [token]);
 
   const handleBackHome = () => router.push('/');
-  const handleViewOrders = () => router.push('/user-profile', { state: { activeTab: 'orders' } });
+  const handleViewOrders = () => router.push('/profile?tab=orders');
 
   return (
     <div style={{ textAlign: 'center', padding: '2rem' }}>

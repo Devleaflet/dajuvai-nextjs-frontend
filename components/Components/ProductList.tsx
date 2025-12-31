@@ -60,8 +60,8 @@ const ProductList: React.FC<ProductListProps> = ({
 					!!img && typeof img === "string" && img.trim() !== ""
 			)
 			.map(processImageUrl)
-			.filter(Boolean);
-		if (productImages.length > 0) return productImages[0];
+			.filter((img): img is string => !!img);
+		if (productImages.length > 0) return productImages[0]!;
 
 		if (typeof product.image === "string" && product.image.trim()) {
 			const img = processImageUrl(product.image);
@@ -79,8 +79,8 @@ const ProductList: React.FC<ProductListProps> = ({
 					!!img && typeof img === "string" && img.trim() !== ""
 			)
 			.map(processImageUrl)
-			.filter(Boolean);
-		if (variantImages.length > 0) return variantImages[0];
+			.filter((img): img is string => !!img);
+		if (variantImages.length > 0) return variantImages[0]!;
 
 		return "/assets/logo.webp";
 	};

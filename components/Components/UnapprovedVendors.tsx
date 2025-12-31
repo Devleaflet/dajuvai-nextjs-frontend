@@ -515,6 +515,7 @@ interface AdminVendor {
   id: number;
   businessName: string;
   email: string;
+  businessAddress?: string;
   phoneNumber?: string;
   district?: {
     id: number;
@@ -712,7 +713,7 @@ const UnapprovedVendors: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [vendorAPI]);
 
   useEffect(() => {
     if (isAuthenticated && token) {
@@ -763,7 +764,11 @@ const UnapprovedVendors: React.FC = () => {
         let aValue: any = a[sortConfig.key];
         let bValue: any = b[sortConfig.key];
 
-        if (sortConfig.key === "id") {
+        // Handle nested district object
+        if (sortConfig.key === "district") {
+          aValue = a.district?.name?.toLowerCase() || "";
+          bValue = b.district?.name?.toLowerCase() || "";
+        } else if (sortConfig.key === "id") {
           aValue = Number(aValue);
           bValue = Number(bValue);
         } else {
@@ -1046,7 +1051,7 @@ const UnapprovedVendors: React.FC = () => {
           setShowViewModal(false);
           setSelectedVendor(null);
         }}
-        vendor={selectedVendor}
+        vendor={selectedVendor as any}
       />
     </div>
   );

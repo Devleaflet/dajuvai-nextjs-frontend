@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import "@/styles/TermsAndConditions.css";
 import Navbar from "@/components/Components/Navbar";
 import Footer from "@/components/Components/Footer";
@@ -8,14 +8,16 @@ import Footer from "@/components/Components/Footer";
 const TermsAndConditions = () => {
 
   const handleGoBack = () => {
-    window.location.href = "/checkout"; 
+    window.location.href = "/checkout";
   };
 
 
 
   return (
     <>
-      <Navbar />
+      <Suspense fallback={<div style={{ height: '80px' }} />}>
+        <Navbar />
+      </Suspense>
       <div className="tnc-container">
         <header className="tnc-header">
           <div className="tnc-header-content">

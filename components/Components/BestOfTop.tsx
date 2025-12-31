@@ -23,7 +23,7 @@ const BestOfTop: React.FC = () => {
         if (Array.isArray(parsed) && parsed.length > 0) {
           setRecommendedProducts(parsed);
         }
-      } catch {}
+      } catch { }
     }
   }, []);
 
@@ -78,6 +78,7 @@ const BestOfTop: React.FC = () => {
   return (
     <ProductCarousel
       title="Best of Top Products"
+      sectionId={1}
       products={recommendedProducts}
       scrollAmount={300}
     />

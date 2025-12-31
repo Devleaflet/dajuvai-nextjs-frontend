@@ -2,21 +2,34 @@
 
 import { Chart } from 'chart.js/auto';
 import { useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import axiosInstance from "@/lib/api/axiosInstance";
-import RevenueByCategory from "@/components/Components/AdminDashboard/CategoryRevenue";
-import RevenueBySubCategory from "@/components/Components/AdminDashboard/SubCategoryRevenue";
-import RevenueByVendor from "@/components/Components/AdminDashboard/VendorRevenue";
 import { AdminSidebar } from "@/components/Components/AdminSidebar";
 import Header from "@/components/Components/Header";
 import Skeleton from "@/components/Components/Skeleton/Skeleton";
 import { useAuth } from "@/lib/context/AuthContext";
 import "@/styles/AdminDashboard.css";
-import { useDocketHeight } from './../Hook/UseDockerHeight';
+import { useDocketHeight } from '@/lib/hooks/UseDockerHeight';
+
+const RevenueByCategory = dynamic(() => import("@/components/Components/AdminDashboard/CategoryRevenue"), {
+	loading: () => <Skeleton type="text" />,
+	ssr: false
+});
+
+const RevenueBySubCategory = dynamic(() => import("@/components/Components/AdminDashboard/SubCategoryRevenue"), {
+	loading: () => <Skeleton type="text" />,
+	ssr: false
+});
+
+const RevenueByVendor = dynamic(() => import("@/components/Components/AdminDashboard/VendorRevenue"), {
+	loading: () => <Skeleton type="text" />,
+	ssr: false
+});
 
 const STATS_CACHE_KEY = 'admin_dashboard_stats';
 const REVENUE_CACHE_KEY = 'admin_dashboard_revenue';
 const VENDORS_CACHE_KEY = 'admin_dashboard_vendors_sales';
-const TOP_PRODUCTS_CACHE_KEY = 'admin_dashboard_top_products";
+const TOP_PRODUCTS_CACHE_KEY = 'admin_dashboard_top_products';
 const CACHE_TTL = 5 * 60 * 1000;
 
 interface StatData {
@@ -59,7 +72,7 @@ interface StatsCardProps {
 	value: string | number;
 	iconType: string;
 	change: number;
-	trend: 'up' | 'down";
+	trend: 'up' | 'down';
 	timeframe: string;
 }
 
@@ -83,7 +96,7 @@ function StatsCard({ title, value, iconType }: StatsCardProps) {
 
 export function AdminDashboard() {
 	const { token } = useAuth();
-	const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+	const [isMobile, setIsMobile] = useState(false);
 	const [stats, setStats] = useState<StatData | null>(null);
 	const [revenue, setRevenue] = useState<RevenueData[]>([]);
 	const [vendorsSales, setVendorsSales] = useState<VendorSales[]>([]);
@@ -115,9 +128,12 @@ export function AdminDashboard() {
 	const vendorChartRef = useRef<Chart | null>(null);
 	const topProductsChartRef = useRef<Chart | null>(null);
 
-	
+
 
 	useEffect(() => {
+		// Set initial mobile state
+		setIsMobile(window.innerWidth < 768);
+
 		const handleResize = () => {
 			setIsMobile(window.innerWidth < 768);
 		};
@@ -146,11 +162,6 @@ export function AdminDashboard() {
 			const response = await axiosInstance.get('/api/admin/dashboard/stats', {
 				headers: { Authorization: `Bearer ${token}` },
 			});
-			//('----------stats------------');
-			//('----------stats------------');
-			//('----------stats------------');
-			//('----------stats------------');
-			//(response);
 			if (response.data && response.data.success) {
 				setStats(response.data.data);
 				localStorage.setItem(
@@ -161,7 +172,8 @@ export function AdminDashboard() {
 				setError(response.data.message || 'Failed to fetch dashboard stats');
 			}
 		} catch (err) {
-			setError(err.response?.data?.message || 'Error fetching dashboard stats');
+			const error = err as any;
+			setError(error.response?.data?.message || 'Error fetching dashboard stats');
 		} finally {
 			setStatsLoading(false);
 		}
@@ -200,15 +212,15 @@ export function AdminDashboard() {
 				setError('Failed to fetch revenue data');
 			}
 		} catch (err) {
-			setError(err.response?.data?.message || 'Error fetching revenue data');
+			const error = err as any;
+			setError(error.response?.data?.message || 'Error fetching revenue data');
 		} finally {
 			setRevenueLoading(false);
 		}
 	};
 
 	const getVendorsCacheKey = () =>
-		`${VENDORS_CACHE_KEY}_${vendorsStartDate || 'all'}_${
-			vendorsEndDate || 'all'
+		`${VENDORS_CACHE_KEY}_${vendorsStartDate || 'all'}_${vendorsEndDate || 'all'
 		}_${vendorsPage}`;
 
 	const fetchVendorsSales = async () => {
@@ -253,8 +265,7 @@ export function AdminDashboard() {
 	};
 
 	const getTopProductsCacheKey = () =>
-		`${TOP_PRODUCTS_CACHE_KEY}_${topProductsStartDate || 'all'}_${
-			topProductsEndDate || 'all'
+		`${TOP_PRODUCTS_CACHE_KEY}_${topProductsStartDate || 'all'}_${topProductsEndDate || 'all'
 		}_${topProductsPage}`;
 
 	const fetchTopProducts = async () => {
@@ -333,7 +344,7 @@ export function AdminDashboard() {
 				remaining -= clamped;
 			}
 			values.push(remaining);
-			setTodaysSalesData(hours.map((h, i) => ({ label: h, value: values[i] })));
+			setTodaysSalesData(hours.map((h, i) => ({ label: h, value: values[i] || 0 })));
 		}
 	}, [todaysSales]);
 
@@ -413,9 +424,9 @@ export function AdminDashboard() {
 							callbacks: {
 								label: (context) => {
 									if (context.dataset.label === 'Revenue') {
-										return `Rs. ${context.parsed.y.toLocaleString('en-IN')}`;
+										return `Rs. ${(context.parsed.y || 0).toLocaleString('en-IN')}`;
 									} else {
-										return `${context.parsed.y}`;
+										return `${context.parsed.y || 0}`;
 									}
 								},
 							},
@@ -492,8 +503,8 @@ export function AdminDashboard() {
 						x: {
 							beginAtZero: true,
 							ticks: {
-								callback: (value: number) =>
-									`Rs. ${value.toLocaleString('en-IN')}`,
+								callback: (value: string | number) =>
+									`Rs. ${Number(value).toLocaleString('en-IN')}`,
 							},
 						},
 					},
@@ -507,65 +518,6 @@ export function AdminDashboard() {
 			}
 		};
 	}, [vendorsSales]);
-
-	useEffect(() => {
-		const ctx = document.getElementById(
-			'top-products-chart'
-		) as HTMLCanvasElement;
-		if (ctx && topProducts.length > 0) {
-			if (topProductsChartRef.current) {
-				topProductsChartRef.current.destroy();
-			}
-			const colors = [
-				'#3B82F6',
-				'#10B981',
-				'#F59E0B',
-				'#EF4444',
-				'#8B5CF6',
-				'#EC4899',
-				'#14B8A6',
-			];
-			const chart = new Chart(ctx, {
-				type: 'bar',
-				data: {
-					labels: topProducts.map((p) => p.productName),
-					datasets: [
-						{
-							label: 'Total Sales',
-							data: topProducts.map((p) => p.totalSales),
-							backgroundColor: topProducts.map(
-								(_, i) => colors[i % colors.length]
-							),
-							borderColor: '#374151',
-							borderWidth: 1,
-						},
-					],
-				},
-				options: {
-					responsive: true,
-					maintainAspectRatio: false,
-					plugins: {
-						legend: { display: false },
-					},
-					scales: {
-						y: {
-							beginAtZero: true,
-							ticks: {
-								callback: (value: number) =>
-									`Rs. ${value.toLocaleString('en-IN')}`,
-							},
-						},
-					},
-				},
-			});
-			topProductsChartRef.current = chart;
-		}
-		return () => {
-			if (topProductsChartRef.current) {
-				topProductsChartRef.current.destroy();
-			}
-		};
-	}, [topProducts]);
 
 	useEffect(() => {
 		const ctx = document.getElementById(
@@ -611,10 +563,10 @@ export function AdminDashboard() {
 							callbacks: {
 								// Show full product name on hover
 								title: function (context) {
-									return context[0].label;
+									return context[0]?.label || '';
 								},
 								label: function (context) {
-									return `Rs. ${context.parsed.y.toLocaleString('en-IN')}`;
+									return `Rs. ${(context.parsed.y || 0).toLocaleString('en-IN')}`;
 								},
 							},
 						},
@@ -623,7 +575,7 @@ export function AdminDashboard() {
 						x: {
 							ticks: {
 								callback: function (value, index) {
-									const label = this.getLabelForValue(value);
+									const label = String(this.getLabelForValue(Number(value)));
 									const maxLength = 15; // Adjust number of visible characters
 									return label.length > maxLength
 										? label.slice(0, maxLength) + '…'
@@ -637,8 +589,8 @@ export function AdminDashboard() {
 						y: {
 							beginAtZero: true,
 							ticks: {
-								callback: (value: number) =>
-									`Rs. ${value.toLocaleString('en-IN')}`,
+								callback: (value: string | number) =>
+									`Rs. ${Number(value).toLocaleString('en-IN')}`,
 							},
 							grid: {
 								color: '#e5e7eb',
@@ -775,7 +727,7 @@ export function AdminDashboard() {
 				<AdminSidebar />
 				<div className={`dashboard ${isMobile ? 'dashboard--mobile' : ''}`}>
 					<Header
-						// onSearch={handleSearch}
+						onSearch={() => { }}
 						showSearch={false}
 						title="Dashboard"
 					/>
@@ -806,7 +758,7 @@ export function AdminDashboard() {
 			<AdminSidebar />
 			<div className={`dashboard ${isMobile ? 'dashboard--mobile' : ''}`}>
 				<Header
-					// onSearch={handleSearch}
+					onSearch={() => { }}
 					showSearch={false}
 					title="Dashboard"
 				/>

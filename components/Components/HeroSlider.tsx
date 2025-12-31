@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import "@/styles/HeroSlider.css";
 import SliderSkeleton from "@/components/skeleton/SliderSkeleton";
 import { API_BASE_URL } from '@/lib/config';
@@ -144,7 +145,10 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ onLoad }) => {
       const dy = clientY - startPos.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
       if (distance <= clickThreshold) {
-        handleImageClick(slides[activeSlide]);
+        const currentSlide = slides[activeSlide];
+        if (currentSlide) {
+          handleImageClick(currentSlide);
+        }
       }
     }
     setStartPos(null);
@@ -170,15 +174,20 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ onLoad }) => {
   };
 
   const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>): void => {
-    handleDragStart(e.touches[0].clientX, e.touches[0].clientY);
+    const touch = e.touches[0];
+    if (!touch) return;
+    handleDragStart(touch.clientX, touch.clientY);
   };
 
   const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>): void => {
-    handleDragMove(e.touches[0].clientX);
+    const touch = e.touches[0];
+    if (!touch) return;
+    handleDragMove(touch.clientX);
   };
 
   const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>): void => {
-    const clientX = e.changedTouches[0]?.clientX || startPos?.x || 0;
+    const touch = e.changedTouches[0];
+    const clientX = touch?.clientX || startPos?.x || 0;
     const clientY = e.changedTouches[0]?.clientY || startPos?.y || 0;
     handleDragEnd(clientX, clientY);
   };
@@ -278,20 +287,29 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ onLoad }) => {
           transition: isDragging ? 'none' : 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
-        {slides.map((slide) => (
-          <div key={slide.id} className="hero-slider__slide">
-            <div className="hero-slider__image-container">
-              <img
-                src={window.innerWidth < 768 ? slide.mobileImage || slide.desktopImage : slide.desktopImage}
-                alt={slide.name}
-                className="hero-slider__image"
-                loading="lazy"
-                draggable={false}
-                onDragStart={(e) => e.preventDefault()}
-              />
+        {slides.map((slide, index) => {
+          const imageSrc = window.innerWidth < 768
+            ? (slide.mobileImage || slide.desktopImage || '')
+            : (slide.desktopImage || '');
+
+          return (
+            <div key={slide.id} className="hero-slider__slide">
+              <div className="hero-slider__image-container">
+                <Image
+                  src={imageSrc}
+                  alt={slide.name}
+                  fill
+                  priority={index === 0}
+                  sizes="100vw"
+                  className="hero-slider__image"
+                  draggable={false}
+                  onDragStart={(e) => e.preventDefault()}
+                  style={{ objectFit: 'cover' }}
+                />
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {slides.length > 1 && (

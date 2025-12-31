@@ -159,8 +159,11 @@ const CategorySlider: React.FC = () => {
     const slider = sliderRef.current;
     if (!slider) return;
 
+    const touch = e.touches[0];
+    if (!touch) return;
+
     setIsDragging(true);
-    setStartX(e.touches[0].pageX - slider.offsetLeft);
+    setStartX(touch.pageX - slider.offsetLeft);
     setScrollLeft(slider.scrollLeft);
     setDragDistance(0);
   };
@@ -170,7 +173,10 @@ const CategorySlider: React.FC = () => {
     const slider = sliderRef.current;
     if (!slider) return;
 
-    const x = e.touches[0].pageX - slider.offsetLeft;
+    const touch = e.touches[0];
+    if (!touch) return;
+
+    const x = touch.pageX - slider.offsetLeft;
     const walk = (x - startX) * 1.5;
     setDragDistance(Math.abs(walk));
     slider.scrollLeft = scrollLeft - walk;
@@ -214,7 +220,7 @@ const CategorySlider: React.FC = () => {
   );
 
   // 🔹 Subcomponent that shows fallback if image fails
-  const ImageWithFallback: React.FC<{ src?: string; name: string }> = ({
+  const ImageWithFallback: React.FC<{ src: string | undefined; name: string }> = ({
     src,
     name,
   }) => {
@@ -300,7 +306,10 @@ const CategorySlider: React.FC = () => {
                 }
               >
                 <div className="top-category__image-container">
-                  <ImageWithFallback src={item.image} name={item.name} />
+                  <ImageWithFallback
+                    src={item.image}
+                    name={item.name}
+                  />
                 </div>
                 <p className="top-category__name">{item.name}</p>
               </div>

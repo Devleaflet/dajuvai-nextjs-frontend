@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useContext, createContext, useReducer, useEffect, useState } from "react";
+import React, { useContext, createContext, useReducer, useEffect, useState, useMemo, useCallback } from "react";
 import axiosInstance from "@/lib/api/axiosInstance";
 import { Product } from "@/components/Components/Types/Product";
 import { fetchCart } from "@/lib/api/cart";
@@ -8,6 +8,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
 import axios from "axios";
 import { toast } from "react-hot-toast";
+import logger from "@/lib/utils/logger";
 
 // Define cart item type with proper ID structure
 interface CartItem {
@@ -61,9 +62,9 @@ const cartReducer = (state: CartItem[], action: ActionType): CartItem[] => {
           name: String(action.payload.product.name || action.payload.product.title),
           price: Number(action.payload.product.price),
           quantity: action.payload.quantity,
-          image: action.payload.product.image || iphone,
+          image: action.payload.product.image || "/assets/logo.webp",
           product: action.payload.product,
-          variantId: action.payload.variantId,
+          ...(action.payload.variantId !== undefined && { variantId: action.payload.variantId }),
         },
         ...state,
       ];
@@ -151,10 +152,10 @@ const CartContextProvider: React.FC<{ children: React.ReactNode }> = ({
       } catch (error) {
         // If there's an auth error, clear the cart
         if (axios.isAxiosError(error) && error.response?.status === 401) {
-          //("Auth error while fetching cart, clearing cart");
+          logger.debug("Auth error while fetching cart, clearing cart");
           setCartItems([]);
         } else {
-          console.error("Failed to load cart on mount:", error);
+          logger.error("Failed to load cart on mount", error);
         }
       }
     };
@@ -173,10 +174,10 @@ const CartContextProvider: React.FC<{ children: React.ReactNode }> = ({
           setCartItems(items);
         } catch (error) {
           if (axios.isAxiosError(error) && error.response?.status === 401) {
-            //("Auth error while refreshing cart, clearing cart");
+            logger.debug("Auth error while refreshing cart, clearing cart");
             setCartItems([]);
           } else {
-            console.error("Failed to refresh cart on navigation:", error);
+            logger.error("Failed to refresh cart on navigation", error);
           }
         }
       };
@@ -201,10 +202,10 @@ const CartContextProvider: React.FC<{ children: React.ReactNode }> = ({
         setCartItems(items);
       } catch (error) {
         if (axios.isAxiosError(error) && error.response?.status === 401) {
-          //("Auth error while refreshing cart, clearing cart");
+          logger.debug("Auth error while refreshing cart, clearing cart");
           setCartItems([]);
         } else {
-          console.error("Failed to refresh cart:", error);
+          logger.error("Failed to refresh cart", error);
         }
       }
     };
@@ -222,11 +223,44 @@ const CartContextProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => window.removeEventListener('userLoggedOut', handleLogout);
   }, []);
 
-  const setCartItems = (items: CartItem[]) => {
+  const setCartItems = useCallback((items: CartItem[]) => {
     dispatch({ type: "SET_ITEMS", payload: items });
-  };
+  }, []);
 
-  const handleCartOnAdd = async (product: Product, quantity = 1, variantId?: number) => {
+  const refreshCart = useCallback(async () => {
+    //("=== refreshCart START ===");
+    //("Is authenticated:", auth.isAuthenticated);
+
+    if (!auth.isAuthenticated) {
+      //("User not authenticated, clearing cart");
+      setCartItems([]);
+      return;
+    }
+
+    try {
+      logger.debug("Fetching cart from backend");
+      const items = await fetchCart();
+      logger.debug("Fetched cart items from backend", { count: items.length });
+
+      logger.debug("Setting cart items in state");
+      setCartItems(items);
+      logger.debug("refreshCart SUCCESS");
+    } catch (error) {
+      logger.error("refreshCart ERROR");
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        logger.debug("Auth error while refreshing cart, clearing cart");
+        setCartItems([]);
+      } else {
+        logger.error("Failed to refresh cart", error);
+        if (axios.isAxiosError(error)) {
+          logger.debug("Error response", error.response?.data);
+          logger.debug("Error status", error.response?.status);
+        }
+      }
+    }
+  }, [auth.isAuthenticated, setCartItems]);
+
+  const handleCartOnAdd = useCallback(async (product: Product, quantity = 1, variantId?: number) => {
     //("=== handleCartOnAdd START ===");
     //("Product being added:", product);
     //("Quantity:", quantity);
@@ -263,18 +297,19 @@ const CartContextProvider: React.FC<{ children: React.ReactNode }> = ({
       //("Refreshing cart from backend...");
       // Refresh cart from backend to get the correct item structure
       await refreshCart();
-      //("Cart refreshed successfully");
+      logger.debug("Cart refreshed successfully");
 
       toast.success("Item added to cart successfully!");
-      //("=== handleCartOnAdd SUCCESS ===");
-    } catch (error: any) {
-      console.error("=== handleCartOnAdd ERROR ===");
-      console.error("Cart POST error:", error?.response?.data || error.message);
+      logger.debug("handleCartOnAdd SUCCESS");
+    } catch (error: unknown) {
+      logger.error("handleCartOnAdd ERROR");
+      const err = error as any;
+      logger.error("Cart POST error", err?.response?.data || err.message);
 
       const message =
-        error?.response?.data?.message ||
-        error?.response?.data?.error ||
-        error.message;
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err.message;
 
       //("-----------Message---------")
       //(message)
@@ -298,9 +333,9 @@ const CartContextProvider: React.FC<{ children: React.ReactNode }> = ({
       });
       //("=== handleCartOnAdd END ===");
     }
-  };
+  }, [auth.isAuthenticated, addingItems, refreshCart]);
 
-  const handleCartItemOnDelete = async (cartItem: CartItem) => {
+  const handleCartItemOnDelete = useCallback(async (cartItem: CartItem) => {
     //("=== handleCartItemOnDelete START ===");
     //("Cart item being deleted:", cartItem);
     //("Cart item ID:", cartItem.id);
@@ -338,15 +373,19 @@ const CartContextProvider: React.FC<{ children: React.ReactNode }> = ({
       await refreshCart();
       //("Cart refreshed successfully after deletion");
 
-      //("Item deleted successfully from backend");
+      logger.debug("Item deleted successfully from backend");
       toast.success("Item removed from cart successfully!");
-      //("=== handleCartItemOnDelete SUCCESS ===");
-    } catch (error: any) {
-      console.error("=== handleCartItemOnDelete ERROR ===");
-      console.error("Delete error:", error?.response?.data || error.message);
-      console.error("Full error object:", error);
-      console.error("Error response status:", error?.response?.status);
-      console.error("Error response headers:", error?.response?.headers);
+      logger.debug("handleCartItemOnDelete SUCCESS");
+    } catch (error: unknown) {
+      logger.error("handleCartItemOnDelete ERROR");
+      if (axios.isAxiosError(error)) {
+        logger.error("Delete error", error.response?.data || error.message);
+        logger.debug("Error response status", error.response?.status);
+        logger.debug("Error response headers", error.response?.headers);
+      } else if (error instanceof Error) {
+        logger.error("Delete error", error.message);
+      }
+      logger.debug("Full error object", error);
 
       // Show error toast notification
       toast.error("Failed to remove item from cart. Please try again.");
@@ -360,9 +399,9 @@ const CartContextProvider: React.FC<{ children: React.ReactNode }> = ({
       });
       //("=== handleCartItemOnDelete END ===");
     }
-  };
+  }, [auth.isAuthenticated, deletingItems, refreshCart]);
 
-  const handleIncreaseQuantity = async (
+  const handleIncreaseQuantity = useCallback(async (
     cartItemId: number,
     amount: number = 1
   ) => {
@@ -383,7 +422,7 @@ const CartContextProvider: React.FC<{ children: React.ReactNode }> = ({
       // Find the cart item to derive productId and variantId
       const item = cartItems.find(ci => ci.id === cartItemId);
       if (!item) {
-        console.warn("Cart item not found for increase:", cartItemId);
+        logger.warn("Cart item not found for increase", { cartItemId });
         return;
       }
 
@@ -399,12 +438,12 @@ const CartContextProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // Refresh cart from backend to get the correct state
       await refreshCart();
-      //("Quantity increased for cart item:", cartItemId);
-    } catch (error: any) {
-      console.error(
-        "Failed to increase quantity:",
-        error?.response?.data || error.message
-      );
+      logger.debug("Quantity increased for cart item", { cartItemId });
+    } catch (error: unknown) {
+      const errorMessage = axios.isAxiosError(error) && error.response?.data
+        ? error.response.data
+        : error instanceof Error ? error.message : "Unknown error";
+      logger.error("Failed to increase quantity", errorMessage);
       toast.error("Failed to update quantity. Please try again.");
     } finally {
       // Remove item from updating set
@@ -414,9 +453,9 @@ const CartContextProvider: React.FC<{ children: React.ReactNode }> = ({
         return newSet;
       });
     }
-  };
+  }, [auth.isAuthenticated, updatingItems, cartItems, refreshCart]);
 
-  const handleDecreaseQuantity = async (
+  const handleDecreaseQuantity = useCallback(async (
     cartItemId: number,
     amount: number = 1
   ) => {
@@ -444,12 +483,12 @@ const CartContextProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // Refresh cart from backend to get the correct state
       await refreshCart();
-      //("Quantity decreased for cart item:", cartItemId);
-    } catch (error: any) {
-      console.error(
-        "Failed to decrease quantity:",
-        error?.response?.data || error.message
-      );
+      logger.debug("Quantity decreased for cart item", { cartItemId });
+    } catch (error: unknown) {
+      const errorMessage = axios.isAxiosError(error) && error.response?.data
+        ? error.response.data
+        : error instanceof Error ? error.message : "Unknown error";
+      logger.error("Failed to decrease quantity", errorMessage);
       toast.error("Failed to update quantity. Please try again.");
     } finally {
       // Remove item from updating set
@@ -459,58 +498,38 @@ const CartContextProvider: React.FC<{ children: React.ReactNode }> = ({
         return newSet;
       });
     }
-  };
+  }, [auth.isAuthenticated, updatingItems, cartItems, refreshCart]);
 
-  const refreshCart = async () => {
-    //("=== refreshCart START ===");
-    //("Is authenticated:", auth.isAuthenticated);
-
-    if (!auth.isAuthenticated) {
-      //("User not authenticated, clearing cart");
-      setCartItems([]);
-      return;
-    }
-
-    try {
-      //("Fetching cart from backend...");
-      const items = await fetchCart();
-      //("Fetched cart items from backend:", items);
-      //("Number of items fetched:", items.length);
-
-
-
-      //("Setting cart items in state...");
-      setCartItems(items);
-      //("Cart items set successfully");
-      //("=== refreshCart SUCCESS ===");
-    } catch (error) {
-      console.error("=== refreshCart ERROR ===");
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
-        //("Auth error while refreshing cart, clearing cart");
-        setCartItems([]);
-      } else {
-        console.error("Failed to refresh cart:", error);
-        console.error("Error response:", error?.response?.data);
-        console.error("Error status:", error?.response?.status);
-      }
-    }
-  };
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo(
+    () => ({
+      cartItems,
+      setCartItems,
+      handleCartOnAdd,
+      handleCartItemOnDelete,
+      handleDecreaseQuantity,
+      handleIncreaseQuantity,
+      refreshCart,
+      deletingItems,
+      addingItems,
+      updatingItems,
+    }),
+    [
+      cartItems,
+      setCartItems,
+      handleCartOnAdd,
+      handleCartItemOnDelete,
+      handleDecreaseQuantity,
+      handleIncreaseQuantity,
+      refreshCart,
+      deletingItems,
+      addingItems,
+      updatingItems,
+    ]
+  );
 
   return (
-    <CartContext.Provider
-      value={{
-        cartItems,
-        setCartItems,
-        handleCartOnAdd,
-        handleCartItemOnDelete,
-        handleDecreaseQuantity,
-        handleIncreaseQuantity,
-        refreshCart,
-        deletingItems,
-        addingItems,
-        updatingItems,
-      }}
-    >
+    <CartContext.Provider value={contextValue}>
       {children}
     </CartContext.Provider>
   );

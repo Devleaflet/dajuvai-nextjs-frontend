@@ -23,7 +23,7 @@ const HomeRecommended: React.FC = () => {
         if (Array.isArray(parsed) && parsed.length > 0) {
           setRecommendedProducts(parsed);
         }
-      } catch {}
+      } catch { }
     }
   }, []);
 
@@ -45,7 +45,7 @@ const HomeRecommended: React.FC = () => {
       ratingCount: reviews.length,
       isBestSeller: item.stock > 20,
       freeDelivery: true,
-      image: item.productImages[0] || p1,
+      image: item.productImages[0] || '',
       category: item.subcategory?.category,
       subcategory: item.subcategory,
     };
@@ -65,6 +65,7 @@ const HomeRecommended: React.FC = () => {
 
   return (
     <ProductCarousel
+      sectionId={1}
       title="RECOMMENDED FOR YOU"
       products={recommendedProducts}
       scrollAmount={300}

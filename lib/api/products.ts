@@ -2,6 +2,20 @@ import axios from "axios";
 import axiosInstance from "./axiosInstance";
 import { API_BASE_URL } from "@/lib/config";
 
+// Helper function to safely get error message
+const getErrorMessage = (error: unknown): string => {
+	if (error instanceof Error) return error.message;
+	if (typeof error === 'object' && error !== null && 'message' in error) {
+		return String((error as any).message);
+	}
+	return String(error);
+};
+
+// Helper to check if error is an axios error
+const isAxiosError = (error: unknown): error is { response?: { status?: number; statusText?: string; headers?: any; data?: any; config?: any } } => {
+	return typeof error === 'object' && error !== null && 'response' in error;
+};
+
 interface RawProduct {
 	id: number;
 	name: string;
@@ -61,9 +75,11 @@ export const testProductAPI = async (
 		});
 		//"✅ Test API Success:", response.data);
 		return response.data;
-	} catch (error: any) {
+	} catch (error: unknown) {
 		console.error("❌ Test API Error:", error);
-		console.error("Error Response:", error.response?.data);
+		if (isAxiosError(error)) {
+			console.error("Error Response:", error.response?.data);
+		}
 		throw error;
 	}
 };
@@ -192,19 +208,18 @@ export const uploadProductImages = async (
 		} else {
 			throw new Error("Invalid response format from upload endpoint");
 		}
-	} catch (error: any) {
+	} catch (error: unknown) {
 		console.error("=== UPLOAD ERROR ===");
 		console.error("Error details:", error);
-		console.error("Response data:", error.response?.data);
-		console.error("Response status:", error.response?.status);
+		if (isAxiosError(error)) {
+			console.error("Response data:", error.response?.data);
+			console.error("Response status:", error.response?.status);
+		}
 
 		return {
 			success: false,
 			urls: [],
-			message:
-				error.response?.data?.message ||
-				error.message ||
-				"Failed to upload images",
+			message: getErrorMessage(error),
 		};
 	}
 };
@@ -319,17 +334,19 @@ export const createProduct = async (
 	} catch (error) {
 		console.error("=== PRODUCT CREATION ERROR ===");
 		console.error("Error Type:", typeof error);
-		console.error("Error Name:", error.name);
-		console.error("Error Message:", error.message);
+		
+		if (error instanceof Error) {
+			console.error("Error Name:", error.name);
+			console.error("Error Message:", error.message);
+		}
 		console.error("Full Error Object:", error);
 
-		if (error.response) {
+		if (isAxiosError(error) && error.response) {
 			console.error("=== ERROR RESPONSE DETAILS ===");
 			console.error("Status:", error.response.status);
 			console.error("Status Text:", error.response.statusText);
 			console.error("Headers:", error.response.headers);
 			console.error("Data:", error.response.data);
-			console.error("Config:", error.response.config);
 
 			if (error.response.status === 401) {
 				throw new Error("Unauthorized: Please login again");
@@ -353,13 +370,13 @@ export const createProduct = async (
 				console.error("API Error Message:", error.response.data.message);
 				throw new Error(error.response.data.message);
 			}
-		} else if (error.request) {
+		} else if (typeof error === 'object' && error !== null && 'request' in error) {
 			console.error("=== REQUEST ERROR (No Response) ===");
-			console.error("Request:", error.request);
+			console.error("Request:", (error as any).request);
 			throw new Error("Network error: No response from server");
 		} else {
 			console.error("=== SETUP ERROR ===");
-			console.error("Error setting up request:", error.message);
+			console.error("Error setting up request:", getErrorMessage(error));
 		}
 
 		throw error;
@@ -444,7 +461,7 @@ export const updateProduct = async (
 	} catch (error) {
 		console.error("❌ UPDATE PRODUCT ERROR:", error);
 
-		if (error.response) {
+		if (isAxiosError(error) && error.response) {
 			console.error("Response Status:", error.response.status);
 			console.error("Response Data:", error.response.data);
 			console.error("Response Headers:", error.response.headers);
@@ -468,11 +485,11 @@ export const updateProduct = async (
 			throw new Error(
 				`Update failed: ${error.response.data?.message || "Unknown error"}`
 			);
-		} else if (error.request) {
-			console.error("Request Error:", error.request);
+		} else if (typeof error === 'object' && error !== null && 'request' in error) {
+			console.error("Request Error:", (error as any).request);
 			throw new Error("Network error: No response from server");
 		} else {
-			console.error("Setup Error:", error.message);
+			console.error("Setup Error:", getErrorMessage(error));
 		}
 
 		throw error;
@@ -497,20 +514,20 @@ export const deleteProduct = async (productId: number, token?: string) => {
 		//"Product deleted successfully:", response.data);
 		return response.data;
 	} catch (error: unknown) {
-		if (typeof error === "object" && error !== null && "response" in error) {
-			const err = error as { response?: { status?: number; data?: any } };
-			console.error("Error deleting product:", err.response?.data || error);
-			if (err.response?.status === 403) {
+		if (isAxiosError(error)) {
+			console.error("Error deleting product:", error.response?.data || error);
+			if (error.response?.status === 403) {
 				throw new Error(
 					"Not authorized to delete this product. You can only delete products you own."
 				);
-			} else if (err.response?.status === 401) {
+			} else if (error.response?.status === 401) {
 				throw new Error("Authentication failed. Please login again.");
-			} else if (err.response?.status === 404) {
+			} else if (error.response?.status === 404) {
 				throw new Error("Product not found.");
 			}
 		}
-		throw error;
+		console.error("Error deleting product:", error);
+		throw new Error(getErrorMessage(error));
 	}
 };
 
@@ -659,10 +676,12 @@ export const fetchProductsBySection = async (
 			isBestSeller: false, // Not provided in API, default to false
 			freeDelivery: false, // Not provided in API, default to false
 		}));
-	} catch (error: any) {
+	} catch (error: unknown) {
 		console.error("Error fetching products by section:", error);
-		throw new Error(
-			error.response?.data?.message || "Failed to fetch products"
-		);
+		const errorMessage = isAxiosError(error) && error.response?.data?.message 
+			? error.response.data.message 
+			: "Failed to fetch products";
+		throw new Error(errorMessage);
 	}
 };
+

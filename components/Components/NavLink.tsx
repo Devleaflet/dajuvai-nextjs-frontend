@@ -25,7 +25,7 @@ export default function NavLink({ to, children, className, style, onClick, end =
       href={to}
       className={computedClassName}
       style={computedStyle}
-      onClick={onClick}
+      {...(onClick && { onClick })}
     >
       {children}
     </Link>

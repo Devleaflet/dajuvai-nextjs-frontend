@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     HelpCircle,
@@ -122,7 +122,7 @@ function CopyAnchor({ id }: { id: string }) {
     }, [copied]);
     const url =
         typeof window !== "undefined"
-            ? `${window.location.origin}${window.pathname}#${id}`
+            ? `${window.location.origin}${window.location.pathname}#${id}`
             : `#${id}`;
     return (
         <button
@@ -187,7 +187,9 @@ export default function EcommerceFAQ() {
     }, []);
 
     return (<>
-        <Navbar />
+        <Suspense fallback={<div style={{ height: '80px' }} />}>
+            <Navbar />
+        </Suspense>
         <div className="faq">
             <section className="faq__container">
                 {/* Header */}

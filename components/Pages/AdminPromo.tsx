@@ -94,11 +94,11 @@ const AdminPromo: React.FC = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "discountPercentage" 
-        ? Number(value) 
-        : name === "isValid" 
-        ? value === "true" 
-        : value,
+      [name]: name === "discountPercentage"
+        ? Number(value)
+        : name === "isValid"
+          ? value === "true"
+          : value,
     }));
   };
 
@@ -126,11 +126,11 @@ const AdminPromo: React.FC = () => {
 
       if (response.success) {
         toast.success("Promo code created successfully!");
-        setFormData({ 
-          promoCode: "", 
-          discountPercentage: 0, 
-          applyOn: "LINE_TOTAL", 
-          isValid: true 
+        setFormData({
+          promoCode: "",
+          discountPercentage: 0,
+          applyOn: "LINE_TOTAL",
+          isValid: true
         });
         setShowAddModal(false);
         // Clear cache and refetch
@@ -139,8 +139,9 @@ const AdminPromo: React.FC = () => {
       } else {
         throw new Error(response.message || "Failed to create promo code");
       }
-    } catch (err: any) {
-      toast.error(err.message || "Failed to create promo code");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to create promo code";
+      toast.error(errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -172,9 +173,10 @@ const AdminPromo: React.FC = () => {
       } else {
         throw new Error(response.message || "Failed to delete promo code");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Delete error:", err);
-      toast.error(err.message || "Failed to delete promo code");
+      const errorMessage = err instanceof Error ? err.message : "Failed to delete promo code";
+      toast.error(errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -204,7 +206,7 @@ const AdminPromo: React.FC = () => {
       <div className="admin-promo">
         <AdminSidebar />
         <div className="admin-promo__content">
-          <Header onSearch={() => {}} showSearch={false} title="Promo Code Management" />
+          <Header onSearch={() => { }} showSearch={false} title="Promo Code Management" />
           <div className="admin-promo__error">
             <h2>Access Denied</h2>
             <p>Please log in to access promo code management.</p>
@@ -219,7 +221,7 @@ const AdminPromo: React.FC = () => {
       <div className="admin-promo">
         <AdminSidebar />
         <div className="admin-promo__content">
-          <Header onSearch={() => {}} showSearch={false} title="Promo Code Management" />
+          <Header onSearch={() => { }} showSearch={false} title="Promo Code Management" />
           <div className="admin-promo__header">
             <div className="admin-promo__title-container">
               <h1 className="admin-promo__title">Promo Code Management</h1>
@@ -334,16 +336,16 @@ const AdminPromo: React.FC = () => {
                   </td>
                   <td>
                     <div className="admin-promo__actions">
-                                             <button
-                         className="admin-promo__action-button admin-promo__action-button--delete"
-                         onClick={() => {
-                           //("Delete button clicked for promo:", promo);
-                           setShowDeleteModal({ show: true, promoCode: promo });
-                         }}
-                         title="Delete promo code"
-                       >
-                         <FiTrash2 />
-                       </button>
+                      <button
+                        className="admin-promo__action-button admin-promo__action-button--delete"
+                        onClick={() => {
+                          //("Delete button clicked for promo:", promo);
+                          setShowDeleteModal({ show: true, promoCode: promo });
+                        }}
+                        title="Delete promo code"
+                      >
+                        <FiTrash2 />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -489,3 +491,4 @@ const AdminPromo: React.FC = () => {
 };
 
 export default AdminPromo;
+

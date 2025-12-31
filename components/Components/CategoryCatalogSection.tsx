@@ -44,7 +44,7 @@ const CategoryCatalogSection: React.FC = () => {
 				//("Raw data from fetchCategoryCatalog:", data);
 				const processedCategories = Array.isArray(data) ? data : [];
 				setCategories(processedCategories);
-				
+
 			} catch (err) {
 				console.error("Error fetching category catalog:", err);
 				setError(err instanceof Error ? err.message : "Unknown error");
@@ -125,9 +125,10 @@ const CategoryCatalogSection: React.FC = () => {
 		e: React.TouchEvent<HTMLDivElement>
 	): void => {
 		const el = subcatRefs.current[catId];
-		if (el) {
+		const touch = e.touches[0];
+		if (el && touch) {
 			setIsDragging((prev) => ({ ...prev, [catId]: true }));
-			setStartX((prev) => ({ ...prev, [catId]: e.touches[0].clientX }));
+			setStartX((prev) => ({ ...prev, [catId]: touch.clientX }));
 			setScrollLeft((prev) => ({ ...prev, [catId]: el.scrollLeft }));
 			el.style.pointerEvents = "auto";
 		}
@@ -137,11 +138,14 @@ const CategoryCatalogSection: React.FC = () => {
 		catId: number,
 		e: React.TouchEvent<HTMLDivElement>
 	): void => {
-		if (!isDragging[catId] || !subcatRefs.current[catId]) return;
+		const touch = e.touches[0];
+		const startXValue = startX[catId];
+		const scrollLeftValue = scrollLeft[catId];
+		if (!isDragging[catId] || !subcatRefs.current[catId] || !touch || startXValue === undefined || scrollLeftValue === undefined) return;
 		e.preventDefault();
-		const x = e.touches[0].clientX;
-		const walk = (startX[catId] - x) * 2;
-		subcatRefs.current[catId]!.scrollLeft = scrollLeft[catId] + walk;
+		const x = touch.clientX;
+		const walk = (startXValue - x) * 2;
+		subcatRefs.current[catId]!.scrollLeft = scrollLeftValue + walk;
 	};
 
 	const handleTouchEnd = (catId: number): void => {
@@ -170,11 +174,13 @@ const CategoryCatalogSection: React.FC = () => {
 		catId: number,
 		e: React.MouseEvent<HTMLDivElement>
 	): void => {
-		if (!isDragging[catId] || !subcatRefs.current[catId]) return;
+		const startXValue = startX[catId];
+		const scrollLeftValue = scrollLeft[catId];
+		if (!isDragging[catId] || !subcatRefs.current[catId] || startXValue === undefined || scrollLeftValue === undefined) return;
 		e.preventDefault();
 		const x = e.pageX - subcatRefs.current[catId]!.offsetLeft;
-		const walk = (x - startX[catId]) * 2;
-		subcatRefs.current[catId]!.scrollLeft = scrollLeft[catId] - walk;
+		const walk = (x - startXValue) * 2;
+		subcatRefs.current[catId]!.scrollLeft = scrollLeftValue - walk;
 	};
 
 	const handleMouseUp = (catId: number): void => {
@@ -236,11 +242,10 @@ const CategoryCatalogSection: React.FC = () => {
 								</button>
 							)}
 							<div
-								className={`category-section__subcategories ${
-									isDragging[catId]
-										? "category-section__subcategories--dragging"
-										: ""
-								}`}
+								className={`category-section__subcategories ${isDragging[catId]
+									? "category-section__subcategories--dragging"
+									: ""
+									}`}
 								ref={(el) => {
 									subcatRefs.current[catId] = el;
 								}}

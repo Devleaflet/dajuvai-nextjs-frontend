@@ -1,8 +1,8 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import axiosInstance from '../../api/axiosInstance';
-import { useVendorAuth } from '../../context/VendorAuthContext';
+import axiosInstance from '@/lib/api/axiosInstance';
+import { useVendorAuth } from '@/lib/context/VendorAuthContext';
 
 interface TopProductData {
     productId: number;
@@ -40,13 +40,13 @@ const TopProducts = () => {
     });
 
     return (
-        <div style={styles.container}>
-            <h2 style={styles.title}>Top Selling Products</h2>
+        <div style={styles['container']}>
+            <h2 style={styles['title']}>Top Selling Products</h2>
 
             {isLoading ? (
-                <p style={styles.noData}>Loading...</p>
+                <p style={styles['noData']}>Loading...</p>
             ) : isError ? (
-                <p style={styles.noData}>Error fetching data</p>
+                <p style={styles['noData']}>Error fetching data</p>
             ) : data && data.length > 0 ? (
                 <ResponsiveContainer width="100%" height={350}>
                     <BarChart
@@ -87,7 +87,7 @@ const TopProducts = () => {
                     </BarChart>
                 </ResponsiveContainer>
             ) : (
-                <p style={styles.noData}>No data available</p>
+                <p style={styles['noData']}>No data available</p>
             )}
         </div>
     );

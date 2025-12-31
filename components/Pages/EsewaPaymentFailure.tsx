@@ -1,25 +1,25 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from "@/lib/context/AuthContext";
 import { API_BASE_URL } from "@/lib/config";
 import AlertModal from "@/components/Components/Modal/AlertModal";
 
 const EsewaPaymentFailure: React.FC = () => {
-    const [search] = useSearchParams();
+    const searchParams = useSearchParams();
     const router = useRouter();
     const { token } = useAuth();
     const [alertMessage, setAlertMessage] = useState('');
     const [showAlert, setShowAlert] = useState(false);
 
-    const orderId = search.get('oid');
+    const orderId = searchParams?.get('oid');
 
     useEffect(() => {
 
         //('orderId from URL:', orderId);
         //('token from AuthContext:', token);
-        
+
         const handleFailure = async () => {
             if (!orderId) {
                 setAlertMessage('Missing order ID');

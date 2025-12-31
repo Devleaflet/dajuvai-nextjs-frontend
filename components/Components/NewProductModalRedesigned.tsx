@@ -69,11 +69,14 @@ const AttributeManager = ({
 
   const addNestedAttribute = (attrIndex: number) => {
     const updated = [...attributes];
-    updated[attrIndex].values.push({
-      value: '',
-      nestedAttributes: []
-    });
-    onUpdate(updated);
+    const attr = updated[attrIndex];
+    if (attr) {
+      attr.values.push({
+        value: '',
+        nestedAttributes: []
+      });
+      onUpdate(updated);
+    }
   };
 
   return (
@@ -84,8 +87,11 @@ const AttributeManager = ({
             value={attr.type}
             onChange={(e) => {
               const updated = [...attributes];
-              updated[attrIndex].type = e.target.value;
-              onUpdate(updated);
+              const attr = updated[attrIndex];
+              if (attr) {
+                attr.type = e.target.value;
+                onUpdate(updated);
+              }
             }}
             placeholder="Attribute type (e.g. Color)"
           />
@@ -97,8 +103,12 @@ const AttributeManager = ({
                   value={val.value}
                   onChange={(e) => {
                     const updated = [...attributes];
-                    updated[attrIndex].values[valIndex].value = e.target.value;
-                    onUpdate(updated);
+                    const attr = updated[attrIndex];
+                    const value = attr?.values[valIndex];
+                    if (value) {
+                      value.value = e.target.value;
+                      onUpdate(updated);
+                    }
                   }}
                   placeholder="Value (e.g. Red)"
                 />
@@ -110,8 +120,13 @@ const AttributeManager = ({
                       value={nested.type}
                       onChange={(e) => {
                         const updated = [...attributes];
-                        updated[attrIndex].values[valIndex].nestedAttributes![nestedIndex].type = e.target.value;
-                        onUpdate(updated);
+                        const attr = updated[attrIndex];
+                        const value = attr?.values[valIndex];
+                        const nested = value?.nestedAttributes?.[nestedIndex];
+                        if (nested) {
+                          nested.type = e.target.value;
+                          onUpdate(updated);
+                        }
                       }}
                       placeholder="Nested type (e.g. Size)"
                     />
@@ -120,9 +135,13 @@ const AttributeManager = ({
                       value={nested.values.join(',')}
                       onChange={(e) => {
                         const updated = [...attributes];
-                        updated[attrIndex].values[valIndex].nestedAttributes![nestedIndex].values =
-                          e.target.value.split(',');
-                        onUpdate(updated);
+                        const attr = updated[attrIndex];
+                        const value = attr?.values[valIndex];
+                        const nested = value?.nestedAttributes?.[nestedIndex];
+                        if (nested) {
+                          nested.values = e.target.value.split(',');
+                          onUpdate(updated);
+                        }
                       }}
                       placeholder="Comma-separated values (e.g. S,M,L)"
                     />
@@ -133,11 +152,15 @@ const AttributeManager = ({
                   type="button"
                   onClick={() => {
                     const updated = [...attributes];
-                    updated[attrIndex].values[valIndex].nestedAttributes = [
-                      ...(updated[attrIndex].values[valIndex].nestedAttributes || []),
-                      { type: '', values: [] }
-                    ];
-                    onUpdate(updated);
+                    const attr = updated[attrIndex];
+                    const value = attr?.values[valIndex];
+                    if (value) {
+                      value.nestedAttributes = [
+                        ...(value.nestedAttributes || []),
+                        { type: '', values: [] }
+                      ];
+                      onUpdate(updated);
+                    }
                   }}
                 >
                   Add Nested Attribute
@@ -169,16 +192,8 @@ const NewProductModal: React.FC<NewProductModalProps> = ({ isOpen, onClose, onSu
   const [formData, setFormData] = useState<NewProductFormData>({
     name: "",
     description: "",
-    basePrice: undefined,
-    stock: undefined,
-    discount: undefined,
-    discountType: undefined,
     status: InventoryStatus.AVAILABLE,
     productImages: [],
-    categoryId: undefined,
-    subcategoryId: undefined,
-    brand_id: undefined,
-    dealId: undefined,
     hasVariants: false,
     variants: [],
   });
@@ -291,24 +306,30 @@ const NewProductModal: React.FC<NewProductModalProps> = ({ isOpen, onClose, onSu
 
   const addAttribute = (variantIndex: number) => {
     const updatedVariants = [...variants];
-    updatedVariants[variantIndex].attributes = [
-      ...(updatedVariants[variantIndex].attributes || []),
-      {
-        type: newAttribute.attributeType,
-        values: newAttribute.attributeValues.map(value => ({
-          value,
-          nestedAttributes: []
-        }))
-      }
-    ];
-    setVariants(updatedVariants);
-    setNewAttribute({ attributeType: '', attributeValues: [''] });
+    const variant = updatedVariants[variantIndex];
+    if (variant) {
+      variant.attributes = [
+        ...(variant.attributes || []),
+        {
+          type: newAttribute.attributeType,
+          values: newAttribute.attributeValues.map(value => ({
+            value,
+            nestedAttributes: []
+          }))
+        }
+      ];
+      setVariants(updatedVariants);
+      setNewAttribute({ attributeType: '', attributeValues: [''] });
+    }
   };
 
   const removeAttribute = (variantIndex: number, attributeIndex: number) => {
     const updatedVariants = [...variants];
-    updatedVariants[variantIndex].attributes.splice(attributeIndex, 1);
-    setVariants(updatedVariants);
+    const variant = updatedVariants[variantIndex];
+    if (variant) {
+      variant.attributes.splice(attributeIndex, 1);
+      setVariants(updatedVariants);
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -603,9 +624,10 @@ const NewProductModal: React.FC<NewProductModalProps> = ({ isOpen, onClose, onSu
       toast.success('Product created successfully!');
       onSubmit(true);
       handleClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating product:', error);
-      toast.error(error.message || 'Failed to create product');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create product';
+      toast.error(errorMessage);
       onSubmit(false);
     } finally {
       setIsLoading(false);
@@ -617,16 +639,8 @@ const NewProductModal: React.FC<NewProductModalProps> = ({ isOpen, onClose, onSu
     setFormData({
       name: "",
       description: "",
-      basePrice: undefined,
-      stock: undefined,
-      discount: undefined,
-      discountType: undefined,
       status: InventoryStatus.AVAILABLE,
       productImages: [],
-      categoryId: undefined,
-      subcategoryId: undefined,
-      brand_id: undefined,
-      dealId: undefined,
       hasVariants: false,
       variants: [],
     });
@@ -658,8 +672,11 @@ const NewProductModal: React.FC<NewProductModalProps> = ({ isOpen, onClose, onSu
     }>;
   }>) => {
     const updatedVariants = [...formData.variants];
-    updatedVariants[variantIndex].attributes = attributes;
-    setFormData({ ...formData, variants: updatedVariants });
+    const variant = updatedVariants[variantIndex];
+    if (variant) {
+      variant.attributes = attributes;
+      setFormData({ ...formData, variants: updatedVariants });
+    }
   };
 
   if (!isOpen) return null;
@@ -918,8 +935,11 @@ const NewProductModal: React.FC<NewProductModalProps> = ({ isOpen, onClose, onSu
                           value={spec.type}
                           onChange={(e) => {
                             const next = [...attributeSpecs];
-                            next[i].type = e.target.value;
-                            setAttributeSpecs(next);
+                            const spec = next[i];
+                            if (spec) {
+                              spec.type = e.target.value;
+                              setAttributeSpecs(next);
+                            }
                           }}
                         />
                         <div className="label-hint">Examples: Color, Size, Material</div>
@@ -933,8 +953,11 @@ const NewProductModal: React.FC<NewProductModalProps> = ({ isOpen, onClose, onSu
                           value={spec.valuesText}
                           onChange={(e) => {
                             const next = [...attributeSpecs];
-                            next[i].valuesText = e.target.value;
-                            setAttributeSpecs(next);
+                            const spec = next[i];
+                            if (spec) {
+                              spec.valuesText = e.target.value;
+                              setAttributeSpecs(next);
+                            }
                           }}
                         />
                         <div className="label-hint">Tip: press comma to separate values. Duplicates are ignored.</div>
@@ -1255,3 +1278,4 @@ const NewProductModal: React.FC<NewProductModalProps> = ({ isOpen, onClose, onSu
 };
 
 export default NewProductModal;
+

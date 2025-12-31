@@ -35,7 +35,7 @@ interface Category {
   subcategories?: Subcategory[];
 }
 
-const CACHE_KEY = 'admin_categories";
+const CACHE_KEY = 'admin_categories';
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 const PAGE_SIZE = 7;
 
@@ -76,7 +76,7 @@ const AdminCategory: React.FC = () => {
           setCategories(data);
           setLoading(false);
         }
-      } catch {}
+      } catch { }
     }
     fetchCategories();
   }, [token, isAuthenticated]);
@@ -360,7 +360,7 @@ const AdminCategory: React.FC = () => {
           if (cat.id === showEditSubcategoryModal.categoryId) {
             return {
               ...cat,
-              subcategories: cat.subcategories?.map(sub => 
+              subcategories: cat.subcategories?.map(sub =>
                 sub.id === data.data.id ? {
                   ...data.data,
                   image: data.data.image_url || data.data.image
@@ -438,7 +438,7 @@ const AdminCategory: React.FC = () => {
     });
   };
 
-  const filteredCategories = categories.filter(cat => 
+  const filteredCategories = categories.filter(cat =>
     cat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     cat.subcategories?.some(sub => sub.name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
@@ -464,7 +464,7 @@ const AdminCategory: React.FC = () => {
     <div className="admin-category">
       <AdminSidebar />
       <div className="admin-category__content">
-        <Header onSearch={() => {}} showSearch={false} />
+        <Header onSearch={() => { }} showSearch={false} />
         <div className="admin-category__header-row">
           <h1 className="admin-category__title">Category Management</h1>
           <button className="admin-category__add-btn" onClick={() => setShowAddModal(true)}>
@@ -698,10 +698,10 @@ const AdminCategory: React.FC = () => {
                   </label>
                   {(editCategoryImagePreview || showEditModal.category.image) && (
                     <div className="admin-category__image-preview-container">
-                      <img 
-                        src={editCategoryImagePreview || showEditModal.category.image} 
-                        alt="Preview" 
-                        className="admin-category__image-preview" 
+                      <img
+                        src={editCategoryImagePreview || showEditModal.category.image}
+                        alt="Preview"
+                        className="admin-category__image-preview"
                       />
                       <button
                         type="button"
@@ -770,7 +770,7 @@ const AdminCategory: React.FC = () => {
                   )}
                 </div>
                 <div className="admin-category__modal-actions">
-                  <button 
+                  <button
                     type="submit"
                     disabled={isSubcategoryLoading}
                     style={{
@@ -782,7 +782,7 @@ const AdminCategory: React.FC = () => {
                     {isSubcategoryLoading ? (
                       <>
                         <span style={{ opacity: 0.5 }}>Adding...</span>
-                        <span 
+                        <span
                           style={{
                             position: 'absolute',
                             right: '10px',
@@ -807,8 +807,8 @@ const AdminCategory: React.FC = () => {
                       'Add'
                     )}
                   </button>
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     disabled={isSubcategoryLoading}
                     onClick={() => {
                       setShowSubcategoryModal({ show: false, categoryId: null });
@@ -850,10 +850,10 @@ const AdminCategory: React.FC = () => {
                   </label>
                   {(editCategoryImagePreview || showEditSubcategoryModal.subcategory.image) && (
                     <div className="admin-category__image-preview-container">
-                      <img 
-                        src={editCategoryImagePreview || showEditSubcategoryModal.subcategory.image} 
-                        alt="Preview" 
-                        className="admin-category__image-preview" 
+                      <img
+                        src={editCategoryImagePreview || showEditSubcategoryModal.subcategory.image}
+                        alt="Preview"
+                        className="admin-category__image-preview"
                       />
                       <button
                         type="button"
@@ -869,7 +869,7 @@ const AdminCategory: React.FC = () => {
                   )}
                 </div>
                 <div className="admin-category__modal-actions">
-                  <button 
+                  <button
                     type="submit"
                     disabled={isSubcategoryLoading}
                     style={{
@@ -881,7 +881,7 @@ const AdminCategory: React.FC = () => {
                     {isSubcategoryLoading ? (
                       <>
                         <span style={{ opacity: 0.5 }}>Saving...</span>
-                        <span 
+                        <span
                           style={{
                             position: 'absolute',
                             right: '10px',
@@ -906,8 +906,8 @@ const AdminCategory: React.FC = () => {
                       'Save'
                     )}
                   </button>
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     disabled={isSubcategoryLoading}
                     onClick={() => {
                       setShowEditSubcategoryModal({ show: false, categoryId: null, subcategory: null });

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { API_BASE_URL } from '@/lib/config';
-import { useVendorAuth } from '../../context/VendorAuthContext';
+import { useVendorAuth } from '@/lib/context/VendorAuthContext';
 
 interface RevenueData {
     category: string;
@@ -43,8 +43,8 @@ const VendorRevenueByCategory = () => {
     }, []);
 
     return (
-        <div style={styles.container}>
-            <h1 style={styles.title}>Revenue by Category</h1>
+        <div style={styles['container']}>
+            <h1 style={styles['title']}>Revenue by Category</h1>
             {data.length > 0 ? (
                 <ResponsiveContainer width="100%" height={400}>
                     <BarChart
@@ -59,7 +59,7 @@ const VendorRevenueByCategory = () => {
                     </BarChart>
                 </ResponsiveContainer>
             ) : (
-                <div style={styles.noData}>No data available</div>
+                <div style={styles['noData']}>No data available</div>
             )}
         </div>
     );

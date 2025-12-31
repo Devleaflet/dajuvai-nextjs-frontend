@@ -21,7 +21,7 @@ const Catalog: React.FC = () => {
 
   // Using shared helper for consistent variant-first image selection across app
 
-  const productService = ProductService.getInstance();
+  const productService = ProductService;
 
   useEffect(() => {
     fetchProducts();
@@ -106,11 +106,11 @@ const Catalog: React.FC = () => {
           >
             <div className="catalog__product-image">
               <img
-                src={getProductPrimaryImage(product, defaultProductImage)}
+                src={getProductPrimaryImage(product, '/assets/default-product.png')}
                 alt={product.title || product.name || 'Product'}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = defaultProductImage;
+                  target.src = '/assets/default-product.png';
                 }}
               />
             </div>

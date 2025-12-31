@@ -111,7 +111,10 @@ const ProductBannerSlider: React.FC<ProductBannerSliderProps> = ({ onLoad }) => 
     const dist = Math.sqrt(dx * dx + dy * dy);
 
     if (dist <= clickThreshold) {
-      handleBannerClick(slides[activeSlide]);
+      const slide = slides[activeSlide];
+      if (slide) {
+        handleBannerClick(slide);
+      }
     }
 
     setTranslateX(0);
@@ -158,8 +161,14 @@ const ProductBannerSlider: React.FC<ProductBannerSliderProps> = ({ onLoad }) => 
       onMouseMove={(e) => handleDragMove(e.clientX)}
       onMouseUp={(e) => handleDragEnd(e.clientX, e.clientY)}
       onMouseLeave={() => isDragging && handleDragEnd(startPos?.x || 0, startPos?.y || 0)}
-      onTouchStart={(e) => handleDragStart(e.touches[0].clientX, e.touches[0].clientY)}
-      onTouchMove={(e) => handleDragMove(e.touches[0].clientX)}
+      onTouchStart={(e) => {
+        const touch = e.touches[0];
+        if (touch) handleDragStart(touch.clientX, touch.clientY);
+      }}
+      onTouchMove={(e) => {
+        const touch = e.touches[0];
+        if (touch) handleDragMove(touch.clientX);
+      }}
       onTouchEnd={(e) =>
         handleDragEnd(
           e.changedTouches[0]?.clientX || 0,
@@ -178,7 +187,7 @@ const ProductBannerSlider: React.FC<ProductBannerSliderProps> = ({ onLoad }) => 
         {slides.map((slide) => (
           <div key={slide.id} className="hero-slider__slide">
             <img
-              src={window.innerWidth < 768 ? slide.mobileImage || slide.desktopImage : slide.desktopImage}
+              src={(window.innerWidth < 768 ? slide.mobileImage || slide.desktopImage : slide.desktopImage) || ''}
               alt={slide.name}
               className="hero-slider__image"
               loading="lazy"

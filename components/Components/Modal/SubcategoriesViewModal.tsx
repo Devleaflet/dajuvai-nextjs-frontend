@@ -1,7 +1,7 @@
 import React from "react";
 import { X } from "lucide-react";
 import "@/styles/SubcategoriesViewModal.css";
-import placeholder from "../../assets/earphones.png";
+import placeholder from "@/public/assets/earphones.png";
 
 interface SubCategory {
   id: string;
@@ -59,7 +59,7 @@ const SubcategoriesViewModal: React.FC<SubcategoriesViewModalProps> = ({
             <X size={20} />
           </button>
         </div>
-        
+
         <div className="subcategories-modal__content">
           {category.subCategories.length === 0 ? (
             <div className="subcategories-modal__empty">
@@ -84,7 +84,11 @@ const SubcategoriesViewModal: React.FC<SubcategoriesViewModalProps> = ({
                           <div className="subcategories-modal__image">
                             {(subcategoryImagePreview && subcategoryImageChanging === sub.id) || sub.image ? (
                               <img
-                                src={(subcategoryImagePreview && subcategoryImageChanging === sub.id) ? subcategoryImagePreview : (sub.image || placeholder || "/placeholder.svg")}
+                                src={
+                                  (subcategoryImagePreview && subcategoryImageChanging === sub.id)
+                                    ? subcategoryImagePreview
+                                    : (sub.image || (typeof placeholder === 'string' ? placeholder : placeholder?.src) || "/placeholder.svg")
+                                }
                                 alt={sub.name}
                               />
                             ) : (
@@ -92,14 +96,14 @@ const SubcategoriesViewModal: React.FC<SubcategoriesViewModalProps> = ({
                             )}
                           </div>
                           {onChangeSubcategoryImage && (
-                            <button 
+                            <button
                               className="subcategories-modal__change-image-btn"
                               onClick={() => onChangeSubcategoryImage(category.id, sub.id)}
                               title="Change image"
                             >
                               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 3H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <circle cx="12" cy="13" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 3H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                <circle cx="12" cy="13" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                               </svg>
                             </button>
                           )}

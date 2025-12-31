@@ -32,11 +32,11 @@ export const processGoogleAuthResponse = async (
       //('[GoogleAuthUtils] Extracted user:', { userId, email, role, token, username });
 
       // Create user data object
-      const userData = {
+      const userData: UserData = {
         id: userId,
         email: email,
         role: role,
-        username: username || email.split('@')[0], // Use provided username or email username as fallback
+        username: (username || email.split('@')[0]) as string, // Use provided username or email username as fallback
         isVerified: true,
       };
 

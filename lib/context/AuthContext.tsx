@@ -1,9 +1,11 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "@/lib/config";
 import { setupAxiosInterceptors } from "@/lib/api/axiosInstance";
+import logger from "@/lib/utils/logger";
+import { secureStorage } from "@/lib/utils/secureStorage";
 
 // Define types for user data
 interface UserData {
@@ -44,10 +46,15 @@ const AuthContext = createContext<AuthContextType>({
 // Helper to decode JWT token and get expiration time
 const getTokenExpiration = (token: string): number | null => {
   try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
+    const parts = token.split(".");
+    if (parts.length !== 3 || !parts[1]) {
+      logger.error("Invalid token format");
+      return null;
+    }
+    const payload = JSON.parse(atob(parts[1]));
     return payload.exp ? payload.exp * 1000 : null; // Convert to milliseconds
   } catch (error) {
-    console.error("Error decoding token:", error);
+    logger.error("Error decoding token", error);
     return null;
   }
 };
@@ -74,16 +81,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    const storedToken = localStorage.getItem("authToken");
-    const storedUser = localStorage.getItem("authUser");
+    const storedToken = secureStorage.getItem("authToken");
+    const storedUser = secureStorage.getItem("authUser");
     //("[Auth Debug] initializeAuth called");
-    //("[Auth Debug] localStorage.authToken:", storedToken);
-    //("[Auth Debug] localStorage.authUser:", storedUser);
+    //("[Auth Debug] secureStorage.authToken:", storedToken);
+    //("[Auth Debug] secureStorage.authUser:", storedUser);
 
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-        //("[Auth Debug] Parsed user from localStorage:", parsedUser);
+        //("[Auth Debug] Parsed user from secureStorage:", parsedUser);
         if (storedToken && isTokenValid(storedToken)) {
           setToken(storedToken);
           setUser(parsedUser);
@@ -112,7 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 isVerified: true,
               };
               setUser(updatedUser);
-              localStorage.setItem("authUser", JSON.stringify(updatedUser));
+              secureStorage.setItem("authUser", JSON.stringify(updatedUser));
               //("[Auth Debug] User verified with backend:", updatedUser);
             } else {
               //("[Auth Debug] Backend verification failed, clearing auth");
@@ -123,12 +130,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             logout();
           }
         } catch (verifyError) {
-          console.error("[Auth Debug] Error verifying with backend:", verifyError);
+          logger.error("Error verifying with backend", verifyError);
           // Don't logout on network errors, keep the user logged in
-          //("[Auth Debug] Network error during verification, keeping user logged in");
+          logger.debug("Network error during verification, keeping user logged in");
         }
       } catch (error) {
-        console.error("[Auth Debug] Error initializing auth (JSON parse):", error);
+        logger.error("Error initializing auth (JSON parse)", error);
         logout();
       }
     } else {
@@ -162,99 +169,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => window.removeEventListener("storage", handleStorageChange);
   }, [token, initializeAuth]);
 
-  // Save token and user to local storage
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    if (token) {
-      localStorage.setItem("authToken", token);
-    } else {
-      localStorage.removeItem("authToken");
-    }
-    if (user) {
-      localStorage.setItem("authUser", JSON.stringify(user));
-    } else {
-      localStorage.removeItem("authUser");
-    }
-  }, [token, user]);
-
-  // Token refresh logic - Much more conservative approach
-  useEffect(() => {
-    if (!token || !isAuthenticated) return;
-
-    const refreshToken = async () => {
-      try {
-        const response = await axios.post(
-          `${API_BASE_URL}/api/auth/refresh`,
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            withCredentials: true,
-            timeout: 10000, // 10 second timeout
-          }
-        );
-        if (response.data.success && response.data.data.token) {
-          setToken(response.data.data.token);
-          //("Token refreshed successfully");
-        } else {
-          throw new Error("Failed to refresh token");
-        }
-      } catch (error) {
-        console.error("Token refresh error:", error);
-        // Only logout if it's a clear auth error
-        if (axios.isAxiosError(error) && error.response?.status === 401) {
-          logout();
-        }
-      }
-    };
-
-    const checkTokenExpiration = () => {
-      const expiration = getTokenExpiration(token);
-      if (!expiration) {
-        console.warn("No expiration found in token");
-        return;
-      }
-      const now = Date.now();
-      const timeUntilExpiry = expiration - now;
-
-      // Much more conservative refresh threshold - only refresh 30 minutes before expiry
-      const refreshThreshold = 30 * 60 * 1000; // 30 minutes
-
-      if (timeUntilExpiry < refreshThreshold && timeUntilExpiry > 0) {
-        //(`Token expires in ${Math.round(timeUntilExpiry / 60000)} minutes, refreshing...`);
-        refreshToken();
-      }
-    };
-
-    // Check token expiration every 15 minutes (instead of 5)
-    const interval = setInterval(checkTokenExpiration, 15 * 60 * 1000);
-    checkTokenExpiration(); // Check immediately on token change
-
-    return () => clearInterval(interval);
-  }, [token, isAuthenticated]);
-
-  // Login function
-  const login = (newToken: string | null, newUser: UserData) => {
-    // Accept login if either a token or a user is provided (for cookie-based auth)
-    if (!newToken && !newUser) {
-      console.error("No token or user provided to login function");
-      return;
-    }
-    if (newToken) {
-      setToken(newToken);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem("authToken", newToken);
-      }
-    }
-    setUser(newUser);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem("authUser", JSON.stringify(newUser));
-    }
-  };
-
-  // Logout function
+  // Logout function - defined early to avoid TDZ issues
   const logout = useCallback(() => {
     //("AuthContext logout - user only (full cleanse)");
     setToken(null);
@@ -275,19 +190,131 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           withCredentials: true,
           timeout: 5000
         })
-        .catch((err) => console.error("Logout API error (non-critical):", err));
+        .catch((err) => logger.error("Logout API error (non-critical)", err));
       // Reload the page to ensure all state is reset
       window.location.href = '/';
     }
   }, []);
 
+  // Save token and user to secure storage
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    if (token) {
+      secureStorage.setItem("authToken", token);
+    } else {
+      secureStorage.removeItem("authToken");
+    }
+    if (user) {
+      secureStorage.setItem("authUser", JSON.stringify(user));
+    } else {
+      secureStorage.removeItem("authUser");
+    }
+  }, [token, user]);
+
+  // Token refresh logic - Optimized approach with visibility and interaction checks
+  useEffect(() => {
+    if (!token || !isAuthenticated) return;
+
+    const refreshToken = async () => {
+      try {
+        const response = await axios.post(
+          `${API_BASE_URL}/api/auth/refresh`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            withCredentials: true,
+            timeout: 10000, // 10 second timeout
+          }
+        );
+        if (response.data.success && response.data.data.token) {
+          setToken(response.data.data.token);
+          logger.debug("Token refreshed successfully");
+        } else {
+          throw new Error("Failed to refresh token");
+        }
+      } catch (error) {
+        logger.error("Token refresh error", error);
+        // Only logout if it's a clear auth error
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          logout();
+        }
+      }
+    };
+
+    const checkTokenExpiration = () => {
+      const expiration = getTokenExpiration(token);
+      if (!expiration) {
+        logger.warn("No expiration found in token");
+        return;
+      }
+      const now = Date.now();
+      const timeUntilExpiry = expiration - now;
+
+      // Refresh threshold - only refresh 30 minutes before expiry
+      const refreshThreshold = 30 * 60 * 1000; // 30 minutes
+
+      if (timeUntilExpiry < refreshThreshold && timeUntilExpiry > 0) {
+        logger.debug(`Token expires in ${Math.round(timeUntilExpiry / 60000)} minutes, refreshing...`);
+        refreshToken();
+      }
+    };
+
+    // Check token on page visibility change
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkTokenExpiration();
+      }
+    };
+
+    // Check token on user interaction (click or focus)
+    const handleUserInteraction = () => {
+      checkTokenExpiration();
+    };
+
+    // Add event listeners
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('click', handleUserInteraction, { once: true, capture: true });
+    window.addEventListener('focus', handleUserInteraction, { once: true });
+
+    // Check immediately on token change
+    checkTokenExpiration();
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('click', handleUserInteraction);
+      window.removeEventListener('focus', handleUserInteraction);
+    };
+  }, [token, isAuthenticated, logout]);
+
+  // Login function
+  const login = (newToken: string | null, newUser: UserData) => {
+    // Accept login if either a token or a user is provided (for cookie-based auth)
+    if (!newToken && !newUser) {
+      logger.error("No token or user provided to login function");
+      return;
+    }
+    if (newToken) {
+      setToken(newToken);
+      if (typeof window !== 'undefined') {
+        secureStorage.setItem("authToken", newToken);
+      }
+    }
+    setUser(newUser);
+    if (typeof window !== 'undefined') {
+      secureStorage.setItem("authUser", JSON.stringify(newUser));
+    }
+  };
+
   // Fetch user data by ID
   const fetchUserData = async (userId: number): Promise<UserData | null> => {
     const currentToken = token || (typeof window !== 'undefined' ? localStorage.getItem("authToken") : null);
-    //("[Auth Debug] fetchUserData called with userId:", userId);
-    //("[Auth Debug] Using token:", currentToken);
+    logger.debug("fetchUserData called", { userId });
+    logger.debug("Using token", { hasToken: !!currentToken });
     if (!currentToken) {
-      console.error("[Auth Debug] No token available for fetching user data");
+      logger.error("No token available for fetching user data");
       return null;
     }
 
@@ -303,23 +330,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           timeout: 10000,
         }
       );
-      //("[Auth Debug] fetchUserData response:", response.data);
+      logger.debug("fetchUserData response", { success: response.data.success });
       if (response.data.success) {
         const userData = response.data.data;
         setUser(userData);
         return userData;
       } else {
-        console.error("[Auth Debug] Failed to fetch user data:", response.data);
+        logger.error("Failed to fetch user data", response.data);
         return null;
       }
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.error("[Auth Debug] Error fetching user data:", error.response?.data?.message || error.message);
+        logger.error("Error fetching user data", { message: error.response?.data?.message || error.message });
         if (error.response?.status === 401) {
           logout();
         }
       } else {
-        console.error("[Auth Debug] Unexpected error fetching user data:", error);
+        logger.error("Unexpected error fetching user data", error);
       }
       return null;
     } finally {
@@ -340,19 +367,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setupAxiosInterceptors(() => token || localStorage.getItem("authToken"));
   }, [token]);
 
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo(
+    () => ({
+      user,
+      token,
+      login,
+      logout,
+      isAuthenticated,
+      isLoading,
+      fetchUserData,
+      getUserStatus,
+    }),
+    [user, token, login, logout, isAuthenticated, isLoading, fetchUserData, getUserStatus]
+  );
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        token,
-        login,
-        logout,
-        isAuthenticated,
-        isLoading,
-        fetchUserData,
-        getUserStatus,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

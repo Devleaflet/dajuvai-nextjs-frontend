@@ -9,7 +9,7 @@ import VendorViewModal from "@/components/Components/Modal/VendorViewModal";
 import { API_BASE_URL } from "@/lib/config";
 import { useAuth } from "@/lib/context/AuthContext";
 import {
-	Vendor,
+	Vendor as ComponentVendor,
 	District,
 	ApiResponse,
 	VendorUpdateRequest,
@@ -17,6 +17,9 @@ import {
 import "@/styles/AdminVendor.css";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
+
+// Use the detailed vendor type for internal operations
+type Vendor = ComponentVendor;
 
 const SkeletonRow: React.FC = () => {
 	return (
@@ -81,19 +84,19 @@ const createVendorAPI = (token: string | null) => ({
 				taxDocuments: Array.isArray(vendor.taxDocuments)
 					? vendor.taxDocuments
 					: vendor.taxDocuments
-					? [vendor.taxDocuments]
-					: [],
+						? [vendor.taxDocuments]
+						: [],
 				businessRegNumber: vendor.businessRegNumber || "N/A",
 				citizenshipDocuments: Array.isArray(vendor.citizenshipDocuments)
 					? vendor.citizenshipDocuments
 					: vendor.citizenshipDocuments
-					? [vendor.citizenshipDocuments]
-					: [],
+						? [vendor.citizenshipDocuments]
+						: [],
 				chequePhoto: Array.isArray(vendor.chequePhoto)
 					? vendor.chequePhoto
 					: vendor.chequePhoto
-					? [vendor.chequePhoto]
-					: [],
+						? [vendor.chequePhoto]
+						: [],
 				accountName: vendor.accountName || "N/A",
 				bankName: vendor.bankName || "N/A",
 				accountNumber: vendor.accountNumber || "N/A",
@@ -127,7 +130,7 @@ const createVendorAPI = (token: string | null) => ({
 				}
 			);
 
-		
+
 
 			if (!response.ok) {
 				throw new Error(`HTTP error! status: ${response.status}`);
@@ -142,19 +145,19 @@ const createVendorAPI = (token: string | null) => ({
 				taxDocuments: Array.isArray(vendor.taxDocuments)
 					? vendor.taxDocuments
 					: vendor.taxDocuments
-					? [vendor.taxDocuments]
-					: [],
+						? [vendor.taxDocuments]
+						: [],
 				businessRegNumber: vendor.businessRegNumber || "N/A",
 				citizenshipDocuments: Array.isArray(vendor.citizenshipDocuments)
 					? vendor.citizenshipDocuments
 					: vendor.citizenshipDocuments
-					? [vendor.citizenshipDocuments]
-					: [],
+						? [vendor.citizenshipDocuments]
+						: [],
 				chequePhoto: Array.isArray(vendor.chequePhoto)
 					? vendor.chequePhoto
 					: vendor.chequePhoto
-					? [vendor.chequePhoto]
-					: [],
+						? [vendor.chequePhoto]
+						: [],
 				accountName: vendor.accountName || "N/A",
 				bankName: vendor.bankName || "N/A",
 				accountNumber: vendor.accountNumber || "N/A",
@@ -281,7 +284,7 @@ const createVendorAPI = (token: string | null) => ({
 					: vendorData.chequePhoto || "", // Ensure it's a string or empty
 			};
 
-	
+
 
 			const response = await fetch(`${API_BASE_URL}/api/vendors/${id}`, {
 				method: "PUT",
@@ -313,25 +316,28 @@ const createVendorAPI = (token: string | null) => ({
 			}
 
 			if (!result.data) {
+				// Return a properly typed vendor object with all required fields
+				// Note: We need to fetch the original vendor data or use defaults for missing fields
 				return {
 					id,
-					...normalizedVendorData,
+					businessName: normalizedVendorData.businessName || '',
+					email: '', // Email is not in update request, will be filled from original vendor
 					phoneNumber: normalizedVendorData.phoneNumber || "N/A",
 					taxNumber: normalizedVendorData.taxNumber || "N/A",
 					taxDocuments: Array.isArray(normalizedVendorData.taxDocuments)
 						? normalizedVendorData.taxDocuments
 						: normalizedVendorData.taxDocuments
-						? [normalizedVendorData.taxDocuments]
-						: [],
+							? [normalizedVendorData.taxDocuments]
+							: [],
 					businessRegNumber: normalizedVendorData.businessRegNumber || "N/A",
 					citizenshipDocuments: Array.isArray(
 						normalizedVendorData.citizenshipDocuments
 					)
 						? normalizedVendorData.citizenshipDocuments
 						: normalizedVendorData.citizenshipDocuments
-						? [normalizedVendorData.citizenshipDocuments]
-						: [],
-					chequePhoto: normalizedVendorData.chequePhoto || "",
+							? [normalizedVendorData.citizenshipDocuments]
+							: [],
+					chequePhoto: normalizedVendorData.chequePhoto ? [normalizedVendorData.chequePhoto] : null,
 					accountName: normalizedVendorData.accountName || "N/A",
 					bankName: normalizedVendorData.bankName || "N/A",
 					accountNumber: normalizedVendorData.accountNumber || "N/A",
@@ -339,7 +345,17 @@ const createVendorAPI = (token: string | null) => ({
 					bankCode: normalizedVendorData.bankCode || "N/A",
 					businessAddress: normalizedVendorData.businessAddress || "N/A",
 					profilePicture: normalizedVendorData.profilePicture || "N/A",
-					isVerified: false,
+					verificationCode: null,
+					verificationCodeExpire: null,
+					isVerified: normalizedVendorData.isVerified || false,
+					isApproved: false,
+					resetToken: null,
+					resetTokenExpire: null,
+					resendCount: 0,
+					resendBlockUntil: null,
+					createdAt: new Date().toISOString(),
+					updatedAt: new Date().toISOString(),
+					district: normalizedVendorData.district as any || { id: 0, name: 'N/A' },
 					status: "Inactive",
 				} as Vendor;
 			}
@@ -351,14 +367,14 @@ const createVendorAPI = (token: string | null) => ({
 				taxDocuments: Array.isArray(result.data.taxDocuments)
 					? result.data.taxDocuments
 					: result.data.taxDocuments
-					? [result.data.taxDocuments]
-					: [],
+						? [result.data.taxDocuments]
+						: [],
 				businessRegNumber: result.data.businessRegNumber || "N/A",
 				citizenshipDocuments: Array.isArray(result.data.citizenshipDocuments)
 					? result.data.citizenshipDocuments
 					: result.data.citizenshipDocuments
-					? [result.data.citizenshipDocuments]
-					: [],
+						? [result.data.citizenshipDocuments]
+						: [],
 				chequePhoto: result.data.chequePhoto || "",
 				accountName: result.data.accountName || "N/A",
 				bankName: result.data.bankName || "N/A",
@@ -633,7 +649,7 @@ const AdminVendor: React.FC = () => {
 		fetchDistricts,
 		loadUnapprovedCount,
 		loadVendors,
-		navigate,
+		router,
 	]);
 
 	// Auto-filter when approval filter changes
@@ -659,8 +675,8 @@ const AdminVendor: React.FC = () => {
 					typeof vendor.district === "object" && vendor.district
 						? vendor.district.name
 						: typeof vendor.district === "string"
-						? vendor.district
-						: "";
+							? vendor.district
+							: "";
 				return (
 					(vendor.businessName || "").toLowerCase().includes(searchTerm) ||
 					(vendor.email || "").toLowerCase().includes(searchTerm) ||
@@ -705,8 +721,8 @@ const AdminVendor: React.FC = () => {
 					typeof vendor.district === "object" && vendor.district
 						? vendor.district.name
 						: typeof vendor.district === "string"
-						? vendor.district
-						: "";
+							? vendor.district
+							: "";
 				return districtName === districtFilter;
 			});
 		}
@@ -1008,7 +1024,7 @@ const AdminVendor: React.FC = () => {
 												</td>
 												<td className="admin-vendors__district-column">
 													{typeof vendor.district === "object" &&
-													vendor.district
+														vendor.district
 														? vendor.district.name
 														: vendor.district || "N/A"}
 												</td>
@@ -1017,9 +1033,8 @@ const AdminVendor: React.FC = () => {
 												</td>
 												<td className="admin-vendors__approval-column">
 													<span
-														className={`approval-status ${
-															vendor.isApproved ? "approved" : "pending"
-														}`}
+														className={`approval-status ${vendor.isApproved ? "approved" : "pending"
+															}`}
 													>
 														{vendor.isApproved ? "Approved" : "Pending"}
 													</span>
@@ -1069,8 +1084,7 @@ const AdminVendor: React.FC = () => {
 						<div className="admin-vendors__pagination-container">
 							<Pagination
 								currentPage={currentPage}
-								totalItems={filteredVendors.length}
-								itemsPerPage={vendorsPerPage}
+								totalPages={Math.ceil(filteredVendors.length / vendorsPerPage)}
 								onPageChange={setCurrentPage}
 							/>
 						</div>
@@ -1082,7 +1096,14 @@ const AdminVendor: React.FC = () => {
 							setSelectedVendor(null);
 						}}
 						onSave={handleSaveVendor}
-						vendor={selectedVendor}
+						vendor={selectedVendor ? {
+							id: selectedVendor.id,
+							businessName: selectedVendor.businessName,
+							email: selectedVendor.email,
+							businessAddress: selectedVendor.businessAddress || '',
+							phoneNumber: selectedVendor.phoneNumber,
+							district: typeof selectedVendor.district === 'object' ? selectedVendor.district.name : selectedVendor.district
+						} : null}
 						districts={districts}
 					/>
 					<VendorViewModal
@@ -1091,7 +1112,14 @@ const AdminVendor: React.FC = () => {
 							setShowViewModal(false);
 							setSelectedVendor(null);
 						}}
-						vendor={selectedVendor}
+						vendor={selectedVendor ? {
+							id: selectedVendor.id,
+							businessName: selectedVendor.businessName,
+							email: selectedVendor.email,
+							businessAddress: selectedVendor.businessAddress || '',
+							phoneNumber: selectedVendor.phoneNumber,
+							district: typeof selectedVendor.district === 'object' ? selectedVendor.district.name : selectedVendor.district
+						} : null}
 					/>
 					<ConfirmationModal
 						show={showConfirmModal}

@@ -5,8 +5,20 @@ import { createPortal } from "react-dom";
 import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/lib/context/AuthContext";
 import { API_BASE_URL } from "@/lib/config";
+import {
+	loginSchema,
+	registerSchema,
+	forgotPasswordSchema,
+	resetPasswordSchema,
+	type LoginFormData,
+	type RegisterFormData,
+	type ForgotPasswordFormData,
+	type ResetPasswordFormData
+} from "@/lib/validations/auth.schema";
 import { FaInfoCircle } from "react-icons/fa";
 import "@/styles/AuthModal.css";
 import { Toaster, toast } from "react-hot-toast";
@@ -40,10 +52,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 	const { login, fetchUserData } = useAuth();
 	const router = useRouter();
 	const [termsAgreed, setTermsAgreed] = useState<boolean>(false);
-	const [email, setEmail] = useState<string>("");
-	const [password, setPassword] = useState<string>("");
-	const [confirmPassword, setConfirmPassword] = useState<string>("");
-	const [username, setUsername] = useState<string>("");
 	const [isLoginMode, setIsLoginMode] = useState<boolean>(true);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [error, setError] = useState<string>("");
@@ -56,20 +64,55 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 	const [forgotMode, setForgotMode] = useState<"none" | "request" | "reset">(
 		"none"
 	);
-	const [resetToken, setResetToken] = useState<string>("");
-	const [newPassword, setNewPassword] = useState<string>("");
-	const [confirmNewPassword, setConfirmNewPassword] = useState<string>("");
 	const [showForgotPopup, setShowForgotPopup] = useState(false);
 	const [showPassword, setShowPassword] = useState<boolean>(false);
 	const [showConfirmPassword, setShowConfirmPassword] =
 		useState<boolean>(false);
 
-	// Validation states
-	const [errors, setErrors] = useState<Record<string, string>>({});
-	const [touched, setTouched] = useState<Record<string, boolean>>({});
-
 	const modalRef = useRef<HTMLDivElement | null>(null);
 	const popupRef = useRef<HTMLDivElement | null>(null);
+
+	// React Hook Form for login
+	const loginForm = useForm<LoginFormData>({
+		resolver: zodResolver(loginSchema),
+		mode: 'onBlur',
+		defaultValues: {
+			email: '',
+			password: '',
+		},
+	});
+
+	// React Hook Form for register
+	const registerForm = useForm<RegisterFormData>({
+		resolver: zodResolver(registerSchema),
+		mode: 'onBlur',
+		defaultValues: {
+			email: '',
+			password: '',
+			confirmPassword: '',
+			name: '',
+			phone: '',
+		},
+	});
+
+	// React Hook Form for forgot password
+	const forgotPasswordForm = useForm<ForgotPasswordFormData>({
+		resolver: zodResolver(forgotPasswordSchema),
+		mode: 'onBlur',
+		defaultValues: {
+			email: '',
+		},
+	});
+
+	// React Hook Form for reset password
+	const resetPasswordForm = useForm<ResetPasswordFormData>({
+		resolver: zodResolver(resetPasswordSchema),
+		mode: 'onBlur',
+		defaultValues: {
+			password: '',
+			confirmPassword: '',
+		},
+	});
 
 	useEffect(() => {
 		if (isOpen) {
@@ -91,19 +134,21 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 		};
 	}, [countdown, showVerification]);
 
+	// Reset forms when switching between login and register
 	useEffect(() => {
 		setError("");
 		setSuccess("");
-		setErrors({});
-		setTouched({});
-	}, [isLoginMode]);
+		loginForm.reset();
+		registerForm.reset();
+	}, [isLoginMode, loginForm, registerForm]);
 
+	// Reset everything when modal closes
 	useEffect(() => {
 		if (!isOpen) {
-			setEmail("");
-			setPassword("");
-			setConfirmPassword("");
-			setUsername("");
+			loginForm.reset();
+			registerForm.reset();
+			forgotPasswordForm.reset();
+			resetPasswordForm.reset();
 			setError("");
 			setSuccess("");
 			setShowVerification(false);
@@ -111,214 +156,29 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 			setPendingVerificationEmail("");
 			setCountdown(0);
 			setForgotMode("none");
-			setResetToken("");
-			setNewPassword("");
-			setConfirmNewPassword("");
 			setShowPassword(false);
 			setShowConfirmPassword(false);
-			setErrors({});
-			setTouched({});
+			setShowForgotPopup(false);
+			setTermsAgreed(false);
 		}
-	}, [isOpen]);
-
-	const validateField = (name: string, value: string): string => {
-		switch (name) {
-			case "username":
-				if (!value.trim()) return "Username is required";
-				if (value.length < 3) return "Username must be at least 3 characters";
-				if (value.length > 30)
-					return "Username must be less than 30 characters";
-				if (!/^[a-zA-Z0-9_]+$/.test(value))
-					return "Username can only contain letters, numbers, and underscores";
-				return "";
-
-			case "email":
-				if (!value.trim()) return "Email is required";
-				if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
-					return "Invalid email format";
-				if (value.length > 255) return "Email is too long";
-				return "";
-
-			case "password":
-				if (!value.trim()) return "Password is required";
-				if (value.length < 8) return "Password must be at least 8 characters";
-				if (!/[a-z]/.test(value))
-					return "Password must contain at least one lowercase letter";
-				if (!/[A-Z]/.test(value))
-					return "Password must contain at least one uppercase letter";
-				if (!/[^a-zA-Z0-9]/.test(value))
-					return "Password must contain at least one special character";
-				if (value.length > 128) return "Password is too long";
-				return "";
-
-			case "confirmPassword":
-				if (!value.trim()) return "Please confirm your password";
-				if (value !== password) return "Passwords do not match";
-				return "";
-
-			case "resetToken":
-				if (!value.trim()) return "Reset token is required";
-				return "";
-
-			case "newPassword":
-				if (!value.trim()) return "New password is required";
-				if (value.length < 8) return "Password must be at least 8 characters";
-				if (!/[a-z]/.test(value))
-					return "Password must contain at least one lowercase letter";
-				if (!/[A-Z]/.test(value))
-					return "Password must contain at least one uppercase letter";
-				if (!/[^a-zA-Z0-9]/.test(value))
-					return "Password must contain at least one special character";
-				return "";
-
-			case "confirmNewPassword":
-				if (!value.trim()) return "Please confirm your new password";
-				if (value !== newPassword) return "Passwords do not match";
-				return "";
-
-			default:
-				return "";
-		}
-	};
-
-	const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-		const { name, value } = e.target;
-		setTouched((prev) => ({ ...prev, [name]: true }));
-
-		const error = validateField(name, value);
-		setErrors((prev) => ({ ...prev, [name]: error }));
-	};
-
-	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const { name, value } = e.target;
-
-		switch (name) {
-			case "username":
-				setUsername(value);
-				break;
-			case "email":
-				setEmail(value);
-				break;
-			case "password":
-				setPassword(value);
-				break;
-			case "confirmPassword":
-				setConfirmPassword(value);
-				break;
-			case "resetToken":
-				setResetToken(value);
-				break;
-			case "newPassword":
-				setNewPassword(value);
-				break;
-			case "confirmNewPassword":
-				setConfirmNewPassword(value);
-				break;
-		}
-
-		if (errors[name]) {
-			setErrors((prev) => ({ ...prev, [name]: "" }));
-		}
-
-		if (touched[name]) {
-			const error = validateField(name, value);
-			setErrors((prev) => ({ ...prev, [name]: error }));
-		}
-	};
+	}, [isOpen, loginForm, registerForm, forgotPasswordForm, resetPasswordForm]);
 
 	const handleTermsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		setTermsAgreed(e.target.checked);
 	};
 
-	const validateForm = (): boolean => {
-		const newErrors: Record<string, string> = {};
-		let isValid = true;
-
-		const fieldsToValidate = isLoginMode
-			? ["email", "password"]
-			: ["username", "email", "password", "confirmPassword"];
-
-		fieldsToValidate.forEach((field) => {
-			const value =
-				field === "username"
-					? username
-					: field === "email"
-						? email
-						: field === "password"
-							? password
-							: field === "confirmPassword"
-								? confirmPassword
-								: "";
-
-			const error = validateField(field, value);
-			if (error) {
-				newErrors[field] = error;
-				isValid = false;
-			}
-		});
-
-		setErrors(newErrors);
-
-		const allTouched = fieldsToValidate.reduce((acc, field) => {
-			acc[field] = true;
-			return acc;
-		}, {} as Record<string, boolean>);
-
-		setTouched((prev) => ({ ...prev, ...allTouched }));
-		return isValid;
-	};
-
-	const validateResetForm = (): boolean => {
-		const newErrors: Record<string, string> = {};
-		let isValid = true;
-
-		const fieldsToValidate =
-			forgotMode === "request"
-				? ["email"]
-				: ["resetToken", "newPassword", "confirmNewPassword"];
-
-		fieldsToValidate.forEach((field) => {
-			const value =
-				field === "email"
-					? email
-					: field === "resetToken"
-						? resetToken
-						: field === "newPassword"
-							? newPassword
-							: field === "confirmNewPassword"
-								? confirmNewPassword
-								: "";
-
-			const error = validateField(field, value);
-			if (error) {
-				newErrors[field] = error;
-				isValid = false;
-			}
-		});
-
-		setErrors(newErrors);
-
-		const allTouched = fieldsToValidate.reduce((acc, field) => {
-			acc[field] = true;
-			return acc;
-		}, {} as Record<string, boolean>);
-
-		setTouched((prev) => ({ ...prev, ...allTouched }));
-		return isValid;
-	};
-
-	const handleSignup = async (userData: {
-		username: string;
-		email: string;
-		password: string;
-		confirmPassword: string;
-	}) => {
+	const handleSignup = async (userData: RegisterFormData) => {
 		try {
 			setIsLoading(true);
 			setError("");
 			const response = await axios.post<SignupResponse>(
 				`${API_BASE_URL}/api/auth/signup`,
-				userData,
+				{
+					username: userData.name, // Backend expects 'username' field
+					email: userData.email,
+					password: userData.password,
+					confirmPassword: userData.confirmPassword,
+				},
 				{
 					headers: {
 						"Content-Type": "application/json",
@@ -327,16 +187,11 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 			);
 
 			setSuccess(response.data.message);
-			//("Signup successful:", response.data);
 
 			setPendingVerificationEmail(userData.email);
 			setShowVerification(true);
 			setCountdown(120);
-			setPassword("");
-			setConfirmPassword("");
-			setUsername("");
-			setErrors({});
-			setTouched({});
+			registerForm.reset();
 		} catch (err) {
 			if (axios.isAxiosError(err)) {
 				console.error("Signup error details:", {
@@ -348,15 +203,17 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
 				if (err.response?.status === 400 && err.response?.data?.errors) {
 					const serverErrors = err.response.data.errors;
-					const newErrors: Record<string, string> = {};
 
+					// Map server errors to form fields
 					Object.keys(serverErrors).forEach((key) => {
 						if (serverErrors[key] && serverErrors[key][0]) {
-							newErrors[key] = serverErrors[key][0];
+							registerForm.setError(key as keyof RegisterFormData, {
+								type: 'server',
+								message: serverErrors[key][0],
+							});
 						}
 					});
 
-					setErrors(newErrors);
 					setError("Please correct the validation errors");
 				} else if (
 					err.response?.status === 400 &&
@@ -468,7 +325,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 		}
 	};
 
-	const handleLogin = async (userData: { email: string; password: string }) => {
+	const handleLogin = async (userData: LoginFormData) => {
 		try {
 			setIsLoading(true);
 			setError("");
@@ -484,14 +341,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 				}
 			);
 
-			//("User login successful:", response.data);
-
 			if (response.data.success && response.data.token) {
 				const userData = {
 					id: response.data.data.userId,
 					email: response.data.data.email,
 					role: response.data.data.role,
-					username: response.data.data.email.split("@")[0],
+					username: response.data.data.email?.split("@")[0] || 'user',
 					isVerified: true,
 				};
 
@@ -565,27 +420,24 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 			return;
 		}
 
-		if (!validateForm()) {
-			toast.error("Please fix the errors in the form", {
-				position: "top-right",
-				autoClose: 5000,
-				hideProgressBar: false,
-				closeOnClick: true,
-				pauseOnHover: true,
-				draggable: true,
-			});
-			return;
-		}
-
 		if (isLoginMode) {
-			await handleLogin({ email: email.trim(), password });
+			const isValid = await loginForm.trigger();
+			if (!isValid) {
+				toast.error("Please fix the errors in the form", {
+					position: "top-right",
+				});
+				return;
+			}
+			await handleLogin(loginForm.getValues());
 		} else {
-			await handleSignup({
-				username: username.trim(),
-				email: email.trim(),
-				password,
-				confirmPassword,
-			});
+			const isValid = await registerForm.trigger();
+			if (!isValid) {
+				toast.error("Please fix the errors in the form", {
+					position: "top-right",
+				});
+				return;
+			}
+			await handleSignup(registerForm.getValues());
 		}
 	};
 
@@ -594,16 +446,17 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 		setError("");
 		setSuccess("");
 
-		if (!validateResetForm()) {
+		const isValid = await forgotPasswordForm.trigger();
+		if (!isValid) {
 			toast.error("Please fix the errors in the form", {
 				position: "top-right",
-				autoClose: 5000,
 			});
 			return;
 		}
 
 		setIsLoading(true);
 		try {
+			const { email } = forgotPasswordForm.getValues();
 			await axios.post(`${API_BASE_URL}/api/auth/forgot-password`, { email });
 			setSuccess("Password reset email sent! Check your inbox.");
 			setForgotMode("reset");
@@ -619,26 +472,26 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 		setError("");
 		setSuccess("");
 
-		if (!validateResetForm()) {
+		const isValid = await resetPasswordForm.trigger();
+		if (!isValid) {
 			toast.error("Please fix the errors in the form", {
 				position: "top-right",
-				autoClose: 5000,
 			});
 			return;
 		}
 
 		setIsLoading(true);
 		try {
+			const { password, confirmPassword } = resetPasswordForm.getValues();
+			const resetToken = resetPasswordForm.watch('password'); // We'll need to add a token field
 			await axios.post(`${API_BASE_URL}/api/auth/reset-password`, {
-				newPass: newPassword,
-				confirmPass: confirmNewPassword,
+				newPass: password,
+				confirmPass: confirmPassword,
 				token: resetToken,
 			});
 			setSuccess("Password reset successful! You can now log in.");
 			setForgotMode("none");
-			setResetToken("");
-			setNewPassword("");
-			setConfirmNewPassword("");
+			resetPasswordForm.reset();
 		} catch {
 			setError(
 				"Failed to reset password. Please check your token and try again."
@@ -821,133 +674,231 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 										type="text"
 										className="auth-modal__input"
 										placeholder="Please enter username"
-										name="username"
-										value={username}
-										onChange={handleInputChange}
-										onBlur={handleBlur}
-										required
+										{...registerForm.register("name")}
 										disabled={isLoading}
 									/>
-									{errors.username && touched.username && (
+									{registerForm.formState.errors.name && (
 										<div className="error-message">
 											<FaInfoCircle className="error-icon" />
-											{errors.username}
+											{registerForm.formState.errors.name.message}
 										</div>
 									)}
 								</div>
 							)}
 
-							<div className="auth-modal__form-group">
-								<input
-									type="email"
-									className="auth-modal__input"
-									placeholder="Please enter email"
-									name="email"
-									value={email}
-									onChange={handleInputChange}
-									onBlur={handleBlur}
-									required
-									disabled={isLoading}
-								/>
-								{errors.email && touched.email && (
-									<div className="error-message">
-										<FaInfoCircle className="error-icon" />
-										{errors.email}
-									</div>
-								)}
-							</div>
-
-							<div
-								className="auth-modal__form-group"
-								style={{ position: "relative" }}
-							>
-								<input
-									type={showPassword ? "text" : "password"}
-									className="auth-modal__input"
-									placeholder="Please enter password"
-									name="password"
-									value={password}
-									onChange={handleInputChange}
-									onBlur={handleBlur}
-									required
-									disabled={isLoading}
-									style={{ paddingRight: "40px" }}
-								/>
-								<span
-									style={{
-										position: "absolute",
-										right: "10px",
-										top: "25px",
-										transform: "translateY(-50%)",
-										display: "flex",
-										alignItems: "center",
-										height: "100%",
-									}}
-								>
-									<button
-										type="button"
-										onClick={togglePasswordVisibility}
-										style={{
-											background: "none",
-											border: "none",
-											cursor: "pointer",
-											padding: "0",
-											fontSize: "16px",
-											lineHeight: 1,
-										}}
-										tabIndex={-1}
-										aria-label={
-											showPassword ? "Hide password" : "Show password"
-										}
-									>
-										{showPassword ? (
-											<svg
-												width="20"
-												height="20"
-												viewBox="0 0 24 24"
-												fill="none"
-												stroke="#888"
-												strokeWidth="2"
-												strokeLinecap="round"
-												strokeLinejoin="round"
-											>
-												<ellipse
-													cx="12"
-													cy="12"
-													rx="10"
-													ry="7"
-												/>
-												<circle
-													cx="12"
-													cy="12"
-													r="3.5"
-												/>
-											</svg>
-										) : (
-											<svg
-												width="20"
-												height="20"
-												viewBox="0 0 24 24"
-												fill="none"
-												stroke="#888"
-												strokeWidth="2"
-												strokeLinecap="round"
-												strokeLinejoin="round"
-											>
-												<path d="M1 1l22 22" />
-												<path d="M17.94 17.94A10.94 10.94 0 0 1 12 19C7 19 2.73 15.11 1 12c.74-1.32 1.81-2.87 3.11-4.19M9.53 9.53A3.5 3.5 0 0 1 12 8.5c1.93 0 3.5 1.57 3.5 3.5 0 .47-.09.92-.26 1.33" />
-												<path d="M14.47 14.47A3.5 3.5 0 0 1 12 15.5c-1.93 0-3.5-1.57-3.5-3.5 0-.47.09-.92.26-1.33" />
-											</svg>
+							{isLoginMode ? (
+								<>
+									<div className="auth-modal__form-group">
+										<input
+											type="email"
+											className="auth-modal__input"
+											placeholder="Please enter email"
+											{...loginForm.register("email")}
+											disabled={isLoading}
+										/>
+										{loginForm.formState.errors.email && (
+											<div className="error-message">
+												<FaInfoCircle className="error-icon" />
+												{loginForm.formState.errors.email.message}
+											</div>
 										)}
-									</button>
-								</span>
-								{errors.password && touched.password && (
-									<div className="error-message">
-										<FaInfoCircle className="error-icon" />
-										{errors.password}
 									</div>
-								)}
-							</div>
+
+									<div
+										className="auth-modal__form-group"
+										style={{ position: "relative" }}
+									>
+										<input
+											type={showPassword ? "text" : "password"}
+											className="auth-modal__input"
+											placeholder="Please enter password"
+											{...loginForm.register("password")}
+											disabled={isLoading}
+											style={{ paddingRight: "40px" }}
+										/>
+										<span
+											style={{
+												position: "absolute",
+												right: "10px",
+												top: "25px",
+												transform: "translateY(-50%)",
+												display: "flex",
+												alignItems: "center",
+												height: "100%",
+											}}
+										>
+											<button
+												type="button"
+												onClick={togglePasswordVisibility}
+												style={{
+													background: "none",
+													border: "none",
+													cursor: "pointer",
+													padding: "0",
+													fontSize: "16px",
+													lineHeight: 1,
+												}}
+												tabIndex={-1}
+												aria-label={
+													showPassword ? "Hide password" : "Show password"
+												}
+											>
+												{showPassword ? (
+													<svg
+														width="20"
+														height="20"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="#888"
+														strokeWidth="2"
+														strokeLinecap="round"
+														strokeLinejoin="round"
+													>
+														<ellipse
+															cx="12"
+															cy="12"
+															rx="10"
+															ry="7"
+														/>
+														<circle
+															cx="12"
+															cy="12"
+															r="3.5"
+														/>
+													</svg>
+												) : (
+													<svg
+														width="20"
+														height="20"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="#888"
+														strokeWidth="2"
+														strokeLinecap="round"
+														strokeLinejoin="round"
+													>
+														<path d="M1 1l22 22" />
+														<path d="M17.94 17.94A10.94 10.94 0 0 1 12 19C7 19 2.73 15.11 1 12c.74-1.32 1.81-2.87 3.11-4.19M9.53 9.53A3.5 3.5 0 0 1 12 8.5c1.93 0 3.5 1.57 3.5 3.5 0 .47-.09.92-.26 1.33" />
+														<path d="M14.47 14.47A3.5 3.5 0 0 1 12 15.5c-1.93 0-3.5-1.57-3.5-3.5 0-.47.09.92-.26 1.33" />
+													</svg>
+												)}
+											</button>
+										</span>
+										{loginForm.formState.errors.password && (
+											<div className="error-message">
+												<FaInfoCircle className="error-icon" />
+												{loginForm.formState.errors.password.message}
+											</div>
+										)}
+									</div>
+								</>
+							) : (
+								<>
+									<div className="auth-modal__form-group">
+										<input
+											type="email"
+											className="auth-modal__input"
+											placeholder="Please enter email"
+											{...registerForm.register("email")}
+											disabled={isLoading}
+										/>
+										{registerForm.formState.errors.email && (
+											<div className="error-message">
+												<FaInfoCircle className="error-icon" />
+												{registerForm.formState.errors.email.message}
+											</div>
+										)}
+									</div>
+
+									<div
+										className="auth-modal__form-group"
+										style={{ position: "relative" }}
+									>
+										<input
+											type={showPassword ? "text" : "password"}
+											className="auth-modal__input"
+											placeholder="Please enter password"
+											{...registerForm.register("password")}
+											disabled={isLoading}
+											style={{ paddingRight: "40px" }}
+										/>
+										<span
+											style={{
+												position: "absolute",
+												right: "10px",
+												top: "25px",
+												transform: "translateY(-50%)",
+												display: "flex",
+												alignItems: "center",
+												height: "100%",
+											}}
+										>
+											<button
+												type="button"
+												onClick={togglePasswordVisibility}
+												style={{
+													background: "none",
+													border: "none",
+													cursor: "pointer",
+													padding: "0",
+													fontSize: "16px",
+													lineHeight: 1,
+												}}
+												tabIndex={-1}
+												aria-label={
+													showPassword ? "Hide password" : "Show password"
+												}
+											>
+												{showPassword ? (
+													<svg
+														width="20"
+														height="20"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="#888"
+														strokeWidth="2"
+														strokeLinecap="round"
+														strokeLinejoin="round"
+													>
+														<ellipse
+															cx="12"
+															cy="12"
+															rx="10"
+															ry="7"
+														/>
+														<circle
+															cx="12"
+															cy="12"
+															r="3.5"
+														/>
+													</svg>
+												) : (
+													<svg
+														width="20"
+														height="20"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="#888"
+														strokeWidth="2"
+														strokeLinecap="round"
+														strokeLinejoin="round"
+													>
+														<path d="M1 1l22 22" />
+														<path d="M17.94 17.94A10.94 10.94 0 0 1 12 19C7 19 2.73 15.11 1 12c.74-1.32 1.81-2.87 3.11-4.19M9.53 9.53A3.5 3.5 0 0 1 12 8.5c1.93 0 3.5 1.57 3.5 3.5 0 .47-.09.92-.26 1.33" />
+														<path d="M14.47 14.47A3.5 3.5 0 0 1 12 15.5c-1.93 0-3.5-1.57-3.5-3.5 0-.47.09-.92.26-1.33" />
+													</svg>
+												)}
+											</button>
+										</span>
+										{registerForm.formState.errors.password && (
+											<div className="error-message">
+												<FaInfoCircle className="error-icon" />
+												{registerForm.formState.errors.password.message}
+											</div>
+										)}
+									</div>
+								</>
+							)}
 
 							{isLoginMode && !showVerification && (
 								<button
@@ -972,11 +923,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 											type={showConfirmPassword ? "text" : "password"}
 											className="auth-modal__input"
 											placeholder="Confirm password"
-											value={confirmPassword}
-											name="confirmPassword"
-											onChange={handleInputChange}
-											onBlur={handleBlur}
-											required
+											{...registerForm.register("confirmPassword")}
 											disabled={isLoading}
 											style={{ paddingRight: "40px" }}
 										/>
@@ -1050,10 +997,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 												)}
 											</button>
 										</span>
-										{errors.confirmPassword && touched.confirmPassword && (
+										{registerForm.formState.errors.confirmPassword && (
 											<div className="error-message">
 												<FaInfoCircle className="error-icon" />
-												{errors.confirmPassword}
+												{registerForm.formState.errors.confirmPassword.message}
 											</div>
 										)}
 									</div>
@@ -1156,12 +1103,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 									type="email"
 									className="auth-modal__input"
 									placeholder="Email"
-									value={email}
-									onChange={handleInputChange}
-									onBlur={handleBlur}
-									name="email"
-									required
+									{...forgotPasswordForm.register("email")}
 								/>
+								{forgotPasswordForm.formState.errors.email && (
+									<div className="error-message">
+										<FaInfoCircle className="error-icon" />
+										{forgotPasswordForm.formState.errors.email.message}
+									</div>
+								)}
 								{error && <div className="auth-modal__error">{error}</div>}
 								{success && (
 									<div className="auth-modal__success">{success}</div>
@@ -1181,6 +1130,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 										setForgotMode("none");
 										setError("");
 										setSuccess("");
+										forgotPasswordForm.reset();
 									}}
 									style={{ marginTop: 8 }}
 								>
@@ -1200,8 +1150,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 									type="text"
 									className="auth-modal__input"
 									placeholder="Reset Token"
-									value={resetToken}
-									onChange={(e) => setResetToken(e.target.value)}
+									value={resetPasswordForm.watch('password') || ''}
+									onChange={(e) => resetPasswordForm.setValue('password', e.target.value)}
 									required
 								/>
 								<div
@@ -1212,10 +1162,15 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 										type={showPassword ? "text" : "password"}
 										className="auth-modal__input"
 										placeholder="New Password"
-										value={newPassword}
-										onChange={(e) => setNewPassword(e.target.value)}
+										{...resetPasswordForm.register("password")}
 										required
 									/>
+									{resetPasswordForm.formState.errors.password && (
+										<div className="error-message">
+											<FaInfoCircle className="error-icon" />
+											{resetPasswordForm.formState.errors.password.message}
+										</div>
+									)}
 									<button
 										type="button"
 										onClick={togglePasswordVisibility}
@@ -1280,10 +1235,15 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 										type={showConfirmPassword ? "text" : "password"}
 										className="auth-modal__input"
 										placeholder="Confirm New Password"
-										value={confirmNewPassword}
-										onChange={(e) => setConfirmNewPassword(e.target.value)}
+										{...resetPasswordForm.register("confirmPassword")}
 										required
 									/>
+									{resetPasswordForm.formState.errors.confirmPassword && (
+										<div className="error-message">
+											<FaInfoCircle className="error-icon" />
+											{resetPasswordForm.formState.errors.confirmPassword.message}
+										</div>
+									)}
 									<button
 										type="button"
 										onClick={toggleConfirmPasswordVisibility}
@@ -1359,6 +1319,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 										setForgotMode("none");
 										setError("");
 										setSuccess("");
+										resetPasswordForm.reset();
 									}}
 									style={{ marginTop: 8 }}
 								>

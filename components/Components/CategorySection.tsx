@@ -1,13 +1,12 @@
 'use client';
 
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useRouter, usePathname } from "next/navigation";
 import "@/styles/CategorySection.css";
 import { useCategory } from "@/lib/context/Category";
 import { fetchCategoryCatalog } from "@/lib/api/categoryCatalog";
 import { useQuery } from "@tanstack/react-query";
 import type { Category } from "@/lib/context/Category";
-import { log } from "console";
 
 interface CategorySectionProps {
 	maxItemsToShow?: number;
@@ -99,15 +98,17 @@ const CategorySection: React.FC<CategorySectionProps> = ({
 
 	const handleMouseMove = useCallback(
 		(e: React.MouseEvent, categoryId: string) => {
-			if (!isDragging[categoryId]) return;
+			const startXValue = startX[categoryId];
+			const scrollLeftValue = scrollLeft[categoryId];
+			if (!isDragging[categoryId] || startXValue === undefined || scrollLeftValue === undefined) return;
 
 			e.preventDefault();
 			const carousel = carouselRefs.current[categoryId];
 			if (!carousel) return;
 
 			const x = e.pageX - carousel.offsetLeft;
-			const walk = (x - startX[categoryId]) * 2;
-			carousel.scrollLeft = scrollLeft[categoryId] - walk;
+			const walk = (x - startXValue) * 2;
+			carousel.scrollLeft = scrollLeftValue - walk;
 		},
 		[isDragging, startX, scrollLeft]
 	);
@@ -132,12 +133,13 @@ const CategorySection: React.FC<CategorySectionProps> = ({
 	const handleTouchStart = useCallback(
 		(e: React.TouchEvent, categoryId: string) => {
 			const carousel = carouselRefs.current[categoryId];
-			if (!carousel) return;
+			const touch = e.touches[0];
+			if (!carousel || !touch) return;
 
 			setIsDragging((prev) => ({ ...prev, [categoryId]: true }));
 			setStartX((prev) => ({
 				...prev,
-				[categoryId]: e.touches[0].pageX - carousel.offsetLeft,
+				[categoryId]: touch.pageX - carousel.offsetLeft,
 			}));
 			setScrollLeft((prev) => ({ ...prev, [categoryId]: carousel.scrollLeft }));
 		},
@@ -146,14 +148,17 @@ const CategorySection: React.FC<CategorySectionProps> = ({
 
 	const handleTouchMove = useCallback(
 		(e: React.TouchEvent, categoryId: string) => {
-			if (!isDragging[categoryId]) return;
+			const touch = e.touches[0];
+			const startXValue = startX[categoryId];
+			const scrollLeftValue = scrollLeft[categoryId];
+			if (!isDragging[categoryId] || !touch || startXValue === undefined || scrollLeftValue === undefined) return;
 
 			const carousel = carouselRefs.current[categoryId];
 			if (!carousel) return;
 
-			const x = e.touches[0].pageX - carousel.offsetLeft;
-			const walk = (x - startX[categoryId]) * 2;
-			carousel.scrollLeft = scrollLeft[categoryId] - walk;
+			const x = touch.pageX - carousel.offsetLeft;
+			const walk = (x - startXValue) * 2;
+			carousel.scrollLeft = scrollLeftValue - walk;
 		},
 		[isDragging, startX, scrollLeft]
 	);
@@ -191,7 +196,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
 		const newUrl = `/shop?categoryId=${mainCategoryId}&subcategoryId=${itemId}`;
 
 		if (pathname === "/shop") {
-			router.push(newUrl, { replace: true });
+			router.replace(newUrl);
 			const event = new CustomEvent("shopFiltersChanged", {
 				detail: {
 					categoryId: Number(mainCategoryId),
@@ -278,93 +283,96 @@ const CategorySection: React.FC<CategorySectionProps> = ({
 
 	return (
 		<div className="category-section">
-			{categories.slice(0, 5).map((maincategory: Category) => (
-				<div
-					key={`section-${maincategory.id}`}
-					className="category-section__category"
-				>
-					<div className="category-section__header">
-						<h2 className="category-section__title">{maincategory.name}</h2>
-						{showViewAll && (
-							<button
-								className="category-section__view-all"
-								onClick={() => handleViewAllClick(maincategory.id)}
-							>
-								View All
-							</button>
-						)}
-					</div>
-
-					<div className="category-section__carousel-container">
-						<button
-							className="category-section__nav-arrow category-section__nav-arrow--left"
-							onClick={() => scrollCarousel(maincategory.id, "left")}
-							aria-label="Scroll left"
-						>
-							&#8249;
-						</button>
-
-						<div
-							ref={(el) => (carouselRefs.current[maincategory.id] = el)}
-							className="category-section__subcategories category-section__subcategories--carousel"
-							onMouseDown={(e) => handleMouseDown(e, maincategory.id)}
-							onMouseMove={(e) => handleMouseMove(e, maincategory.id)}
-							onMouseUp={() => handleMouseUp(maincategory.id)}
-							onMouseLeave={() => handleMouseLeave(maincategory.id)}
-							onTouchStart={(e) => handleTouchStart(e, maincategory.id)}
-							onTouchMove={(e) => handleTouchMove(e, maincategory.id)}
-							onTouchEnd={() => handleTouchEnd(maincategory.id)}
-							onKeyDown={(e) => handleKeyDown(e, maincategory.id)}
-							tabIndex={0}
-						>
-							{maincategory.items.map((item) => (
-								<div
-									style={{
-										display: "flex",
-										flexDirection: "column",
-										gap: "10px",
-										justifyContent: "center",
-										alignItems: "center",
-										maxWidth: "280px",
-									}}
-									key={`sub-${maincategory.id}-${item.id}`}
+			{categories.slice(0, 5).map((maincategory: Category) => {
+				const categoryIdStr = String(maincategory.id);
+				return (
+					<div
+						key={`section-${maincategory.id}`}
+						className="category-section__category"
+					>
+						<div className="category-section__header">
+							<h2 className="category-section__title">{maincategory.name}</h2>
+							{showViewAll && (
+								<button
+									className="category-section__view-all"
+									onClick={() => handleViewAllClick(categoryIdStr)}
 								>
-									<div
-										className="category-section__subcategory-item"
-										onClick={(e) =>
-											handleItemClick(maincategory.id, item.id, e)
-										}
-										role="button"
-										aria-label={`View ${item.name}`}
-									>
-										<div className="category-section__subcategory-image-container">
-											<img
-												src={item.image}
-												alt={item.name}
-												className="category-section__subcategory-image"
-												loading="lazy"
-												decoding="async"
-												draggable={false}
-											/>
-										</div>
-									</div>
-									<p className="category-section__subcategory-name">
-										{item.name}
-									</p>
-								</div>
-							))}
+									View All
+								</button>
+							)}
 						</div>
 
-						<button
-							className="category-section__nav-arrow category-section__nav-arrow--right"
-							onClick={() => scrollCarousel(maincategory.id, "right")}
-							aria-label="Scroll right"
-						>
-							&#8250;
-						</button>
+						<div className="category-section__carousel-container">
+							<button
+								className="category-section__nav-arrow category-section__nav-arrow--left"
+								onClick={() => scrollCarousel(categoryIdStr, "left")}
+								aria-label="Scroll left"
+							>
+								&#8249;
+							</button>
+
+							<div
+								ref={(el) => { carouselRefs.current[categoryIdStr] = el; }}
+								className="category-section__subcategories category-section__subcategories--carousel"
+								onMouseDown={(e) => handleMouseDown(e, categoryIdStr)}
+								onMouseMove={(e) => handleMouseMove(e, categoryIdStr)}
+								onMouseUp={() => handleMouseUp(categoryIdStr)}
+								onMouseLeave={() => handleMouseLeave(categoryIdStr)}
+								onTouchStart={(e) => handleTouchStart(e, categoryIdStr)}
+								onTouchMove={(e) => handleTouchMove(e, categoryIdStr)}
+								onTouchEnd={() => handleTouchEnd(categoryIdStr)}
+								onKeyDown={(e) => handleKeyDown(e, categoryIdStr)}
+								tabIndex={0}
+							>
+								{maincategory.items.map((item) => (
+									<div
+										style={{
+											display: "flex",
+											flexDirection: "column",
+											gap: "10px",
+											justifyContent: "center",
+											alignItems: "center",
+											maxWidth: "280px",
+										}}
+										key={`sub-${maincategory.id}-${item.id}`}
+									>
+										<div
+											className="category-section__subcategory-item"
+											onClick={(e) =>
+												handleItemClick(categoryIdStr, String(item.id), e)
+											}
+											role="button"
+											aria-label={`View ${item.name}`}
+										>
+											<div className="category-section__subcategory-image-container">
+												<img
+													src={item.image}
+													alt={item.name}
+													className="category-section__subcategory-image"
+													loading="lazy"
+													decoding="async"
+													draggable={false}
+												/>
+											</div>
+										</div>
+										<p className="category-section__subcategory-name">
+											{item.name}
+										</p>
+									</div>
+								))}
+							</div>
+
+							<button
+								className="category-section__nav-arrow category-section__nav-arrow--right"
+								onClick={() => scrollCarousel(categoryIdStr, "right")}
+								aria-label="Scroll right"
+							>
+								&#8250;
+							</button>
+						</div>
 					</div>
-				</div>
-			))}
+				)
+			})}
 		</div>
 	);
 };

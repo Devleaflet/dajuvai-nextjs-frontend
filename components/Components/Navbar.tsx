@@ -21,7 +21,8 @@ import {
 } from 'react-icons/fa';
 import { FaFacebook, FaInstagram, FaTiktok, FaWhatsapp } from 'react-icons/fa6';
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import Image from "next/image";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import NavLink from "./NavLink";
 import axiosInstance from "@/lib/api/axiosInstance";
 import { fetchCategory } from "@/lib/api/category";
@@ -29,7 +30,7 @@ import { fetchSubCategory } from "@/lib/api/subcategory";
 import { API_BASE_URL } from '@/lib/config';
 import { useAuth } from "@/lib/context/AuthContext";
 import { useCart } from "@/lib/context/CartContext";
-import { useCategory } from "@/lib/context/Category";
+import { useCategory, CategoryItem } from "@/lib/context/Category";
 import { useUI } from "@/lib/context/UIContext";
 import { useVendorAuth } from '@/lib/context/VendorAuthContext';
 import VendorLogin from '../Pages/VendorLogin';
@@ -77,7 +78,7 @@ const Navbar: React.FC = () => {
 	const [sideMoreOpen, setSideMoreOpen] = useState<boolean>(false);
 	const [isCategoriesReady, setIsCategoriesReady] = useState(false);
 	const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
-	const [dropdownSubcategories, setDropdownSubcategories] = useState([]);
+	const [dropdownSubcategories, setDropdownSubcategories] = useState<CategoryItem[]>([]);
 	const [dropdownLoading, setDropdownLoading] = useState(false);
 	const [sideMenuSubcategories, setSideMenuSubcategories] = useState<
 		Record<number, Subcategory[]>
@@ -96,7 +97,7 @@ const Navbar: React.FC = () => {
 
 	const sideMenuRef = useRef<HTMLDivElement>(null);
 	const hamburgerRef = useRef<HTMLButtonElement>(null);
-	const cartButtonRef = useRef<HTMLAnchorElement>(null);
+	const cartButtonRef = useRef<HTMLButtonElement>(null);
 	const profileRef = useRef<HTMLDivElement>(null);
 	const dropdownTriggerRef = useRef<HTMLDivElement>(null);
 	const searchRef = useRef<HTMLDivElement>(null);
@@ -197,9 +198,11 @@ const Navbar: React.FC = () => {
 		if (!isAuthenticated || !user) return <FaUser />;
 		if (user.profilePicture) {
 			return (
-				<img
+				<Image
 					src={user.profilePicture}
 					alt={user.username || user.email || 'User'}
+					width={40}
+					height={40}
 					className="navbar__avatar-image"
 				/>
 			);
@@ -504,7 +507,7 @@ const Navbar: React.FC = () => {
 		setSideMenuOpen(false);
 		setActiveDropdown(null);
 
-		const isOnShopPage = window.pathname === '/shop';
+		const isOnShopPage = window.location.pathname === '/shop';
 
 		if (isOnShopPage) {
 			const newUrl = `/shop?categoryId=${categoryId}&subcategoryId=${subcategoryId}`;
@@ -578,7 +581,7 @@ const Navbar: React.FC = () => {
 			const subs = await fetchSubCategory(categoryId);
 			setSideMenuSubcategories((prev) => ({
 				...prev,
-				[categoryId]: subs || [],
+				[categoryId]: (subs || []) as unknown as Subcategory[],
 			}));
 			setSideMenuLoading((prev) => ({ ...prev, [categoryId]: false }));
 		}
@@ -664,13 +667,14 @@ const Navbar: React.FC = () => {
 		);
 	};
 
+	const searchParams = useSearchParams();
+
 	useEffect(() => {
-		const params = new URLSearchParams(location.search);
-		const categoryId = params.get('categoryId');
+		const categoryId = searchParams.get('categoryId');
 		if (categoryId) {
 			setActiveDropdown(Number(categoryId));
 		}
-	}, [location.search]);
+	}, [searchParams]);
 
 	useEffect(() => {
 		async function fetchSubs() {
@@ -764,10 +768,14 @@ const Navbar: React.FC = () => {
 					<div className="navbar__top-row">
 						<div className="navbar__logo">
 							<Link href="/">
-								<img
+								<Image
 									src="/assets/logo.webp"
 									alt="DajuVai"
+									width={150}
+									height={100}
+									priority
 									className="navbar__logo-img"
+									style={{ width: 'auto', height: '100px' }}
 								/>
 							</Link>
 						</div>
@@ -962,6 +970,9 @@ const Navbar: React.FC = () => {
 									autoComplete="off"
 									style={{
 										outline: 'none',
+										borderRadius: '25px',
+										WebkitBorderRadius: '25px',
+										MozBorderRadius: '25px',
 									}}
 								/>
 								<button
@@ -980,9 +991,11 @@ const Navbar: React.FC = () => {
 											className="navbar__search-result"
 											onClick={() => handleSearchResultClick(result.id)}
 										>
-											<img
+											<Image
 												src={result.image}
 												alt={result.name}
+												width={50}
+												height={50}
 												className="navbar__search-result-image"
 											/>
 											<div className="navbar__search-result-info">
@@ -1226,9 +1239,11 @@ const Navbar: React.FC = () => {
 
 					<div className="nepal-flag">
 						<span className="navbar__social-link navbar__social-link--nepal">
-							<img
+							<Image
 								src="/assets/nepal.gif"
 								alt="Nepal Flag"
+								width={30}
+								height={30}
 								className="navbar__nepal-flag"
 							/>
 						</span>
@@ -1380,7 +1395,7 @@ const Navbar: React.FC = () => {
 							{categories.map((category: any) => (
 								<div
 									key={category.id}
-									ref={(el) => (categoryRefs.current[category.id] = el)}
+									ref={(el) => { categoryRefs.current[category.id] = el; }}
 									className={`navbar__category${activeDropdown === category.id ? ' active' : ''
 										}`}
 									onMouseEnter={() => {
@@ -1423,10 +1438,10 @@ const Navbar: React.FC = () => {
 							className="navbar__category-nav navbar__category-nav--right"
 							onClick={() => scrollCategories('right')}
 							disabled={
-								categoriesRef.current &&
-								scrollPosition >=
-								categoriesRef.current.scrollWidth -
-								categoriesRef.current.clientWidth
+								!!(categoriesRef.current &&
+									scrollPosition >=
+									categoriesRef.current.scrollWidth -
+									categoriesRef.current.clientWidth)
 							}
 						>
 							<FaChevronRight />

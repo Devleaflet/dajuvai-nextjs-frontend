@@ -2,6 +2,25 @@
 
 import axiosInstance from './axiosInstance';
 
+// Helper function to safely get error message
+const getErrorMessage = (error: unknown): string => {
+	if (error instanceof Error) return error.message;
+	if (typeof error === 'object' && error !== null && 'message' in error) {
+		return String((error as any).message);
+	}
+	return String(error);
+};
+
+// Helper to check if error is an axios error
+const isAxiosError = (error: unknown): error is { 
+	name?: string;
+	message?: string;
+	response?: { status?: number; statusText?: string; headers?: any; data?: any; config?: any };
+	config?: { url?: string; method?: string; data?: any };
+} => {
+	return typeof error === 'object' && error !== null && ('response' in error || 'config' in error);
+};
+
 // Types
 export interface StaffUser {
   id: number;
@@ -67,8 +86,8 @@ const staffApi = {
         statusCode: response.status
       };
       
-    } catch (error: any) {
-      console.error('Unexpected error in registerStaff:', {
+    } catch (error: unknown) {
+      console.error('Unexpected error in registerStaff:', isAxiosError(error) ? {
         name: error.name,
         message: error.message,
         response: error.response ? {
@@ -76,16 +95,21 @@ const staffApi = {
           data: error.response.data,
           headers: error.response.headers
         } : 'No response',
-        config: {
-          url: error.config?.url,
-          method: error.config?.method,
-          data: error.config?.data
-        }
-      });
+        config: error.config ? {
+          url: error.config.url,
+          method: error.config.method,
+          data: error.config.data
+        } : 'No config'
+      } : error);
+      
+      const errorMessage = isAxiosError(error) && error.response?.data?.message 
+        ? error.response.data.message 
+        : getErrorMessage(error);
+      
       return {
         success: false,
-        message: error.response?.data?.message || error.message || 'Network error',
-        statusCode: error.response?.status || 0
+        message: errorMessage || 'Network error',
+        statusCode: isAxiosError(error) ? error.response?.status || 0 : 0
       };
     }
   },
@@ -98,22 +122,22 @@ const staffApi = {
       //'Staff list response:', response.data);
       // API documentation shows { success: true, data: StaffUser[] }
       return response.data;
-    } catch (error: any) {
-      console.error('Error fetching staff list:', {
+    } catch (error: unknown) {
+      console.error('Error fetching staff list:', isAxiosError(error) ? {
         status: error.response?.status,
         data: error.response?.data,
         message: error.message,
         config: error.config
-      });
+      } : error);
       
       // Return empty array if endpoint doesn't exist yet or returns 404
-      if (error.response?.status === 404) {
+      if (isAxiosError(error) && error.response?.status === 404) {
         //'Staff endpoint not found, returning empty list');
         return { success: true, data: [] };
       }
       
       // Return error response if available
-      if (error.response?.data) {
+      if (isAxiosError(error) && error.response?.data) {
         return {
           success: false,
           ...error.response.data,
@@ -124,7 +148,7 @@ const staffApi = {
       // Return generic error
       return {
         success: false,
-        message: error.message || 'Failed to fetch staff list'
+        message: getErrorMessage(error) || 'Failed to fetch staff list'
       };
     }
   },
@@ -134,15 +158,22 @@ const staffApi = {
     try {
       await axiosInstance.delete(`/api/auth/staff/${id}`);
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting staff:', error);
+      const errorMessage = isAxiosError(error) && error.response?.data?.message 
+        ? error.response.data.message 
+        : 'Failed to delete staff member';
+      const statusCode = isAxiosError(error) && error.response?.status 
+        ? error.response.status 
+        : undefined;
       return {
         success: false,
-        message: error.response?.data?.message || 'Failed to delete staff member',
-        statusCode: error.response?.status
+        message: errorMessage,
+        ...(statusCode !== undefined && { statusCode })
       };
     }
   }
 };
 
 export default staffApi;
+

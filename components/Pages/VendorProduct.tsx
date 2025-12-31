@@ -255,7 +255,7 @@ const VendorProduct: React.FC = () => {
 					let status: "AVAILABLE" | "OUT_OF_STOCK" | "LOW_STOCK" = "AVAILABLE";
 					if (product.status === "OUT_OF_STOCK") status = "OUT_OF_STOCK";
 					else if (product.status === "LOW_STOCK") status = "LOW_STOCK";
-					const mappedProduct: Product = {
+					const mappedProduct = {
 						id: product.id,
 						name: product.name,
 						title: product.name,
@@ -280,10 +280,10 @@ const VendorProduct: React.FC = () => {
 						subcategory: product.subcategory,
 						vendor: product.vendor?.businessName || "",
 						category: product.subcategory?.name || "",
-						categoryId: product.categoryId,
-						subcategoryId: product.subcategory?.id || 0,
-						brand_id: product.brand_id,
-						dealId: product.dealId,
+						categoryId: product.categoryId || undefined,
+						subcategoryId: product.subcategory?.id || undefined,
+						brand_id: product.brand_id || undefined,
+						dealId: product.dealId || undefined,
 						rating: 0,
 						ratingCount: 0,
 						image:
@@ -299,7 +299,7 @@ const VendorProduct: React.FC = () => {
 						created_at: product.created_at,
 					};
 
-					return mappedProduct;
+					return mappedProduct as Product;
 				}
 			);
 
@@ -330,13 +330,13 @@ const VendorProduct: React.FC = () => {
 						new Date(b.created_at || 0).getTime()
 				);
 			case "price-asc":
-				return sorted.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+				return sorted.sort((a, b) => parseFloat(String(a.price)) - parseFloat(String(b.price)));
 			case "price-desc":
-				return sorted.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+				return sorted.sort((a, b) => parseFloat(String(b.price)) - parseFloat(String(a.price)));
 			case "name-asc":
-				return sorted.sort((a, b) => a.name.localeCompare(b.name));
+				return sorted.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 			case "name-desc":
-				return sorted.sort((a, b) => b.name.localeCompare(a.name));
+				return sorted.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
 			default:
 				return sorted;
 		}
@@ -878,7 +878,7 @@ const VendorProduct: React.FC = () => {
 								setEditingProduct(null);
 							}}
 							onSave={handleSaveEditProduct}
-							product={editingProduct}
+							product={editingProduct as any}
 						/>
 					)}
 					{showDeleteDialog && productToDelete && (

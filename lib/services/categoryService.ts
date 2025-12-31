@@ -32,9 +32,8 @@ class CategoryService {
 
   async getAllCategories(token?: string): Promise<Category[]> {
     try {
-      const response = await axios.get(this.baseUrl, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined
-      });
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+      const response = await axios.get(this.baseUrl, config);
       return response.data.data;
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -44,9 +43,8 @@ class CategoryService {
 
   async getSubcategories(categoryId: number, token?: string): Promise<Subcategory[]> {
     try {
-      const response = await axios.get(`${this.baseUrl}/${categoryId}/subcategories`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined
-      });
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+      const response = await axios.get(`${this.baseUrl}/${categoryId}/subcategories`, config);
       return response.data.data;
     } catch (error) {
       console.error('Error fetching subcategories:', error);

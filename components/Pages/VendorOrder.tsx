@@ -5,7 +5,7 @@ import { Sidebar } from "@/components/Components/Sidebar";
 import Pagination from "@/components/Components/Pagination";
 import OrderList from "@/components/Components/OrderList";
 import ViewModal from "@/components/Components/Modal/ViewModal";
-import { useDocketHeight } from "../Hook/UseDockerHeight";
+import { useDocketHeight } from "@/lib/hooks/UseDockerHeight";
 import "@/styles/VendorOrder.css";
 import * as XLSX from "xlsx";
 import VendorDashboardService from "@/lib/services/vendorDashboardService";
@@ -54,7 +54,7 @@ const VendorOrder: React.FC = () => {
           id: order.id,
           orderId: `#ORD${String(order.id).padStart(4, "0")}`,
           orderedBy: order.orderedBy.username || "Unknown Customer",
-          product: firstItem.product.name,
+          product: firstItem?.product?.name || "Unknown Product",
           createdAt: order.createdAt,
           price: parseFloat(order.totalPrice) + parseFloat(order.shippingFee),
           paymentStatus: order.paymentMethod || "",
@@ -69,7 +69,7 @@ const VendorOrder: React.FC = () => {
 
   useEffect(() => {
     if (orderIdFromParams && allOrders.length > 0) {
-      const order = allOrders.find(o => o.id.toString() === orderIdFromParams);
+      const order = allOrders.find((o: any) => o.id.toString() === orderIdFromParams);
       if (order) {
         setSelectedOrder(order);
         fetchOrderDetails(order.id);
@@ -85,8 +85,9 @@ const VendorOrder: React.FC = () => {
       const dashboardService = VendorDashboardService.getInstance();
       const response = await dashboardService.getVendorOrderDetail(authState.token, orderId);
       setSelectedOrderDetail(response.data);
-    } catch (err: any) {
-      setErrorMessage(err.response?.data?.message || "Failed to fetch order details");
+    } catch (err: unknown) {
+      const error = err as any;
+      setErrorMessage(error.response?.data?.message || "Failed to fetch order details");
     }
   };
 
@@ -341,7 +342,7 @@ const VendorOrder: React.FC = () => {
         <ViewModal
           show={isViewModalOpen}
           onClose={() => setIsViewModalOpen(false)}
-          order={selectedOrder}
+          order={selectedOrder as any}
           orderDetail={selectedOrderDetail}
         />
       </div>

@@ -27,8 +27,8 @@ const GoogleAuthJson: React.FC = () => {
         };
 
         // Process the response data
-        const result = await processGoogleAuthResponse(responseData, login, navigate);
-        
+        const result = await processGoogleAuthResponse(responseData, login, (path: string) => router.push(path));
+
         if (!result.success) {
           setError(result.error || 'Authentication failed');
         }
@@ -41,7 +41,7 @@ const GoogleAuthJson: React.FC = () => {
     };
 
     processJsonResponse();
-  }, [login, navigate]);
+  }, [login, router]);
 
   if (isProcessing) {
     return (
@@ -65,7 +65,7 @@ const GoogleAuthJson: React.FC = () => {
             <h2 className="google-auth-callback__title">Authentication Failed</h2>
             <p className="google-auth-callback__message">{error}</p>
             <button
-              onClick={() => router.push('/', { replace: true })}
+              onClick={() => router.replace('/')}
               className="google-auth-callback__button"
             >
               Return to Home

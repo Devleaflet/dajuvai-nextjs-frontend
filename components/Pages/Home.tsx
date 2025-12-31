@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Navbar from "@/components/Components/Navbar";
 import CategorySlider from "@/components/Components/CategorySlider";
@@ -12,6 +12,9 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchCategory } from "@/lib/api/category";
 import SpecialOffers from "@/components/Components/SpecialOffers";
 import CategoryCatalogSection from "@/components/Components/CategoryCatalogSection";
+import HeroSliderSkeleton from "@/components/skeleton/HeroSliderSkeleton";
+import CategorySliderSkeleton from "@/components/skeleton/CategorySliderSkeleton";
+import HomepageSectionsSkeleton from "@/components/skeleton/HomepageSectionsSkeleton";
 
 const Home = () => {
 	const [isLoading, setIsLoading] = useState(true);
@@ -100,9 +103,15 @@ const Home = () => {
 	return (
 		<div style={{ zIndex: "0" }}>
 			<Navbar />
-			<HeroSlider />
-			<CategorySlider />
-			<HomepageSections />
+			<Suspense fallback={<HeroSliderSkeleton />}>
+				<HeroSlider />
+			</Suspense>
+			<Suspense fallback={<CategorySliderSkeleton />}>
+				<CategorySlider />
+			</Suspense>
+			<Suspense fallback={<HomepageSectionsSkeleton />}>
+				<HomepageSections />
+			</Suspense>
 			<SpecialOffers />
 			{/* <CategorySection maxItemsToShow={8} /> */}
 			<CategoryCatalogSection />

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { AdminSidebar } from "@/Components/AdminSidebar";
+import { AdminSidebar } from "@/components/Components/AdminSidebar";
 
 const AdminOrdersSkeleton: React.FC = () => {
   return (
@@ -9,8 +9,8 @@ const AdminOrdersSkeleton: React.FC = () => {
       <AdminSidebar />
       <div className="admin-orders__content">
         {/* Header skeleton */}
-        <div style={{ 
-          padding: '1rem 2rem', 
+        <div style={{
+          padding: '1rem 2rem',
           borderBottom: '1px solid #e5e7eb',
           backgroundColor: '#fff'
         }}>
@@ -19,7 +19,7 @@ const AdminOrdersSkeleton: React.FC = () => {
             <div className="skeleton skeleton-text" style={{ width: '300px', height: '40px', borderRadius: '8px' }}></div>
           </div>
         </div>
-        
+
         <div className="admin-orders__list-container">
           <div className="admin-orders__header">
             <div className="skeleton skeleton-text" style={{ width: '200px', height: '32px' }}></div>

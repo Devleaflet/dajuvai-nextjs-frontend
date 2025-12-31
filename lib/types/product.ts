@@ -98,7 +98,6 @@ export interface ProductFormData {
   quantity?: number;
   brand_id?: number | null;
   dealId?: number | null;
-  bannerId?: number | null;
   inventory: {
     sku: string;
     status: string;
