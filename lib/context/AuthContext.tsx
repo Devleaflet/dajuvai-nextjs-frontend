@@ -310,7 +310,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Fetch user data by ID
   const fetchUserData = async (userId: number): Promise<UserData | null> => {
-    const currentToken = token || (typeof window !== 'undefined' ? localStorage.getItem("authToken") : null);
+    const currentToken = token || (typeof window !== 'undefined' ? secureStorage.getItem("authToken") : null);
     logger.debug("fetchUserData called", { userId });
     logger.debug("Using token", { hasToken: !!currentToken });
     if (!currentToken) {
@@ -364,7 +364,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Setup axios interceptors
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    setupAxiosInterceptors(() => token || localStorage.getItem("authToken"));
+    setupAxiosInterceptors(() => token || secureStorage.getItem("authToken"));
   }, [token]);
 
   // Memoize context value to prevent unnecessary re-renders

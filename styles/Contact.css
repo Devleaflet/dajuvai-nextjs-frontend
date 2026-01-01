@@ -141,3 +141,9 @@
     max-width: 100%;
   }
 } 
+
+/* Toast Notification Styling */
+.toast-content {
+  display: flex;
+  align-items: center;
+}

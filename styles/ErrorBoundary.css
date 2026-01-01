@@ -1,0 +1,66 @@
+.error-boundary-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.5rem;
+}
+
+.error-boundary-description {
+  color: #4b5563;
+  margin-bottom: 1.5rem;
+}
+
+.error-boundary-error-container {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: #fef2f2;
+  border-radius: 0.375rem;
+  text-align: left;
+}
+
+.error-boundary-error-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #991b1b;
+  margin-bottom: 0.5rem;
+}
+
+.error-boundary-error-message {
+  font-size: 0.75rem;
+  color: #b91c1c;
+  font-family: monospace;
+  word-break: break-all;
+}
+
+.error-boundary-button-primary {
+  width: 100%;
+  background-color: #ff6f00;
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.error-boundary-button-primary:hover {
+  background-color: #e56500;
+}
+
+.error-boundary-button-secondary {
+  width: 100%;
+  margin-top: 0.75rem;
+  background-color: #e5e7eb;
+  color: #1f2937;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.error-boundary-button-secondary:hover {
+  background-color: #d1d5db;
+}

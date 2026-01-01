@@ -13,6 +13,7 @@ import axiosInstance from "@/lib/api/axiosInstance";
 import { API_BASE_URL } from "@/lib/config";
 import { useAuth } from "@/lib/context/AuthContext";
 import VendorService, { type Vendor } from "@/lib/services/vendorService";
+import { secureStorage } from "@/lib/utils/secureStorage";
 
 interface UserDetails {
 	id?: number;
@@ -343,7 +344,7 @@ const UserProfile: React.FC = () => {
 			setIsLoading((prev) => ({ ...prev, fetchUser: true }));
 			try {
 				const headers: Record<string, string> = {};
-				const authToken = token || localStorage.getItem("authToken");
+				const authToken = token || secureStorage.getItem("authToken");
 
 				if (authToken) {
 					headers['Authorization'] = `Bearer ${authToken}`;
@@ -533,7 +534,7 @@ const UserProfile: React.FC = () => {
 				Accept: "application/json",
 				"Content-Type": "application/json",
 			};
-			const authToken = token || localStorage.getItem("authToken");
+			const authToken = token || secureStorage.getItem("authToken");
 			if (authToken) {
 				headers['Authorization'] = `Bearer ${authToken}`;
 				//("[UserProfile] handleSave - Using token:", authToken);

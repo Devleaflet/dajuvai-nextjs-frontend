@@ -3,6 +3,7 @@
 // hooks/useWishlistApi.ts
 import { useState, useCallback } from 'react';
 import { API_BASE_URL } from '@/lib/config';
+import { secureStorage } from '@/lib/utils/secureStorage';
 
 interface Product {
   id: number;
@@ -59,7 +60,7 @@ export const useWishlistApi = (): UseWishlistApiReturn => {
 
   // Get auth token from localStorage
   const getAuthToken = useCallback((): string | null => {
-    return localStorage.getItem('authToken');
+    return secureStorage.getItem('authToken');
   }, []);
 
   // API headers with authentication

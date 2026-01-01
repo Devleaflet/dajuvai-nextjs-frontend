@@ -335,3 +335,96 @@
   border-radius: 4px;
   background-color: #f8f9fa;
 }
+
+/* Admin Product List Specific Styles */
+.admin-product-container {
+  padding: 1.5rem;
+}
+
+.admin-product-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.admin-product-search {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  outline: none;
+}
+
+.admin-product-search:focus {
+  ring: 2px;
+  ring-color: #3b82f6;
+}
+
+.admin-product-table-container {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.admin-product-table {
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.admin-product-table-head {
+  background-color: #f9fafb;
+}
+
+.admin-product-table-header {
+  padding: 0.75rem 1.5rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.admin-product-table-body {
+  background-color: white;
+}
+
+.admin-product-table-row {
+  border-top: 1px solid #e5e7eb;
+  transition: background-color 0.2s;
+}
+
+.admin-product-table-row:hover {
+  background-color: #f9fafb;
+}
+
+.admin-product-table-cell {
+  padding: 1rem 1.5rem;
+  white-space: nowrap;
+}
+
+.admin-product-image-container {
+  height: 2.5rem;
+  width: 2.5rem;
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+.admin-product-image {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+
+.admin-product-text-primary {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #111827;
+}
+
+.admin-product-text-secondary {
+  font-size: 0.875rem;
+  color: #6b7280;
+}

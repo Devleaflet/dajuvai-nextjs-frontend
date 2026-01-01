@@ -679,6 +679,7 @@ Fbottom {
 
 	.footer__account-section {
 		text-align: left;
+		margin-top: 20px;
 		margin-bottom: 15px;
 	}
 
@@ -962,4 +963,5 @@ Fbottom {
 
 .footer__links-section {
 	text-align: left;
+	margin-top: 20px;
 }

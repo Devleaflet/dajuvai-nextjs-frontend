@@ -11,6 +11,7 @@ import { useAuth } from "@/lib/context/AuthContext";
 import "@/styles/AdminProfile.css";
 import { AdminSidebar } from "@/components/Components/AdminSidebar";
 import Header from "@/components/Components/Header";
+import { secureStorage } from "@/lib/utils/secureStorage";
 
 interface AdminDetails {
   id?: number;
@@ -138,7 +139,7 @@ const AdminProfile: React.FC = () => {
       setIsLoading((prev) => ({ ...prev, fetchAdmin: true }));
       try {
         const headers: Record<string, string> = {};
-        const authToken = token || localStorage.getItem("authToken");
+        const authToken = token || secureStorage.getItem("authToken");
 
         if (authToken) {
           headers["Authorization"] = `Bearer ${authToken}`;
@@ -215,7 +216,7 @@ const AdminProfile: React.FC = () => {
         Accept: "application/json",
         "Content-Type": "application/json",
       };
-      const authToken = token || localStorage.getItem("authToken");
+      const authToken = token || secureStorage.getItem("authToken");
       if (authToken) {
         headers["Authorization"] = `Bearer ${authToken}`;
       }

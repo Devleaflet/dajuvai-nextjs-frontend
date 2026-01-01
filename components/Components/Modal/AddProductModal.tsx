@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import { API_BASE_URL } from "@/lib/config";
 import { ProductFormData, ProductVariant, Attribute } from "@/lib/types/product";
 import { useVendorAuth } from "@/lib/context/VendorAuthContext";
+import { secureStorage } from "@/lib/utils/secureStorage";
 
 enum InventoryStatus {
   AVAILABLE = "AVAILABLE",
@@ -89,7 +90,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
   const [currentAttributeValue, setCurrentAttributeValue] = useState<string>("");
 
   const [error, setError] = useState<string | null>(null);
-  const [token] = useState<string | null>(localStorage.getItem("token"));
+  const [token] = useState<string | null>(secureStorage.getItem("authToken"));
 
   const statusOptions = Object.values(InventoryStatus);
 

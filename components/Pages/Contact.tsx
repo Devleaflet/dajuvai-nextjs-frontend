@@ -33,7 +33,7 @@ const Contact: React.FC = () => {
     try {
       await axiosInstance.post("/api/contact", form);
       toast.success(
-        <div className="flex items-center">
+        <div className="toast-content">
 
           <span>Your message has been sent successfully! We'll get back to you soon.</span>
         </div>,
@@ -54,7 +54,7 @@ const Contact: React.FC = () => {
         errorMessage = err.response.data.message || errorMessage;
       }
       toast.error(
-        <div className="flex items-center">
+        <div className="toast-content">
           <FaExclamationCircle size={24} className="mr-2" />
           <span>{errorMessage}</span>
         </div>,

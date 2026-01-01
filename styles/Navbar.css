@@ -130,7 +130,7 @@
 	width: 100%;
 	padding: 10px 50px 10px 15px;
 	border: 2px solid #ff6b00;
-	border-radius: 4px;
+	border-radius: 25px;
 	font-size: 14px;
 	outline: none;
 	transition: all 0.3s ease;
@@ -151,7 +151,7 @@
 	margin: 0;
 	background: #ff6b00;
 	border: none;
-	border-radius: 0 2px 2px 0;
+	border-radius: 0 25px 25px 0;
 	color: white;
 	cursor: pointer;
 	transition: background-color 0.3s ease;

@@ -18,6 +18,7 @@
 
 import React, { Component, ReactNode } from 'react';
 import logger from '@/lib/utils/logger';
+import '@/styles/ErrorBoundary.css';
 
 /**
  * Props for the ErrorBoundary component
@@ -116,11 +117,11 @@ export class ErrorBoundary extends Component<Props, State> {
 
       // Default error UI
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-          <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
-            <div className="mb-4">
+        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb', padding: '0 1rem' }}>
+          <div style={{ maxWidth: '28rem', width: '100%', backgroundColor: 'white', borderRadius: '0.5rem', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', padding: '2rem', textAlign: 'center' }}>
+            <div style={{ marginBottom: '1rem' }}>
               <svg
-                className="mx-auto h-16 w-16 text-red-500"
+                style={{ margin: '0 auto', height: '4rem', width: '4rem', color: '#ef4444' }}
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -134,20 +135,20 @@ export class ErrorBoundary extends Component<Props, State> {
               </svg>
             </div>
 
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            <h1 className="error-boundary-title">
               Oops! Something went wrong
             </h1>
 
-            <p className="text-gray-600 mb-6">
+            <p className="error-boundary-description">
               We encountered an unexpected error. Please try again or contact support if the problem persists.
             </p>
 
             {process.env.NODE_ENV === 'development' && this.state.error && (
-              <div className="mb-6 p-4 bg-red-50 rounded-md text-left">
-                <p className="text-sm font-semibold text-red-800 mb-2">
+              <div className="error-boundary-error-container">
+                <p className="error-boundary-error-title">
                   Error Details (Development Only):
                 </p>
-                <p className="text-xs text-red-700 font-mono break-all">
+                <p className="error-boundary-error-message">
                   {this.state.error.message}
                 </p>
               </div>
@@ -155,14 +156,14 @@ export class ErrorBoundary extends Component<Props, State> {
 
             <button
               onClick={this.handleReset}
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
+              className="error-boundary-button-primary"
             >
               Try Again
             </button>
 
             <button
               onClick={() => window.location.href = '/'}
-              className="w-full mt-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
+              className="error-boundary-button-secondary"
             >
               Go to Homepage
             </button>

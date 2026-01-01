@@ -8,6 +8,7 @@ import "@/styles/AddVendorModal.css";
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import { API_BASE_URL } from '@/lib/config';
+import { secureStorage } from '@/lib/utils/secureStorage';
 
 interface ImageUploadResponse {
   success: boolean;
@@ -88,7 +89,7 @@ const VendorEditModal: FC<VendorEditModalProps> = ({ show, onClose, onSave, vend
     formData.append("file", file);
 
     // Get token from localStorage
-    const token = localStorage.getItem('authToken');
+    const token = secureStorage.getItem('authToken');
     if (!token) {
       throw new Error('No authentication token found');
     }

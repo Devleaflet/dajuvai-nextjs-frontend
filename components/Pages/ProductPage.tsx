@@ -28,6 +28,7 @@ interface Subcategory {
 import React from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
+import '@/styles/ProductPage.css';
 import axiosInstance from "@/lib/api/axiosInstance";
 import { addToWishlist } from "@/lib/api/wishlist";
 import Footer from "@/components/Components/Footer";
@@ -1008,11 +1009,11 @@ const ProductPage = () => {
 													if (attrType === "color") {
 														return (
 															<div
-																className="flex gap-2 mb-2"
+																className="product-attribute-row"
 																key={attrType}
 															>
 																<span
-																	className="text-md font-medium text-black mr-2 whitespace-nowrap"
+																	className="product-attribute-label"
 																	style={{
 																		padding: "10px 3px",
 																		fontWeight: "600",
@@ -1086,11 +1087,11 @@ const ProductPage = () => {
 													// Default logic for other attributes
 													return (
 														<div
-															className="flex gap-2 mb-2"
+															className="product-attribute-row"
 															key={attrType}
 														>
 															<span
-																className="text-md font-medium text-black mr-2 whitespace-nowrap"
+																className="product-attribute-label"
 																style={{
 																	padding: "10px 3px",
 																	fontWeight: "600",
