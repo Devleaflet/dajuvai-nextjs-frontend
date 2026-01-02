@@ -393,7 +393,7 @@ input[type="file"] {
 
 
 .cheque-container {
-  background-image: url('../assets/cheque.png'); 
+  background-image: url('/assets/cheque.png'); 
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

@@ -6,9 +6,6 @@ const config: Config = {
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './lib/**/*.{js,ts,jsx,tsx,mdx}',
   ],
-  corePlugins: {
-    preflight: false,
-  },
   theme: {
     extend: {
       screens: {
