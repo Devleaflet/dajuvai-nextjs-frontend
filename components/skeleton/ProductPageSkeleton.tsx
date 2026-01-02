@@ -1,6 +1,6 @@
 'use client';
 
-import "@/Styles/ProductPageSkeleton.css";
+import "@/styles/ProductPageSkeleton.css";
 
 const ProductPageSkeleton = () => {
   return (
