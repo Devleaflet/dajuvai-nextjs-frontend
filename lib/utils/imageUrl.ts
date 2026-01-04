@@ -57,14 +57,14 @@ export function processImageUrl(imgUrl: string): string {
   // Check if URL is malformed (contains http/https in the middle)
   // Pattern 1: https://domain.com/https://cloudinary.com/...
   const malformedMatch = trimmed.match(/https?:\/\/[^/]+\/(https?:\/\/.+)/);
-  if (malformedMatch) {
+  if (malformedMatch && malformedMatch[1]) {
     return malformedMatch[1];
   }
   
   // Pattern 2: Look for any http/https that's not at the start
   if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
     const httpMatch = trimmed.match(/(https?:\/\/.+)/);
-    if (httpMatch) {
+    if (httpMatch && httpMatch[1]) {
       return httpMatch[1];
     }
   }
