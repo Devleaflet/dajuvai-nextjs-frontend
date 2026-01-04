@@ -41,6 +41,7 @@ import { useCart } from "@/lib/context/CartContext";
 import "@/styles/ProductPage.css";
 import ScrollToTop from "@/components/Components/ScrollToTop";
 import { sanitizeRichText } from "@/lib/utils/sanitize";
+import { processImageUrl } from "@/lib/utils/imageUrl";
 
 const AuthModal = dynamic(() => import("@/components/Components/AuthModal"), {
 	ssr: false
@@ -72,11 +73,9 @@ interface ReviewsResponse {
 
 const ProductPage = () => {
 	const toFullUrl = (imgUrl: string): string => {
-		if (!imgUrl) return ""; // Return empty string if no image URL
-		return imgUrl.startsWith("http")
-			? imgUrl
-			: `${window.location.origin}${imgUrl.startsWith("/") ? "" : "/"
-			}${imgUrl}`;
+		if (!imgUrl) return "";
+		// Use processImageUrl to handle HTML entities and malformed URLs
+		return processImageUrl(imgUrl);
 	};
 
 	const {

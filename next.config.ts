@@ -11,6 +11,10 @@ const nextConfig: NextConfig = {
         hostname: 'api.dajuvai.com',
       },
       {
+        protocol: 'https',
+        hostname: 'dev-server-test.dajuvai.com',
+      },
+      {
         protocol: 'http',
         hostname: 'localhost',
         port: '5000',

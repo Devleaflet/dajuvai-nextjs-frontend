@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { processImageUrl } from '@/lib/utils/imageUrl';
 
 interface ProductImageGalleryProps {
   images: string[];
@@ -23,8 +24,10 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Validate images array
-  const validImages = images && images.length > 0 ? images : ['/assets/logo.webp'];
+  // Validate and process images array
+  const validImages = images && images.length > 0
+    ? images.map(img => processImageUrl(img))
+    : ['/assets/logo.webp'];
   const hasMultipleImages = validImages.length > 1;
 
   // Reset currentIndex if it's out of bounds

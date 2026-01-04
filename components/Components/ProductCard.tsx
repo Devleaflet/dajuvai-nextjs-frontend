@@ -11,8 +11,8 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { getProductPrimaryImage } from "@/lib/utils/getProductPrimaryImage";
 import { toast } from "react-hot-toast";
-import { API_BASE_URL } from "@/lib/config";
 import { calculateDiscountedPrice } from "@/lib/utils/pricing";
+import { processImageUrl } from "@/lib/utils/imageUrl";
 import ProductImageGallery from "@/components/features/ProductImageGallery";
 import ProductInfo from "@/components/features/ProductInfo";
 import ProductActions from "@/components/features/ProductActions";
@@ -91,25 +91,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 				});
 
 				orderedVariants.forEach((variant) => {
-					// Process image URL helper
-					const processImageUrl = (imgUrl: string): string => {
-						if (!imgUrl) return "";
-						const trimmed = imgUrl.trim();
-						if (!trimmed) return "";
-						if (trimmed.startsWith("//")) return `https:${trimmed}`;
-						if (
-							trimmed.startsWith("http://") ||
-							trimmed.startsWith("https://") ||
-							trimmed.startsWith("/")
-						) {
-							return trimmed;
-						}
-						const base = API_BASE_URL.replace(/\/?api\/?$/, "");
-						const needsSlash = !trimmed.startsWith("/");
-						const url = `${base}${needsSlash ? "/" : ""}${trimmed}`;
-						return url.replace(/([^:]\/)\/+/, "$1/");
-					};
-
 					// Add variant.image
 					if (typeof variant?.image === "string" && variant.image.trim()) {
 						const url = processImageUrl(variant.image);
@@ -143,25 +124,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 					}
 				});
 			}
-
-			// Process image URL helper (defined here for product images)
-			const processImageUrl = (imgUrl: string): string => {
-				if (!imgUrl) return "";
-				const trimmed = imgUrl.trim();
-				if (!trimmed) return "";
-				if (trimmed.startsWith("//")) return `https:${trimmed}`;
-				if (
-					trimmed.startsWith("http://") ||
-					trimmed.startsWith("https://") ||
-					trimmed.startsWith("/")
-				) {
-					return trimmed;
-				}
-				const base = API_BASE_URL.replace(/\/?api\/?$/, "");
-				const needsSlash = !trimmed.startsWith("/");
-				const url = `${base}${needsSlash ? "/" : ""}${trimmed}`;
-				return url.replace(/([^:]\/)\/+/, "$1/");
-			};
 
 			// Add product.productImages array
 			if (Array.isArray(product?.productImages)) {
@@ -315,7 +277,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 			onClick={handleCardClick}
 			className="cursor-pointer no-underline text-inherit"
 		>
-			<div className="relative z-0 flex-shrink-0 w-60 rounded-lg bg-white shadow-md p-2 transition-transform duration-300 hover:shadow-xl hover:-translate-y-1 h-fit pointer-events-auto">
+			<div className="relative z-0 shrink-0 w-60 rounded-lg bg-white shadow-md p-2 transition-transform duration-300 hover:shadow-xl hover:-translate-y-1 h-fit pointer-events-auto">
 				<div className="flex justify-between items-center mb-1.5 max-h-2.5">
 					{isBestSeller && (
 						<span className="bg-gray-700 text-white px-2 py-1 rounded-full text-xs font-medium">Best seller</span>
