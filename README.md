@@ -8,6 +8,7 @@ A modern, high-performance e-commerce platform built with Next.js 16, React 19, 
 - **Modern Tech Stack:** Next.js 16 with App Router, React 19, TypeScript
 - **Performance Optimized:** React Compiler, Image Optimization, Code Splitting
 - **SEO Ready:** Dynamic metadata, sitemap, robots.txt
+- 
 - **Multi-User Support:** Customer, Vendor, and Admin dashboards
 - **Secure Authentication:** JWT-based auth with OAuth support (Google, Facebook)
 - **Shopping Features:** Cart, Wishlist, Checkout, Order tracking
