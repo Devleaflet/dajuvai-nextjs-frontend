@@ -4,6 +4,7 @@ A modern, high-performance e-commerce platform built with Next.js 16, React 19, 
 
 ## 🚀 Features
 
+
 - **Modern Tech Stack:** Next.js 16 with App Router, React 19, TypeScript
 - **Performance Optimized:** React Compiler, Image Optimization, Code Splitting
 - **SEO Ready:** Dynamic metadata, sitemap, robots.txt
