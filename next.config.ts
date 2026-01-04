@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'prod.dajuvai.com',
+      },
+      {
+        protocol: 'https',
         hostname: 'dev-server-test.dajuvai.com',
       },
       {
