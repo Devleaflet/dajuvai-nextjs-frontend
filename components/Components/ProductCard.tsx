@@ -1,5 +1,5 @@
 'use client';
-
+ 
 import { Product } from "./Types/Product";
 import { useCart } from "@/lib/context/CartContext";
 import { useAuth } from "@/lib/context/AuthContext";
@@ -17,14 +17,15 @@ import ProductImageGallery from "@/components/features/ProductImageGallery";
 import ProductInfo from "@/components/features/ProductInfo";
 import ProductActions from "@/components/features/ProductActions";
 import '@/styles/ProductCard.css';
-
+ 
 const AuthModal = dynamic(() => import("./AuthModal"), {
 	ssr: false
 });
+ 
 interface ProductCardProps {
 	product: Product;
 }
-
+ 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 	const { handleCartOnAdd } = useCart();
 	const { token, isAuthenticated } = useAuth();
@@ -34,7 +35,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 	const [authModalOpen, setAuthModalOpen] = useState(false);
 	const [isWishlisted, setIsWishlisted] = useState(false);
 	const [wishlistItemId, setWishlistItemId] = useState<number | null>(null);
-
+ 
 	const router = useRouter();
 	const {
 		title,
@@ -44,7 +45,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 		isBestSeller,
 		id,
 	} = product;
-
+ 
 	useEffect(() => {
 		if (isAuthenticated && token) {
 			const variantCount = product.variants?.length || 0;
@@ -68,16 +69,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 			setWishlistItemId(null);
 		}
 	}, [wishlist, id, product.variants, isAuthenticated, token]);
-
+ 
 	// Memoize product images array
 	const productImages = useMemo(() => {
 		const images: string[] = [];
-
+ 
 		try {
 			const variantsArray: any[] = Array.isArray(product?.variants)
 				? product.variants
 				: [];
-
+ 
 			// Process variants in order (position first, then id)
 			if (variantsArray.length > 0) {
 				const orderedVariants = [...variantsArray].sort((a: any, b: any) => {
@@ -89,7 +90,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 					if (Number.isFinite(aid) && Number.isFinite(bid)) return aid - bid;
 					return 0;
 				});
-
+ 
 				orderedVariants.forEach((variant) => {
 					// Add variant.image
 					if (typeof variant?.image === "string" && variant.image.trim()) {
@@ -98,7 +99,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 							images.push(url);
 						}
 					}
-
+ 
 					// Add variant.images array
 					if (Array.isArray(variant?.images)) {
 						variant.images.forEach((img: any) => {
@@ -110,7 +111,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 							}
 						});
 					}
-
+ 
 					// Add variant.variantImages array
 					if (Array.isArray(variant?.variantImages)) {
 						variant.variantImages.forEach((img: any) => {
@@ -124,7 +125,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 					}
 				});
 			}
-
+ 
 			// Add product.productImages array
 			if (Array.isArray(product?.productImages)) {
 				product.productImages.forEach((img: any) => {
@@ -136,7 +137,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 					}
 				});
 			}
-
+ 
 			// Add main product.image
 			if (typeof product?.image === "string" && product.image.trim()) {
 				const url = processImageUrl(product.image);
@@ -144,7 +145,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 					images.push(url);
 				}
 			}
-
+ 
 			// If no images found, use the primary image from utility function
 			if (images.length === 0) {
 				const primaryImage = getProductPrimaryImage(
@@ -158,36 +159,40 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 		} catch (e) {
 			console.warn("Error processing product images:", e);
 		}
-
+ 
 		// Ensure we have at least one image
 		return images.length > 0 ? images : ["/assets/logo.webp"];
 	}, [product]);
-
+ 
 	// Memoize pricing calculation
 	const pricing = useMemo(() => {
 		// Get base price from variant (if exists) or product
 		let baseNum = 0;
 		if (product.variants && product.variants.length > 0) {
-			// Use first variant's basePrice
-			const variantBase = product.variants[0]?.['basePrice'];
+			// Prefer variant basePrice, then fallback to variant price/originalPrice.
+			const firstVariant = product.variants[0];
+			const variantBase =
+				firstVariant?.['basePrice'] ??
+				firstVariant?.['price'] ??
+				firstVariant?.['originalPrice'];
 			baseNum = typeof variantBase === "string" ? parseFloat(variantBase) : Number(variantBase) || 0;
 		} else {
 			// Use product's basePrice or price
 			const productBase = product['basePrice'] ?? product.price;
 			baseNum = typeof productBase === "string" ? parseFloat(productBase) : Number(productBase) || 0;
 		}
-
+ 
 		// Apply product-level discount to the base price
 		const productDiscount = Number(product.discount) || 0;
 		const productDiscountType = product.discountType;
-
+ 
 		return calculateDiscountedPrice(baseNum, productDiscount, productDiscountType);
-	}, [product.variants, product, product.price, product.discount, product.discountType]);
-
+	}, [product]);
+ 
 	// Memoize card click handler
 	const handleCardClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
 		const target = e.target as HTMLElement;
-
+ 
 		if (
 			target.closest(".product-card__wishlist-button") ||
 			target.closest(".product-card__cart-button") ||
@@ -195,32 +200,33 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 		) {
 			return;
 		}
-
+ 
 		// Navigate to product page
 		router.push(`/product-page/${product.id}`);
-
+ 
 		// Force scroll to top on next tick
 		setTimeout(() => {
 			window.scrollTo(0, 0);
 		}, 0);
-
+ 
 		// Extra insurance: also after a tiny delay
 		setTimeout(() => {
 			window.scrollTo(0, 0);
 		}, 100);
 	}, [product.id, router]);
+ 
 	// Memoize wishlist handler
 	const handleWishlist = useCallback(async () => {
 		if (!isAuthenticated) {
 			setAuthModalOpen(true);
 			return;
 		}
-
+ 
 		setWishlistLoading(true);
 		try {
 			const variantCount = product.variants?.length || 0;
 			const variantId = variantCount > 0 && product.variants?.[0] ? product.variants[0].id : undefined;
-
+ 
 			if (isWishlisted && wishlistItemId) {
 				await removeFromWishlist(wishlistItemId, token || undefined);
 				toast.success("Removed from wishlist");
@@ -241,7 +247,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 				(e as any)?.response?.data?.error ||
 				(e as any)?.message ||
 				"";
-
+ 
 			if (status === 409 || /already/i.test(msg)) {
 				toast("Already present in the wishlist");
 				setIsWishlisted(true);
@@ -260,7 +266,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 			setWishlistLoading(false);
 		}
 	}, [isAuthenticated, product.variants, isWishlisted, wishlistItemId, token, id, refreshWishlist]);
-
+ 
 	// Memoize add to cart handler
 	const handleAddToCart = useCallback(() => {
 		if (!isAuthenticated) {
@@ -271,19 +277,17 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 		const variantId = variantCount > 0 && product.variants?.[0] ? product.variants[0].id : undefined;
 		handleCartOnAdd(product, 1, variantId);
 	}, [isAuthenticated, product, handleCartOnAdd]);
-
+ 
 	return (
 		<div
 			onClick={handleCardClick}
-			className="cursor-pointer no-underline text-inherit"
+			className="product-card-wrapper"
 		>
-			<div className="relative z-0 shrink-0 w-60 rounded-lg bg-white shadow-md p-2 transition-transform duration-300 hover:shadow-xl hover:-translate-y-1 h-fit pointer-events-auto">
-				<div className="flex justify-between items-center mb-1.5 max-h-2.5">
-					{isBestSeller && (
-						<span className="bg-gray-700 text-white px-2 py-1 rounded-full text-xs font-medium">Best seller</span>
-					)}
-				</div>
-
+			<div className="product-card">
+				{isBestSeller && (
+					<span className="product-card__badge">Best seller</span>
+				)}
+ 
 				<ProductActions
 					product={{
 						id: product.id,
@@ -295,19 +299,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 					wishlistLoading={wishlistLoading}
 					cartOpen={cartOpen}
 				/>
-
+ 
 				<ProductImageGallery
 					images={productImages}
 					alt={title || "Product image"}
 				/>
-
+ 
 				<ProductInfo
 					product={{
 						title: title || '',
 						description,
 						rating: typeof rating === 'number' ? rating : 0,
-						ratingCount: typeof ratingCount === 'number' ? ratingCount : 0,
-						discount: typeof product.discount === 'number' ? product.discount : 0,
+						ratingCount: Number(ratingCount) || 0,
+						discount: Number(product.discount) || 0,
 						...(product.vendor && { vendor: product.vendor })
 					}}
 					pricing={pricing}
@@ -323,6 +327,5 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 		</div>
 	);
 };
-
+ 
 export default ProductCard;
-

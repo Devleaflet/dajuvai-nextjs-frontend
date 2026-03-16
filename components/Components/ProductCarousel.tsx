@@ -56,17 +56,19 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
 			}
 		};
 
+		const scrollContainer = scrollContainerRef.current;
+
 		checkWidth();
 		checkScroll();
 		window.addEventListener("resize", checkWidth);
-		if (scrollContainerRef.current) {
-			scrollContainerRef.current.addEventListener("scroll", checkScroll);
+		if (scrollContainer) {
+			scrollContainer.addEventListener("scroll", checkScroll);
 		}
 
 		return () => {
 			window.removeEventListener("resize", checkWidth);
-			if (scrollContainerRef.current) {
-				scrollContainerRef.current.removeEventListener("scroll", checkScroll);
+			if (scrollContainer) {
+				scrollContainer.removeEventListener("scroll", checkScroll);
 			}
 		};
 	}, []);
@@ -177,22 +179,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
 					<h2 className="product-carousel__title">{title}</h2>
 					<Link
 						href={`/section/${sectionId}?sectionname=${title}`}
-						style={{
-							padding: "0.4rem 2rem",
-							backgroundColor: "#ff6b00",
-							color: "white",
-							borderRadius: "6px",
-							textDecoration: "none",
-							fontSize: "0.85rem",
-							transition: "all 0.2s ease",
-							flexShrink: "0",
-						}}
-						onMouseOver={(e) => {
-							e.currentTarget.style.backgroundColor = "#e05a00";
-						}}
-						onMouseOut={(e) => {
-							e.currentTarget.style.backgroundColor = "#ff6b00";
-						}}
+						className="product-carousel__view-all"
 					>
 						View All
 					</Link>
@@ -249,5 +236,3 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
 };
 
 export default ProductCarousel;
-
-

@@ -141,11 +141,11 @@
 /* Action Buttons */
 .product-card__wishlist-button {
 	position: absolute;
-	top: 8px;
-	left: 8px;
+	top: 10px;
+	left: 10px;
 	width: 40px;
 	height: 40px;
-	background: rgba(255, 255, 255, 0.95);
+	background: #ffffff;
 	border: none;
 	border-radius: 50%;
 	display: flex;
@@ -155,6 +155,7 @@
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 	transition: all 0.2s ease;
 	z-index: 10;
+	border: 1px solid #f1f2f4;
 }
 
 .product-card__wishlist-button:hover {
@@ -180,11 +181,11 @@
 
 .product-card__cart-button {
 	position: absolute;
-	top: 8px;
-	right: 8px;
+	top: 248px;
+	right: 12px;
 	width: 40px;
 	height: 40px;
-	background: rgba(255, 255, 255, 0.95);
+	background: #ffffff;
 	border: none;
 	border-radius: 50%;
 	display: flex;
@@ -194,6 +195,7 @@
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 	transition: all 0.2s ease;
 	z-index: 10;
+	box-shadow: 0 4px 14px rgba(16, 24, 40, 0.2);
 }
 
 .product-card__cart-button:hover {
@@ -292,9 +294,9 @@
 }
 
 .product-card__current-price {
-	font-size: 20px;
-	font-weight: 800;
-	color: #dc2626;
+	font-size: 14px;
+	font-weight: 700;
+	color: #1d2736;
 	letter-spacing: -0.01em;
 	line-height: 1;
 }
@@ -302,24 +304,24 @@
 .product-card__price-details {
 	display: flex;
 	align-items: center;
-	gap: 6px;
+	gap: 10px;
 	flex-wrap: wrap;
 }
 
 .product-card__original-price {
-	font-size: 14px;
+	font-size: 12px;
 	color: #9ca3af;
 	text-decoration: line-through;
 	font-weight: 500;
 }
 
 .product-card__discount {
-	font-size: 11px;
-	font-weight: 700;
+	font-size: 12px;
+	font-weight: 600;
 	color: #10b981;
-	background: #d1fae5;
-	padding: 2px 6px;
-	border-radius: 10px;
+	background: transparent;
+	padding: 0;
+	border-radius: 0;
 	display: inline-block;
 }
 
@@ -345,7 +347,7 @@
 .product-card__image img {
 	width: 100%;
 	height: 100%;
-	object-fit: cover;
+	object-fit: contain;
 }
 
 /* Pagination Dots */
@@ -382,9 +384,9 @@
 }
 
 .product-card__dot--active {
-	background: #ffffff;
-	width: 16px;
-	border-radius: 8px;
+	background: #ff9f00;
+	width: 5px;
+	border-radius: 50%;
 }
 
 .product-card__dot--more {

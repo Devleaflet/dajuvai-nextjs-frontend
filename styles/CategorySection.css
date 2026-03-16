@@ -153,10 +153,6 @@
   pointer-events: none;
 }
 
-.category-section__subcategory-item:hover .category-section__subcategory-image {
-  transform: scale(1.05);
-}
-
 .category-section__subcategory-name {
   font-size: 1rem;
   font-weight: 500;

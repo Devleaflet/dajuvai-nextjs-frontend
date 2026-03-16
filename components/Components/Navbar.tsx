@@ -68,6 +68,7 @@ const Navbar: React.FC = () => {
 	const [searchQuery, setSearchQuery] = useState<string>('');
 	const [searchResults, setSearchResults] = useState<any[]>([]);
 	const [showSearchDropdown, setShowSearchDropdown] = useState<boolean>(false);
+	const [isLifted, setIsLifted] = useState<boolean>(false);
 	const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
 	const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
 	const [vendorAuthModalOpen, setVendorAuthModalOpen] =
@@ -957,32 +958,38 @@ const Navbar: React.FC = () => {
 							ref={searchRef}
 						>
 							<form
-								onSubmit={handleSearch}
-								className="navbar__search-form"
-							>
-								<input
-									type="text"
-									placeholder="Search products..."
-									value={searchQuery}
-									onChange={handleSearchInputChange}
-									onKeyDown={handleKeyDown}
-									className="navbar__search-input"
-									autoComplete="off"
-									style={{
-										outline: 'none',
-										borderRadius: '25px',
-										WebkitBorderRadius: '25px',
-										MozBorderRadius: '25px',
-									}}
-								/>
-								<button
-									type="submit"
-									className="navbar__search-button"
-								>
-									<FaSearch />
-								</button>
-							</form>
-
+			onSubmit={handleSearch}
+			className="relative w-full max-w-3xl group"
+		>
+			{/* Input field */}
+			<input
+				type="text"
+				placeholder="Search products..."
+				value={searchQuery}
+				onChange={handleSearchInputChange}
+				onKeyDown={handleKeyDown}
+				onClick={() => setIsLifted(true)}
+				onBlur={() => setIsLifted(false)}
+				className={`w-full py-3 px-6 pr-16 rounded-full border-2 border-gray-200 
+					focus:border-orange-500 focus:outline-none
+					hover:border-orange-500
+					transition-all duration-300 ease-in-out
+					text-gray-700 placeholder-gray-400 ${isLifted ? '-translate-y-1.5' : ''}`}
+				autoComplete="off"
+			/>
+			
+			{/* Search button */}
+			<button
+				type="submit"
+				className={`absolute right-2 top-1/2 -translate-y-1/2 
+					bg-orange-500 hover:bg-orange-600 
+					text-white rounded-full p-3
+					transition-all duration-300
+					flex items-center justify-center ${isLifted ? '-translate-y-1.5' : ''}`}
+			>
+				<FaSearch className="w-5 h-5" />
+			</button>
+		</form>
 							{showSearchDropdown && searchResults.length > 0 && (
 								<div className="navbar__search-dropdown">
 									{searchResults.map((result) => (

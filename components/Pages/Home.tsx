@@ -102,8 +102,9 @@ const Home = () => {
 	}
 
 	return (
-		<div style={{ zIndex: "0" }}>
+		<div style={{ zIndex: "0", backgroundColor: '#F4F5F7' }}>
 			<Navbar />
+
 			<Suspense fallback={<HeroSliderSkeleton />}>
 				<HeroSlider />
 			</Suspense>
