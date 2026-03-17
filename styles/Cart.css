@@ -3,6 +3,17 @@
 	min-height: auto;
 }
 
+.cart-antd-drawer .ant-drawer-content-wrapper {
+	max-width: 420px;
+}
+
+@media (max-width: 768px) {
+	.cart-antd-drawer .ant-drawer-content-wrapper {
+		max-width: 100%;
+		width: 100% !important;
+	}
+}
+
 .cart__overlay {
 	position: fixed;
 	top: 0;

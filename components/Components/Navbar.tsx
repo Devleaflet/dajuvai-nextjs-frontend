@@ -759,7 +759,7 @@ const Navbar: React.FC = () => {
 						</a>
 					)}
 					<a
-						href="/becomevendor"
+						href="/become-vendor"
 						className="navbar__top-link"
 					>
 						Become a Vendor
@@ -974,7 +974,7 @@ const Navbar: React.FC = () => {
 					focus:border-orange-500 focus:outline-none
 					hover:border-orange-500
 					transition-all duration-300 ease-in-out
-					text-gray-700 placeholder-gray-400 ${isLifted ? '-translate-y-1.5' : ''}`}
+					text-gray-700 placeholder-gray-400 ${isLifted ? '-translate-y-0.5' : ''}`}
 				autoComplete="off"
 			/>
 			
@@ -1283,7 +1283,7 @@ const Navbar: React.FC = () => {
 							</a>
 						)}
 						<a
-							href="/becomevendor"
+							href="/become-vendor"
 							className="navbar__side-menu-category-button"
 						>
 							Become a Vendor

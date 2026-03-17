@@ -283,7 +283,7 @@ const About = () => {
                 <div className="vendor-cta">
                   <h3>Want to Become a Vendor?</h3>
                   <p>Join our platform and reach thousands of customers across Nepal.</p>
-                  <a href="/becomevendor" className="btn btn--primary">Become a Vendor</a>
+                  <a href="/become-vendor" className="btn btn--primary">Become a Vendor</a>
                 </div>
               </div>
 

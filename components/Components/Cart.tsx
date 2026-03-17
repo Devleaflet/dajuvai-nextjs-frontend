@@ -2,6 +2,7 @@
 
 // Cart.tsx
 import React, { useEffect, useRef, useState, useCallback } from "react";
+import { Drawer } from "antd";
 import {
 	FaTimes,
 	FaShoppingBag,
@@ -29,7 +30,7 @@ interface ErrorState {
 	type: "delete" | "quantity" | "stock";
 }
 
-const Cart: React.FC<CartProps> = ({ cartOpen, toggleCart, cartButtonRef }) => {
+const Cart: React.FC<CartProps> = ({ cartOpen, toggleCart }) => {
 	const {
 		handleCartItemOnDelete,
 		handleIncreaseQuantity,
@@ -39,7 +40,6 @@ const Cart: React.FC<CartProps> = ({ cartOpen, toggleCart, cartButtonRef }) => {
 	} = useCart();
 
 	const { setCartOpen } = useUI();
-	const sideCartRef = useRef<HTMLDivElement>(null);
 	const pathname = usePathname();
 	const prevLocationRef = useRef(pathname);
 
@@ -84,38 +84,30 @@ const Cart: React.FC<CartProps> = ({ cartOpen, toggleCart, cartButtonRef }) => {
 		setErrors((prev) => prev.filter((error) => error.itemId !== itemId));
 	}, []);
 
-	useEffect(() => {
-		const handleClickOutside = (e: MouseEvent): void => {
-			if (
-				cartOpen &&
-				sideCartRef.current &&
-				!sideCartRef.current.contains(e.target as Node) &&
-				cartButtonRef.current &&
-				!cartButtonRef.current.contains(e.target as Node)
-			) {
-				toggleCart();
-			}
-		};
-
-		document.addEventListener("click", handleClickOutside);
-		return () => {
-			document.removeEventListener("click", handleClickOutside);
-		};
-	}, [cartOpen, toggleCart, cartButtonRef]);
-
-	// ✅ FIXED: Handle Escape key to close cart
-	useEffect(() => {
-		const handleEscapeKey = (e: KeyboardEvent) => {
-			if (e.key === 'Escape' && cartOpen) {
-				toggleCart();
-			}
-		};
-
-		document.addEventListener('keydown', handleEscapeKey);
-		return () => {
-			document.removeEventListener('keydown', handleEscapeKey);
-		};
-	}, [cartOpen, toggleCart]);
+	const formatAttributes = useCallback((attrs: any): string => {
+		if (!attrs) return "";
+		if (Array.isArray(attrs)) {
+			return attrs
+				.map((a) => {
+					if (!a) return "";
+					if (typeof a === "string") return a;
+					if (typeof a === "object") {
+						const key = a.key || a.name || a.attribute || Object.keys(a)[0];
+						const value = a.value || a.val || a.option || a[key];
+						return [key, value].filter(Boolean).join(": ");
+					}
+					return String(a);
+				})
+				.filter(Boolean)
+				.join(", ");
+		}
+		if (typeof attrs === "object") {
+			return Object.entries(attrs)
+				.map(([k, v]) => `${k}: ${v}`)
+				.join(", ");
+		}
+		return String(attrs);
+	}, []);
 
 	const getCartVariantLabel = useCallback((item: any): string | null => {
 		try {
@@ -143,32 +135,7 @@ const Cart: React.FC<CartProps> = ({ cartOpen, toggleCart, cartButtonRef }) => {
 			console.error("Error getting variant label:", error);
 		}
 		return null;
-	}, []);
-
-	const formatAttributes = useCallback((attrs: any): string => {
-		if (!attrs) return "";
-		if (Array.isArray(attrs)) {
-			return attrs
-				.map((a) => {
-					if (!a) return "";
-					if (typeof a === "string") return a;
-					if (typeof a === "object") {
-						const key = a.key || a.name || a.attribute || Object.keys(a)[0];
-						const value = a.value || a.val || a.option || a[key];
-						return [key, value].filter(Boolean).join(": ");
-					}
-					return String(a);
-				})
-				.filter(Boolean)
-				.join(", ");
-		}
-		if (typeof attrs === "object") {
-			return Object.entries(attrs)
-				.map(([k, v]) => `${k}: ${v}`)
-				.join(", ");
-		}
-		return String(attrs);
-	}, []);
+	}, [formatAttributes]);
 
 	const handleDeleteItem = useCallback(
 		async (item: any, e?: React.MouseEvent) => {
@@ -177,7 +144,9 @@ const Cart: React.FC<CartProps> = ({ cartOpen, toggleCart, cartButtonRef }) => {
 				e.stopPropagation();
 			}
 
-			const itemId = item.lineItemId || item.id || item.itemId;
+			const rawItemId = item.lineItemId ?? item.id ?? item.itemId;
+			const itemId = rawItemId != null ? String(rawItemId) : "";
+			const numericItemId = Number(rawItemId);
 			if (!itemId) {
 				console.error("No valid item ID found for deletion:", item);
 				addError(
@@ -197,7 +166,9 @@ const Cart: React.FC<CartProps> = ({ cartOpen, toggleCart, cartButtonRef }) => {
 				console.error("Delete failed, trying quantity 0 fallback:", error);
 
 				try {
-					await handleDecreaseQuantity(itemId, item.quantity);
+					if (!Number.isNaN(numericItemId)) {
+						await handleDecreaseQuantity(numericItemId, item.quantity);
+					}
 					//("Successfully removed item via quantity 0");
 				} catch (quantityError) {
 					console.error("Quantity fallback also failed:", quantityError);
@@ -240,9 +211,12 @@ const Cart: React.FC<CartProps> = ({ cartOpen, toggleCart, cartButtonRef }) => {
 
 	const CartItem = React.memo(
 		({ item }: { item: any }) => {
-			const itemId = item.lineItemId || item.id || item.itemId;
+			const rawItemId = item.lineItemId ?? item.id ?? item.itemId;
+			const itemId = rawItemId != null ? String(rawItemId) : "";
+			const numericItemId = Number(rawItemId);
 			const isUpdating =
-				updatingItems?.has?.(itemId) || isProcessing.has(itemId);
+				(!Number.isNaN(numericItemId) && updatingItems?.has?.(numericItemId)) ||
+				isProcessing.has(itemId);
 			const itemError = getItemError(itemId);
 			const variantLabel = getCartVariantLabel(item);
 
@@ -262,12 +236,17 @@ const Cart: React.FC<CartProps> = ({ cartOpen, toggleCart, cartButtonRef }) => {
 					setLocalQuantity((prev: number) => prev + 1);
 
 					try {
-						await handleIncreaseQuantity(itemId, 1);
+						if (!Number.isNaN(numericItemId)) {
+							await handleIncreaseQuantity(numericItemId, 1);
+						}
 					} catch (error) {
 						setLocalQuantity(item.quantity);
 						console.error("Error increasing quantity:", error);
 
-						const errorMessage = (error as any)?.message?.toLowerCase() || "";
+						const errorMessage =
+							error instanceof Error
+								? error.message.toLowerCase()
+								: "";
 						if (
 							errorMessage.includes("stock") ||
 							errorMessage.includes("inventory") ||
@@ -285,7 +264,7 @@ const Cart: React.FC<CartProps> = ({ cartOpen, toggleCart, cartButtonRef }) => {
 						setIsLocalUpdating(false);
 					}
 				},
-				[itemId, item.quantity, handleIncreaseQuantity, addError]
+				[itemId, numericItemId, item.quantity]
 			);
 
 			const handleLocalDecrease = useCallback(
@@ -302,7 +281,9 @@ const Cart: React.FC<CartProps> = ({ cartOpen, toggleCart, cartButtonRef }) => {
 					setLocalQuantity((prev: number) => prev - 1);
 
 					try {
-						await handleDecreaseQuantity(itemId, 1);
+						if (!Number.isNaN(numericItemId)) {
+							await handleDecreaseQuantity(numericItemId, 1);
+						}
 					} catch (error) {
 						setLocalQuantity(item.quantity);
 						console.error("Error decreasing quantity:", error);
@@ -315,14 +296,7 @@ const Cart: React.FC<CartProps> = ({ cartOpen, toggleCart, cartButtonRef }) => {
 						setIsLocalUpdating(false);
 					}
 				},
-				[
-					itemId,
-					item.quantity,
-					localQuantity,
-					handleDecreaseQuantity,
-					handleDeleteItem,
-					addError,
-				]
+				[itemId, numericItemId, item, localQuantity]
 			);
 
 			return (
@@ -445,41 +419,48 @@ const Cart: React.FC<CartProps> = ({ cartOpen, toggleCart, cartButtonRef }) => {
 		}
 	);
 
-	const handleCartContentClick = useCallback((e: React.MouseEvent) => {
-		e.stopPropagation();
-	}, []);
+	CartItem.displayName = "CartItem";
 
-	// ✅ FIXED: Improved close handler that prevents event bubbling issues
-	const handleCloseCart = useCallback((e: React.MouseEvent) => {
-		e.preventDefault();
-		e.stopPropagation();
+	const handleCloseCart = useCallback(() => {
 		toggleCart();
 	}, [toggleCart]);
 
 	return (
-		<>
-			<div
-				className={`fixed top-0 left-0 w-full h-full bg-black/50 z-[9998] transition-all duration-300 backdrop-blur-[2px] ${cartOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
-				onClick={handleCloseCart}
-			></div>
-
-			<div
-				className={`fixed top-0 right-0 w-[460px] h-screen bg-gradient-to-br from-white to-[#f8fafc] shadow-[-4px_0_32px_rgba(0,0,0,0.1)] z-[9999] transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] flex flex-col overflow-hidden ${cartOpen ? 'translate-x-0' : 'translate-x-full'} sm:w-full sm:max-w-full sm:h-[calc(100vh-60px)] sm:bottom-[60px] sm:top-auto sm:left-0 xs:w-full xs:max-w-full xs:h-[calc(100vh-60px)] xs:bottom-[60px] xs:top-auto xs:left-0`}
-				ref={sideCartRef}
-				onClick={handleCartContentClick}
-			>
-				<div className="bg-white border-b border-[#e2e8f0] shadow-[0_1px_3px_rgba(0,0,0,0.05)] sticky top-0 z-10 flex-shrink-0">
-					<div className="flex items-center justify-between p-[18px_24px] sm:p-[14px_18px] xs:p-[12px_14px]">
-						<h2 className="flex items-center gap-3 m-0 text-[1.3rem] font-bold text-[#1a202c] whitespace-nowrap sm:text-[1.1rem] sm:gap-2 xs:text-base">
-							<FaShoppingBag className="text-[#f97316] text-[1.1rem]" />
+		<Drawer
+			rootClassName="cart-antd-drawer"
+			open={cartOpen}
+			onClose={handleCloseCart}
+			placement="right"
+			width={420}
+			maskClosable
+			keyboard
+			closable={false}
+			zIndex={9999}
+			destroyOnHidden
+			styles={{
+				body: { padding: 0 },
+				mask: { backdropFilter: "blur(2px)", background: "rgba(0, 0, 0, 0.5)" },
+				content: {
+					background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
+					boxShadow: "-4px 0 32px rgba(0, 0, 0, 0.1)",
+				},
+			}}
+		>
+			<div className="h-full flex flex-col overflow-hidden">
+				<div className="bg-white border-b border-gray-100 sticky top-0 z-10 flex-shrink-0">
+					<div className="flex items-center justify-between px-6 py-4">
+						<h2 className="flex items-center gap-2 m-0 text-lg font-bold text-gray-800">
+							<FaShoppingBag className="text-[#f97316] text-lg" />
 							Your Shopping Cart
 							{cartItems.length > 0 && (
-								<span className="bg-gradient-to-br from-[#f97316] to-[#ea580c] text-white rounded-full min-w-[24px] h-6 flex items-center justify-center text-xs font-bold shadow-[0_2px_8px_rgba(249,115,22,0.3)] animate-cart-count-bounce border-2 border-white ml-2 sm:min-w-5 sm:h-5 sm:text-[0.7rem] sm:ml-[6px] xs:min-w-[18px] xs:h-[18px] xs:text-[0.65rem] xs:ml-1">{cartItems.length}</span>
+								<span className="bg-[#f97316] text-white rounded-full min-w-[20px] h-5 flex items-center justify-center text-xs font-bold ml-2">
+									{cartItems.length}
+								</span>
 							)}
 						</h2>
 						<button
-							className="bg-[#f1f5f9] border-none rounded-lg w-9 h-9 flex items-center justify-center cursor-pointer text-[#64748b] text-[0.9rem] transition-all duration-200 select-none hover:bg-[#e2e8f0] hover:text-[#475569] hover:rotate-90 active:rotate-90 active:scale-95 focus:outline-2 focus:outline-[#f97316] focus:outline-offset-2 focus:shadow-[0_0_0_2px_rgba(249,115,22,0.3)] sm:w-10 sm:h-10 sm:text-base xs:w-9 xs:h-9"
-							onClick={handleCloseCart}
+							className="bg-gray-100 border-none rounded-md w-8 h-8 flex items-center justify-center cursor-pointer text-gray-500 text-sm transition-colors hover:bg-gray-200 hover:text-gray-700"
+							onClick={() => handleCloseCart()}
 							aria-label="Close cart"
 							type="button"
 						>
@@ -490,17 +471,17 @@ const Cart: React.FC<CartProps> = ({ cartOpen, toggleCart, cartButtonRef }) => {
 
 				<div className="flex-1 flex flex-col overflow-hidden">
 					{cartItems.length === 0 ? (
-						<div className="flex flex-col items-center justify-center text-center p-[50px_28px] flex-1">
-							<div className="w-[70px] h-[70px] bg-gradient-to-br from-[#fed7aa] to-[#fdba74] rounded-full flex items-center justify-center mb-5 text-[#ea580c] text-[1.8rem]">
+						<div className="flex flex-col items-center justify-center text-center px-8 flex-1 h-full">
+							<div className="w-[80px] h-[80px] bg-orange-100 rounded-full flex items-center justify-center mb-6 text-[#f97316] text-3xl">
 								<FaShoppingBag />
 							</div>
-							<h3 className="text-[1.3rem] font-bold text-[#1a202c] m-0 mb-[10px]">Your cart is empty</h3>
-							<p className="text-[#64748b] text-[0.95rem] leading-[1.5] m-0 mb-7 max-w-[280px]">
-								Looks like you haven't added any items to your cart yet.
+							<h3 className="text-xl font-bold text-gray-800 m-0 mb-3">Your cart is empty</h3>
+							<p className="text-gray-500 text-sm leading-relaxed m-0 mb-8 max-w-[260px]">
+								Looks like you haven&apos;t added any items to your cart yet.
 							</p>
 							<Link
 								href="/shop"
-								className="bg-gradient-to-br from-[#f97316] to-[#ea580c] text-white no-underline px-7 py-3 rounded-lg font-semibold text-[0.95rem] transition-all duration-300 shadow-[0_4px_12px_rgba(249,115,22,0.3)] select-none hover:-translate-y-0.5 hover:shadow-[0_6px_18px_rgba(249,115,22,0.4)]"
+								className="bg-[#f97316] text-white no-underline px-8 py-3 rounded-md font-medium text-sm transition-colors hover:bg-[#ea580c] shadow-sm hover:shadow-md"
 								onClick={(e) => {
 									e.stopPropagation();
 									toggleCart();
@@ -512,7 +493,7 @@ const Cart: React.FC<CartProps> = ({ cartOpen, toggleCart, cartButtonRef }) => {
 					) : (
 						<>
 							<div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4 sm:p-[18px] sm:gap-[14px] xs:p-[14px] xs:gap-3 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-[#f1f5f9] [&::-webkit-scrollbar-track]:rounded-[2px] [&::-webkit-scrollbar-thumb]:bg-[#cbd5e1] [&::-webkit-scrollbar-thumb]:rounded-[2px] [&::-webkit-scrollbar-thumb:hover]:bg-[#94a3b8]">
-								{orderedCartItems.map((item, index) => {
+								{orderedCartItems.map((item) => {
 									const itemId = item.id;
 									return (
 										<CartItem
@@ -563,7 +544,7 @@ const Cart: React.FC<CartProps> = ({ cartOpen, toggleCart, cartButtonRef }) => {
 					)}
 				</div>
 			</div>
-		</>
+		</Drawer>
 	);
 };
 

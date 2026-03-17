@@ -144,7 +144,7 @@ const BecomeVendor: React.FC = () => {
                     Trusted by 500+ Sellers
                   </div>
                   <h3 className="become-vendor__cta-title">Ready to Grow Your Business?</h3>
-                  <p className="cta-subtitle">Join Nepal's fastest growing marketplace today</p>
+                  <p className="cta-subtitle">Join Nepal&apos;s fastest growing marketplace today</p>
 
                   <div className="become-vendor__buttons">
                     <button

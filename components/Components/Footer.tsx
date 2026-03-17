@@ -133,7 +133,7 @@ const Footer: React.FC = () => {
 										</li>
 										<li>
 											<Link
-												href="/becomevendor"
+												href="/become-vendor"
 												className="footer__link"
 											>
 												Become a <br />

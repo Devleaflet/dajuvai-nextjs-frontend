@@ -10,8 +10,9 @@ html, body {
 .become-vendor-page-wrapper {
   display: flex;
   flex-direction: column;
-  height: 100%; /* ✅ Not min-height, not vh — just 100% */
+  min-height: 100vh; /* Changed from height: 100% to min-height: 100vh for better responsiveness */
   width: 100%;
+  overflow-x: hidden;
 }
 
 /* ===== MAIN CONTENT ===== */
@@ -28,6 +29,8 @@ html, body {
   overflow: hidden;
   flex: 1; /* Fills available space between navbar and footer */
   box-sizing: border-box; /* Ensures padding is included in height */
+  width: 100%; /* Ensure full width */
+  min-height: calc(100vh - 160px); /* Ensure minimum height */
 }
 
 .become-vendor--visible {
@@ -52,12 +55,17 @@ html, body {
   padding: 0 20px;
   position: relative;
   z-index: 2;
+  width: 100%; /* Ensure full width within max-width constraint */
+  box-sizing: border-box;
 }
 
 .become-vendor__content {
   max-width: 840px;
   margin: 0 auto;
   text-align: center;
+  width: 100%; /* Ensure full width within max-width */
+  box-sizing: border-box;
+  padding: 0 10px; /* Add some padding for small screens */
 }
 
 /* —— HERO —— */
@@ -183,6 +191,11 @@ html, body {
   overflow: hidden;
   transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+  width: 100%; /* Ensure full width */
+  box-sizing: border-box;
+  display: block; /* Ensure it's displayed as block */
+  visibility: visible; /* Ensure visibility */
+  opacity: 1; /* Ensure opacity */
 }
 
 .become-vendor__section::before {
@@ -417,6 +430,11 @@ html, body {
 .become-vendor__cta {
   padding: 40px 0 20px;
   text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+  display: block;
+  visibility: visible;
+  opacity: 1;
 }
 
 .cta-card {
@@ -601,6 +619,17 @@ html, body {
 @media (max-width: 768px) {
   .become-vendor {
     padding: 32px 16px 28px;
+    min-height: auto; /* Remove min-height on mobile for better scrolling */
+  }
+
+  .become-vendor__container {
+    padding: 0 15px;
+    max-width: 100%;
+  }
+
+  .become-vendor__content {
+    max-width: 100%;
+    padding: 0 5px;
   }
 
   .become-vendor__title {
@@ -622,6 +651,8 @@ html, body {
     padding: 24px 20px;
     margin-bottom: 24px;
     border-radius: 14px;
+    width: 100%; /* Ensure full width */
+    box-sizing: border-box;
   }
 
   .become-vendor__section-title {
@@ -646,6 +677,8 @@ html, body {
   .cta-card {
     padding: 24px 20px;
     border-radius: 16px;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .become-vendor__cta-title {
@@ -670,6 +703,14 @@ html, body {
     padding: 28px 16px 24px;
   }
 
+  .become-vendor__container {
+    padding: 0 10px;
+  }
+
+  .become-vendor__content {
+    padding: 0 5px;
+  }
+
   .become-vendor__title {
     font-size: 1.5rem;
   }
@@ -682,6 +723,8 @@ html, body {
     padding: 20px 16px;
     margin-bottom: 20px;
     border-radius: 12px;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .become-vendor__section-title {
@@ -692,10 +735,35 @@ html, body {
     flex-direction: column;
     text-align: center;
     gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .become-vendor__list-icon {
     margin-right: 0;
+  }
+
+  .step-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .step-number {
+    margin-right: 0;
+    margin-bottom: 8px;
+  }
+
+  .become-vendor__buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .become-vendor__button {
+    width: 100%;
+    max-width: 320px;
   }
 
   .step-content {
