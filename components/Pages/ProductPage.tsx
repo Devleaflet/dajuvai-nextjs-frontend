@@ -5,30 +5,9 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useRouter, useParams } from "next/navigation";
 import { Truck, Undo2, ShieldCheck, Phone } from "lucide-react";
-
-interface Category {
-	id: number;
-	name: string;
-	createdBy?: {
-		id: number;
-		username: string;
-	};
-	subcategories?: Array<{
-		id: number;
-		name: string;
-	}>;
-}
-
-interface Subcategory {
-	id: number;
-	name: string;
-	category?: Category;
-}
-
 import React from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
-import '@/styles/ProductPage.css';
 import axiosInstance from "@/lib/api/axiosInstance";
 import { addToWishlist } from "@/lib/api/wishlist";
 import Footer from "@/components/Components/Footer";
@@ -38,1359 +17,611 @@ import RecommendedProducts from "@/components/Components/Product/RecommendedProd
 import Reviews from "@/components/Components/Reviews";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useCart } from "@/lib/context/CartContext";
-import "@/styles/ProductPage.css";
 import ScrollToTop from "@/components/Components/ScrollToTop";
 import { sanitizeRichText } from "@/lib/utils/sanitize";
 import { processImageUrl } from "@/lib/utils/imageUrl";
 
-const AuthModal = dynamic(() => import("@/components/Components/AuthModal"), {
-	ssr: false
-});
-
+const AuthModal = dynamic(() => import("@/components/Components/AuthModal"), { ssr: false });
 const CACHE_KEY_REVIEWS = "productReviewsData";
 
+interface Category {
+  id: number;
+  name: string;
+  createdBy?: { id: number; username: string };
+  subcategories?: Array<{ id: number; name: string }>;
+}
+
 interface Review {
-	id: number;
-	userId: number;
-	rating: number;
-	comment: string;
-	createdAt: string;
-	user?: {
-		username?: string;
-		email?: string;
-	};
+  id: number;
+  userId: number;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  user?: { username?: string; email?: string };
 }
 
 interface ReviewsResponse {
-	success: boolean;
-	data: {
-		averageRating: number;
-		reviews: Review[];
-		total: number;
-		totalPages: number;
-	};
+  success: boolean;
+  data: { averageRating: number; reviews: Review[]; total: number; totalPages: number };
 }
 
 const ProductPage = () => {
-	const toFullUrl = (imgUrl: string): string => {
-		if (!imgUrl) return "";
-		// Use processImageUrl to handle HTML entities and malformed URLs
-		return processImageUrl(imgUrl);
-	};
-
-	const {
-		id: productId,
-		categoryId,
-		subcategoryId,
-	} = useParams<{
-		id: string;
-		categoryId?: string;
-		subcategoryId?: string;
-	}>();
-	const id = productId;
-	const [selectedColor, setSelectedColor] = useState("");
-	const [selectedSize, setSelectedSize] = useState("");
-	const [selectedVariant, setSelectedVariant] = useState<any>(null);
-	const [quantity, setQuantity] = useState(1);
-	const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-	const [showToast, setShowToast] = useState(false);
-	const [toastMessage, setToastMessage] = useState("");
-	const [authModalOpen, setAuthModalOpen] = useState(false);
-	const [imageError, setImageError] = useState<boolean[]>([]);
-	const [currentReviewPage, setCurrentReviewPage] = useState(1);
-
-	const [isZoomActive, setIsZoomActive] = useState(false);
-	const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
-	const mainImageRef = useRef<HTMLDivElement>(null);
-	const quantityInputRef = useRef<HTMLInputElement>(null);
-
-	const ZOOM_LEVEL = 3;
-	const ZOOM_BOX_SIZE = 450;
-
-	const { handleCartOnAdd } = useCart();
-	const { token, isAuthenticated } = useAuth();
-	const router = useRouter();
-
-	const { data: productData, isLoading: isProductLoading } = useQuery({
-		queryKey: ["product", id],
-		queryFn: async () => {
-			if (!id || isNaN(Number(id))) throw new Error("Invalid product ID");
-
-			const response = await axiosInstance.get(`/api/product/${id}`);
-			const apiProduct = response.data.product;
-
-			if (!apiProduct) {
-				throw new Error("Product not found");
-			}
-
-			const variantImages: string[] = [];
-			let allVariants: any[] = [];
-			let defaultVariant: any = null;
-
-			if (apiProduct.variants && Array.isArray(apiProduct.variants)) {
-				allVariants = apiProduct.variants.map((variant: any) => {
-					const variantImgUrls: string[] = [];
-					if (variant.variantImages && Array.isArray(variant.variantImages)) {
-						variant.variantImages.forEach((img: any) => {
-							try {
-								let imgUrl = "";
-								if (typeof img === "string") {
-									try {
-										const parsed = JSON.parse(img);
-										imgUrl = parsed.url || parsed.imageUrl || img;
-									} catch {
-										imgUrl = img;
-									}
-								} else if (img && typeof img === "object") {
-									imgUrl = img.url || img.imageUrl || "";
-								}
-								if (imgUrl) {
-									const fullUrl = toFullUrl(imgUrl);
-									variantImgUrls.push(fullUrl);
-									if (!variantImages.includes(fullUrl)) {
-										variantImages.push(fullUrl);
-									}
-								}
-							} catch (e) {
-								console.error("Error parsing variant image:", e, img);
-							}
-						});
-					}
-
-					const basePrice = parseFloat(variant.basePrice) || 0;
-					const discount = parseFloat(variant.discount) || 0;
-					let price = basePrice;
-					let savings = 0;
-
-					if (variant.discountType === "PERCENTAGE") {
-						savings = basePrice * (discount / 100);
-						price = basePrice - savings;
-					} else if (variant.discountType === "FLAT") {
-						savings = discount;
-						price = basePrice - discount;
-					}
-
-					const variantData = {
-						...variant,
-						variantImgUrls,
-						calculatedPrice: price,
-						calculatedSavings: savings,
-						originalPrice: basePrice,
-						stock: variant.stock || 0,
-						status: variant.status || "AVAILABLE",
-					};
-
-					if (!defaultVariant) {
-						defaultVariant = variantData;
-					}
-
-					return variantData;
-				});
-			}
-
-			const productImages = Array.isArray(apiProduct.productImages)
-				? apiProduct.productImages
-					.map((img: any) => {
-						try {
-							let imgUrl = "";
-							if (typeof img === "string") {
-								try {
-									const parsed = JSON.parse(img);
-									imgUrl = parsed.url || parsed.imageUrl || img;
-								} catch {
-									imgUrl = img;
-								}
-							} else if (img && typeof img === "object") {
-								imgUrl = img.url || img.imageUrl || "";
-							}
-							return imgUrl ? toFullUrl(imgUrl) : "";
-						} catch (e) {
-							console.error("Error parsing product image:", e, img);
-							return "";
-						}
-					})
-					.filter(Boolean)
-				: [];
-
-			const allImages = [
-				...new Set([...productImages, ...variantImages]),
-			].filter(Boolean);
-
-			let productPrice = 0;
-			let productOriginalPrice = 0;
-
-			if (apiProduct.hasVariants) {
-				if (defaultVariant) {
-					productPrice = defaultVariant.calculatedPrice;
-					productOriginalPrice = defaultVariant.originalPrice;
-				}
-			} else {
-				const basePrice = parseFloat(apiProduct.basePrice) || 0;
-				const discount = parseFloat(apiProduct.discount) || 0;
-
-				productOriginalPrice = basePrice;
-				productPrice = basePrice;
-
-				if (apiProduct.discountType === "PERCENTAGE") {
-					productPrice = basePrice - basePrice * (discount / 100);
-				} else if (apiProduct.discountType === "FLAT") {
-					productPrice = basePrice - discount;
-				}
-			}
-
-			const sizeOptions = new Set<string>();
-			const colorOptions = new Set<string>();
-
-			allVariants.forEach((variant: any) => {
-				if (variant.attributes) {
-					Object.entries(variant.attributes).forEach(([key, value]) => {
-						if (typeof value === "string") {
-							if (key.toLowerCase().includes("size")) {
-								sizeOptions.add(value);
-							} else if (key.toLowerCase().includes("color")) {
-								colorOptions.add(value);
-							}
-						}
-					});
-				}
-			});
-
-			const derivedCategoryId =
-				apiProduct?.category?.id != null
-					? Number(apiProduct.category.id)
-					: (apiProduct as any)?.categoryId != null
-						? Number((apiProduct as any).categoryId)
-						: undefined;
-			const derivedCategoryName = apiProduct?.category?.name;
-
-			const derivedSubcategoryId =
-				apiProduct?.subcategory?.id != null
-					? Number(apiProduct.subcategory.id)
-					: (apiProduct as any)?.subcategoryId != null
-						? Number((apiProduct as any).subcategoryId)
-						: undefined;
-			const derivedSubcategoryName = apiProduct?.subcategory?.name;
-
-			return {
-				product: {
-					id: apiProduct.id,
-					name: apiProduct.name,
-					description: apiProduct.description,
-					price: productPrice.toFixed(2),
-					originalPrice:
-						productOriginalPrice > productPrice
-							? productOriginalPrice.toFixed(2)
-							: undefined,
-					rating: 0,
-					ratingCount: "0",
-					image: allImages[0] || "",
-					brand: apiProduct.brand?.name || "Unknown Brand",
-					category:
-						derivedCategoryId != null
-							? {
-								id: derivedCategoryId,
-								name: derivedCategoryName || "Category",
-							}
-							: undefined,
-					subcategory:
-						derivedSubcategoryId != null
-							? {
-								id: derivedSubcategoryId,
-								name: derivedSubcategoryName || "Subcategory",
-							}
-							: undefined,
-					vendor: apiProduct.vendor || {
-						id: null,
-						businessName: "Unknown Vendor",
-					},
-					productImages: allImages,
-					colors: Array.from(colorOptions),
-					sizeOptions: Array.from(sizeOptions),
-					stock: apiProduct.stock || defaultVariant?.stock || 0,
-					isBestSeller: false,
-					variants: allVariants,
-					hasVariants: apiProduct.hasVariants || false,
-					selectedVariant: defaultVariant,
-				},
-				vendorId: apiProduct.vendorId || null,
-			};
-		},
-		staleTime: 5 * 60 * 1000,
-		gcTime: 10 * 60 * 1000,
-	});
-
-	const { data: reviewsData, isLoading: isReviewsLoading } = useQuery({
-		queryKey: ["reviews", id, currentReviewPage],
-		queryFn: async () => {
-			if (!id || isNaN(Number(id))) throw new Error("Invalid product ID");
-
-			const response = await axiosInstance.get<ReviewsResponse>(
-				`/api/reviews/${id}?page=${currentReviewPage}`
-			);
-			if (!response.data.success) {
-				throw new Error("Failed to fetch reviews");
-			}
-			return {
-				reviews: response.data.data.reviews || [],
-				averageRating: response.data.data.averageRating || 0,
-				totalReviews: response.data.data.total || 0,
-				totalPages: response.data.data.totalPages || 1,
-			};
-		},
-		staleTime: 5 * 60 * 1000,
-		gcTime: 10 * 60 * 1000,
-	});
-
-	const product = productData?.product;
-	const vendorId = productData?.vendorId;
-
-	const effectiveCategoryId =
-		categoryId ??
-		(product?.category?.id != null ? String(product.category.id) : undefined);
-	const effectiveSubcategoryId =
-		subcategoryId ??
-		(product?.subcategory?.id != null
-			? String(product.subcategory.id)
-			: undefined);
-
-	const { data: recommendedProducts, isLoading: isLoadingRecommended } =
-		useQuery({
-			queryKey: [
-				"recommendedProducts",
-				effectiveCategoryId,
-				effectiveSubcategoryId,
-			],
-			queryFn: async () => {
-				const fetchWithParams = async (p: URLSearchParams) => {
-					const url = p.toString()
-						? `/api/categories/all/products?${p.toString()}`
-						: `/api/categories/all/products`;
-					const res = await axiosInstance.get(url);
-					const products = (res?.data?.data ?? []) as any[];
-					return products.map((product) => {
-						const rating = product.avgRating || product.rating || 0;
-						const ratingCount = product.count || product.reviews?.length || 0;
-						return {
-							...product,
-							rating,
-							ratingCount,
-						};
-					});
-				};
-
-				try {
-					if (effectiveCategoryId && effectiveSubcategoryId) {
-						const params = new URLSearchParams();
-						params.append("categoryId", String(effectiveCategoryId));
-						params.append("subcategoryId", String(effectiveSubcategoryId));
-						let data = await fetchWithParams(params);
-						if (!Array.isArray(data) || data.length <= 1) {
-							const catOnly = new URLSearchParams();
-							catOnly.append("categoryId", String(effectiveCategoryId));
-							data = await fetchWithParams(catOnly);
-							if (!Array.isArray(data) || data.length <= 1) {
-								data = await fetchWithParams(new URLSearchParams());
-							}
-						}
-						return data;
-					}
-
-					if (effectiveSubcategoryId && !effectiveCategoryId) {
-						const params = new URLSearchParams();
-						params.append("subcategoryId", String(effectiveSubcategoryId));
-						let data = await fetchWithParams(params);
-						if (!Array.isArray(data) || data.length <= 1) {
-							data = await fetchWithParams(new URLSearchParams());
-						}
-						return data;
-					}
-
-					if (effectiveCategoryId && !effectiveSubcategoryId) {
-						const params = new URLSearchParams();
-						params.append("categoryId", String(effectiveCategoryId));
-						let data = await fetchWithParams(params);
-						if (!Array.isArray(data) || data.length <= 1) {
-							data = await fetchWithParams(new URLSearchParams());
-						}
-						return data;
-					}
-
-					return await fetchWithParams(new URLSearchParams());
-				} catch (error) {
-					console.error("Failed to fetch recommended products:", error);
-					return [];
-				}
-			},
-			enabled: true,
-			staleTime: 5 * 60 * 1000,
-		});
-
-	const formatVariantAttributes = (attributes: any): string => {
-		if (!attributes) return "";
-		if (Array.isArray(attributes)) {
-			return attributes
-				.map((attr: any) => {
-					const label = String(attr?.type ?? attr?.attributeType ?? "");
-					const vals = Array.isArray(attr?.values)
-						? attr.values.map((v: any) => String(v?.value ?? v)).filter(Boolean)
-						: Array.isArray(attr?.attributeValues)
-							? attr.attributeValues
-								.map((v: any) => String(v?.value ?? v))
-								.filter(Boolean)
-							: [];
-					return label && vals.length ? `${label}: ${vals.join(", ")}` : "";
-				})
-				.filter(Boolean)
-				.join(", ");
-		}
-		if (typeof attributes === "object") {
-			return Object.entries(attributes)
-				.map(([key, value]) => {
-					if (value == null) return "";
-					if (Array.isArray(value)) {
-						const vals = value
-							.map((v: any) => String(v?.value ?? v))
-							.filter(Boolean);
-						return `${key}: ${vals.join(", ")}`;
-					}
-					if (typeof value === "object") {
-						const val = (value as any).value ?? (value as any).name ?? "";
-						return val
-							? `${key}: ${String(val)}`
-							: `${key}: ${JSON.stringify(value)}`;
-					}
-					return `${key}: ${String(value)}`;
-				})
-				.filter(Boolean)
-				.join(", ");
-		}
-		return String(attributes);
-	};
-
-	const { data: categoryData } = useQuery<{ data: Category }>({
-		queryKey: ["category", categoryId],
-		queryFn: async () => {
-			if (!categoryId) return null;
-			try {
-				const response = await axiosInstance.get(
-					`/api/categories/${categoryId}`
-				);
-				return response.data;
-			} catch (error) {
-				console.error("Error fetching category:", error);
-				return null;
-			}
-		},
-		enabled: !!categoryId,
-		staleTime: 5 * 60 * 1000,
-	});
-
-	const subcategory = categoryData?.data?.subcategories?.find(
-		(sub: any) => sub.id === Number(subcategoryId)
-	);
-
-	const displayCategory = categoryData?.data || product?.category;
-	const displaySubcategory = subcategory || product?.subcategory;
-	const reviews = (reviewsData?.reviews || []).map((review: Review) => ({
-		...review,
-		userName:
-			review.user?.username || review.user?.email?.split("@")[0] || "Anonymous",
-	}));
-	const averageRating = reviewsData?.averageRating || 0;
-	const totalReviews = reviewsData?.totalReviews || 0;
-	const totalPages = reviewsData?.totalPages || 1;
-
-	useEffect(() => {
-		if (product) {
-			const defaultVar =
-				product.hasVariants && product.variants && product.variants.length > 0
-					? product.variants[0]
-					: null;
-			setSelectedColor(defaultVar?.attributes?.color || "");
-			setSelectedSize(defaultVar?.attributes?.size || "");
-			setSelectedVariant(defaultVar);
-			const imgs =
-				defaultVar &&
-					defaultVar.variantImgUrls &&
-					defaultVar.variantImgUrls.length > 0
-					? defaultVar.variantImgUrls
-					: product.productImages || [];
-			setImageError(
-				new Array(imgs && imgs.length ? imgs.length : 1).fill(false)
-			);
-		}
-	}, [product]);
-
-	const handleImageSelect = (index: number) => {
-		setSelectedImageIndex(index);
-	};
-
-	const getCurrentImages = () => {
-		if (selectedVariant?.variantImgUrls?.length > 0) {
-			return selectedVariant.variantImgUrls;
-		}
-		if (
-			product?.hasVariants &&
-			product?.variants?.[0]?.variantImgUrls?.length > 0
-		) {
-			return product.variants[0].variantImgUrls;
-		}
-		return product?.productImages || [];
-	};
-
-	useEffect(() => {
-		const imgs = getCurrentImages();
-		setImageError(new Array(imgs && imgs.length ? imgs.length : 1).fill(false));
-		if (selectedImageIndex >= (imgs?.length || 0)) {
-			setSelectedImageIndex(0);
-		}
-	}, [selectedVariant, product]);
-
-	const getCurrentStock = () => {
-		if (selectedVariant) {
-			return selectedVariant.stock || 0;
-		}
-		return product?.stock || 0;
-	};
-
-	const getCurrentPrice = () => {
-		if (selectedVariant) {
-			return selectedVariant.calculatedPrice || 0;
-		}
-		return parseFloat(product?.price || "0");
-	};
-
-	const getOriginalPrice = () => {
-		if (selectedVariant) {
-			return (
-				selectedVariant.originalPrice || selectedVariant.calculatedPrice || 0
-			);
-		}
-		return parseFloat(product?.originalPrice || product?.price || "0");
-	};
-
-	const handleVariantSelect = (variant: any) => {
-		setSelectedVariant(variant);
-		if (variant.variantImgUrls && variant.variantImgUrls.length > 0) {
-			setSelectedImageIndex(0);
-		} else if (product?.productImages && product.productImages.length > 0) {
-			setSelectedImageIndex(0);
-		}
-	};
-
-	const handleMouseEnter = () => {
-		const currentImages = getCurrentImages();
-		if (currentImages[selectedImageIndex] && !imageError[selectedImageIndex]) {
-			setIsZoomActive(true);
-		}
-	};
-
-	const handleMouseLeave = () => {
-		setIsZoomActive(false);
-	};
-
-	const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-		if (!isZoomActive || !mainImageRef.current) return;
-
-		const rect = mainImageRef.current.getBoundingClientRect();
-		const x = e.clientX - rect.left;
-		const y = e.clientY - rect.top;
-
-		// Calculate relative position (0-1)
-		const relativeX = Math.max(0, Math.min(1, x / rect.width));
-		const relativeY = Math.max(0, Math.min(1, y / rect.height));
-
-		// Convert to percentage for background-position
-		const percentX = relativeX * 100;
-		const percentY = relativeY * 100;
-
-		setZoomPosition({ x: percentX, y: percentY });
-	};
-
-	const showNotification = (message: string) => {
-		setToastMessage(message);
-		setShowToast(true);
-		setTimeout(() => setShowToast(false), 3000);
-	};
-
-	const handleAddToCart = () => {
-		if (!isAuthenticated) {
-			setAuthModalOpen(true);
-			return;
-		}
-		if (!product) return;
-		const variantId = selectedVariant?.id;
-		// Convert category object to string if needed for cart
-		const productForCart = {
-			...product,
-			category: typeof product.category === 'object' ? product.category?.name : product.category
-		};
-		handleCartOnAdd(productForCart as any, quantity, variantId);
-		// showNotification("");
-	};
-
-	const handleAddToWishlist = async () => {
-		if (!isAuthenticated || !product) {
-			setAuthModalOpen(true);
-			return;
-		}
-		try {
-			const variantId = selectedVariant?.id || undefined;
-			await addToWishlist(product.id, variantId, token || undefined);
-			toast.success("Added to wishlist");
-		} catch (e: unknown) {
-			const err = e as any;
-			const status = err?.response?.status;
-			const msg: string =
-				err?.response?.data?.message ||
-				err?.response?.data?.error ||
-				err?.message ||
-				"";
-			if (status === 409 || /already/i.test(msg)) {
-				toast("Already present in the wishlist");
-			} else {
-				toast.error("Failed to add to wishlist");
-			}
-		}
-	};
-
-	const handleBuyNow = () => {
-		if (!isAuthenticated) {
-			setAuthModalOpen(true);
-			return;
-		}
-		if (!product) return;
-
-		// Encode product data as URL params for Next.js
-		const productData = {
-			product: {
-				...product,
-				selectedColor,
-				price: getCurrentPrice().toFixed(2),
-				originalPrice:
-					getOriginalPrice() > getCurrentPrice()
-						? getOriginalPrice().toFixed(2)
-						: undefined,
-				selectedVariant: selectedVariant
-					? {
-						id: selectedVariant.id,
-						attributes: selectedVariant.attributes,
-						calculatedPrice: selectedVariant.calculatedPrice,
-						originalPrice: selectedVariant.originalPrice,
-						stock: selectedVariant.stock,
-						variantImgUrls: selectedVariant.variantImgUrls,
-					}
-					: undefined,
-			},
-			quantity,
-		};
-
-		const params = new URLSearchParams({
-			buyNow: 'true',
-			productData: encodeURIComponent(JSON.stringify(productData))
-		});
-
-		router.push(`/checkout?${params.toString()}`);
-	};
-
-	const handleQuantityChange = (increment: boolean) => {
-		if (!product) return;
-		const currentStock = getCurrentStock();
-		if (increment && quantity < currentStock) {
-			setQuantity((prev) => prev + 1);
-		} else if (!increment && quantity > 1) {
-			setQuantity((prev) => prev - 1);
-		}
-	};
-
-	const handleQuantityInputChange = (
-		e: React.ChangeEvent<HTMLInputElement>
-	) => {
-		const value = e.target.value;
-		const currentStock = getCurrentStock();
-
-		if (value === "") {
-			setQuantity(1);
-			return;
-		}
-
-		const numValue = parseInt(value, 10);
-		if (!isNaN(numValue)) {
-			if (numValue <= 0) {
-				setQuantity(1);
-			} else if (numValue <= currentStock) {
-				setQuantity(numValue);
-			} else {
-				setQuantity(currentStock);
-			}
-		}
-	};
-
-	const handleQuantityBlur = () => {
-		if (quantity < 1) {
-			setQuantity(1);
-		}
-	};
-
-	const handleQuantitySelect = () => {
-		if (quantityInputRef.current) {
-			quantityInputRef.current.select();
-		}
-	};
-
-	useEffect(() => {
-		setZoomPosition({ x: 50, y: 50 }); // Center the zoom initially
-	}, [selectedImageIndex, selectedVariant]);
-
-	useEffect(() => {
-		return () => {
-			setIsZoomActive(false);
-			setZoomPosition({ x: 50, y: 50 });
-		};
-	}, []);
-
-	const handleImageLoad = () => {
-		// Reset zoom when image loads
-		setZoomPosition({ x: 50, y: 50 });
-	};
-
-	const handleImageError = (index: number) => {
-		console.warn(`Image failed to load: ${getCurrentImages()[index]}`);
-		setImageError((prev) => {
-			const newState = [...prev];
-			newState[index] = true;
-			return newState;
-		});
-	};
-
-	const handleReviewPageChange = (page: number) => {
-		setCurrentReviewPage(page);
-		document
-			.getElementById("reviews-section")
-			?.scrollIntoView({ behavior: "smooth" });
-	};
-
-	const handleVendorClick = async () => {
-		const vendorId = product?.vendor?.id;
-		if (!vendorId) {
-			console.warn("Vendor ID not found in product data");
-			return;
-		}
-		try {
-			const response = await fetch(`/api/vendors/auth/vendor}`, {
-				method: "GET",
-				headers: {
-					"Content-Type": "application/json",
-				},
-			});
-			if (!response.ok) {
-				throw new Error(`HTTP error! status: ${response.status}`);
-			}
-			const data = await response.json();
-			if (data.success) {
-				window.location.href = `/vendor/${vendorId}`;
-			} else {
-				console.error("Failed to fetch vendor details:", data.message);
-			}
-		} catch (error) {
-			console.error("Error fetching vendor details:", error);
-			window.location.href = `/vendor/${vendorId}`;
-		}
-	};
-
-	if (isProductLoading || isReviewsLoading || !product) {
-		return (
-			<>
-				<Navbar />
-				<Preloader />
-				<Footer />
-			</>
-		);
-	}
-
-	const currentImages = getCurrentImages();
-	const currentImage =
-		currentImages[selectedImageIndex] && !imageError[selectedImageIndex]
-			? currentImages[selectedImageIndex]
-			: "";
-
-	// Build color-size mapping from variants
-	const colorSizeMap: Record<string, string[]> = {};
-	const sizeColorMap: Record<string, string[]> = {};
-	product.variants.forEach((variant: any) => {
-		const color = variant.attributes?.color?.toLowerCase();
-		const size = variant.attributes?.size;
-		if (color && size) {
-			if (!colorSizeMap[color]) colorSizeMap[color] = [];
-			if (!colorSizeMap[color].includes(size)) colorSizeMap[color].push(size);
-			if (!sizeColorMap[size]) sizeColorMap[size] = [];
-			if (!sizeColorMap[size].includes(color)) sizeColorMap[size].push(color);
-		}
-	});
-
-	// Sort colors and sizes
-	const uniqueColors = Object.keys(colorSizeMap).sort((a, b) =>
-		a.localeCompare(b)
-	);
-	const sortedSizes = Object.keys(sizeColorMap).sort(
-		(a, b) => Number(a) - Number(b)
-	);
-
-	return (
-		<div className="app">
-			<ScrollToTop />
-			<Navbar />
-			<main className="product-page">
-				<div className="product-page__container">
-					<div className="product-page__content product-page__content--three-column">
-						<div className="product-gallery">
-							<div className="product-gallery__images">
-								<div
-									className="product-gallery__main-image"
-									ref={mainImageRef}
-									onMouseEnter={handleMouseEnter}
-									onMouseLeave={handleMouseLeave}
-									onMouseMove={handleMouseMove}
-									id="imageZoom"
-								>
-									{currentImage ? (
-										<Image
-											src={currentImage}
-											alt={product.name}
-											width={600}
-											height={600}
-											priority
-											onError={() => handleImageError(selectedImageIndex)}
-											onLoad={handleImageLoad}
-											draggable={false}
-											style={{ objectFit: 'contain', width: '100%', height: 'auto' }}
-										/>
-									) : (
-										<div className="product-gallery__no-image">
-											No image available
-										</div>
-									)}
-									{isZoomActive && currentImage && (
-										<div
-											className={`product-gallery__zoom-box ${isZoomActive ? "active" : ""
-												}`}
-											style={{
-												backgroundImage: `url(${currentImage})`,
-												backgroundSize: `${ZOOM_LEVEL * 100}%`,
-												backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
-												backgroundRepeat: "no-repeat",
-											}}
-										/>
-									)}
-								</div>
-
-								{currentImages && currentImages.length > 1 && (
-									<div className="product-gallery__thumbnails">
-										{currentImages.map((image: string, index: number) => (
-											<button
-												key={index}
-												className={`product-gallery__thumbnail ${selectedImageIndex === index
-													? "product-gallery__thumbnail--active"
-													: ""
-													}`}
-												onClick={() => handleImageSelect(index)}
-											>
-												{image && !imageError[index] ? (
-													<Image
-														src={image}
-														alt={`Product view ${index + 1}`}
-														width={100}
-														height={100}
-														onError={() => handleImageError(index)}
-														style={{ objectFit: 'cover', width: '100%', height: 'auto' }}
-													/>
-												) : (
-													<div className="product-gallery__thumbnail-no-image">
-														No image
-													</div>
-												)}
-											</button>
-										))}
-									</div>
-								)}
-							</div>
-						</div>
-
-						<div className="product-info">
-							<div className="product-info__header">
-								<h1 className="product-info__title">{product.name}</h1>
-
-								<div className="product-price">
-									<span className="product-price__current">
-										Rs. {getCurrentPrice().toFixed(2)}
-									</span>
-									{getOriginalPrice() > getCurrentPrice() && (
-										<>
-											<span className="product-price__original">
-												Rs. {getOriginalPrice().toFixed(2)}
-											</span>
-											<span className="product-price__savings">
-												Save Rs.{" "}
-												{(getOriginalPrice() - getCurrentPrice()).toFixed(2)}
-											</span>
-										</>
-									)}
-								</div>
-							</div>
-
-							{product.description && (
-								<div className="product-info__description">
-									<h3>Description</h3>
-									<div dangerouslySetInnerHTML={{ __html: sanitizeRichText(product.description) }} />
-								</div>
-							)}
-
-							{product.hasVariants &&
-								product.variants &&
-								product.variants.length > 1 && (
-									<div
-										className="product-options"
-										style={{
-											display: "flex",
-											justifyContent: "start",
-											flexDirection: "column",
-										}}
-									>
-										<h4 className="product-options__label text-lg font-semibold mb-2">
-											Available Options:
-										</h4>
-										<div className="product-options__variants p-2 rounded">
-											{(() => {
-												// Dynamically build attribute options from variants
-												const attributeOptions: Record<
-													string,
-													Set<string>
-												> = {};
-												product.variants.forEach((variant: any) => {
-													if (variant.attributes) {
-														Object.entries(variant.attributes).forEach(
-															([key, value]) => {
-																if (!attributeOptions[key])
-																	attributeOptions[key] = new Set();
-																attributeOptions[key].add(String(value));
-															}
-														);
-													}
-												});
-
-												// Order: color, size, length, then others
-												let attributeTypes = Object.keys(attributeOptions);
-												const order = ["color", "size", "length"];
-												const orderedTypes = [
-													...order.filter((t) => attributeTypes.includes(t)),
-													...attributeTypes
-														.filter((t) => !order.includes(t))
-														.sort(),
-												];
-
-												// Build selected attributes from selectedVariant
-												const selectedAttributes = orderedTypes.reduce(
-													(acc, key) => {
-														acc[key] =
-															(selectedVariant?.attributes &&
-																selectedVariant.attributes[key]) ||
-															"";
-														return acc;
-													},
-													{} as Record<string, string>
-												);
-
-												return orderedTypes.map((attrType, idx) => {
-													const optionValues = [...(attributeOptions[attrType] || [])];
-													const hasMultipleOptions = optionValues.length > 4;
-
-													// Special logic for color buttons
-													if (attrType === "color") {
-														return (
-															<div
-																className="product-attribute-row"
-																key={attrType}
-															>
-																<span
-																	className="product-attribute-label"
-																	style={{
-																		padding: "10px 3px",
-																		fontWeight: "600",
-																	}}
-																>
-																	{attrType.toUpperCase()}
-																</span>
-																<div
-																	className={`product-options__variant-row ${hasMultipleOptions
-																		? "product-options__variant-row--many"
-																		: ""
-																		}`}
-																>
-																	{optionValues.map((optionValue) => {
-																		const isSelected =
-																			selectedAttributes[attrType] ===
-																			optionValue;
-																		const hasStock = product.variants.some(
-																			(v) =>
-																				v.attributes?.color === optionValue &&
-																				v.stock > 0
-																		);
-																		const isOutOfStock = !hasStock;
-
-																		return (
-																			<button
-																				key={optionValue}
-																				className={`product-options__button${isSelected
-																					? " product-options__button--active"
-																					: ""
-																					}${isOutOfStock
-																						? " product-options__button--disabled"
-																						: ""
-																					}${hasMultipleOptions
-																						? " product-options__button--compact"
-																						: ""
-																					}`}
-																				onClick={() => {
-																					if (isOutOfStock) {
-																						toast(
-																							"This color is out of stock."
-																						);
-																						return;
-																					}
-																					setSelectedSize("");
-																					setQuantity(1);
-																					const variant = product.variants.find(
-																						(v) =>
-																							v.attributes?.color ===
-																							optionValue && v.stock > 0
-																					);
-																					if (variant) {
-																						handleVariantSelect(variant);
-																					}
-																				}}
-																				disabled={isOutOfStock}
-																				title={optionValue}
-																			>
-																				{optionValue.length > 8 &&
-																					hasMultipleOptions
-																					? `${optionValue.substring(0, 6)}...`
-																					: optionValue}
-																			</button>
-																		);
-																	})}
-																</div>
-															</div>
-														);
-													}
-
-													// Default logic for other attributes
-													return (
-														<div
-															className="product-attribute-row"
-															key={attrType}
-														>
-															<span
-																className="product-attribute-label"
-																style={{
-																	padding: "10px 3px",
-																	fontWeight: "600",
-																}}
-															>
-																{attrType.toUpperCase()}
-															</span>
-															<div
-																className={`product-options__variant-row ${hasMultipleOptions
-																	? "product-options__variant-row--many"
-																	: ""
-																	}`}
-															>
-																{optionValues.map((optionValue) => {
-																	const isSelected =
-																		selectedAttributes[attrType] ===
-																		optionValue;
-																	const selection = {
-																		...selectedAttributes,
-																		[attrType]: optionValue,
-																	};
-																	const variant = product.variants.find((v) => {
-																		return (
-																			Object.entries(selection).every(
-																				([k, val]) => v.attributes?.[k] === val
-																			) && v.stock > 0
-																		);
-																	});
-																	const isOutOfStock = !variant;
-
-																	return (
-																		<button
-																			key={optionValue}
-																			className={`product-options__button${isSelected
-																				? " product-options__button--active"
-																				: ""
-																				}${isOutOfStock
-																					? " product-options__button--disabled"
-																					: ""
-																				}${hasMultipleOptions
-																					? " product-options__button--compact"
-																					: ""
-																				}`}
-																			onClick={() => {
-																				if (isOutOfStock) {
-																					toast(
-																						`This ${attrType} is out of stock.`
-																					);
-																					return;
-																				}
-																				setQuantity(1);
-																				handleVariantSelect(variant);
-																			}}
-																			disabled={isOutOfStock}
-																			title={optionValue}
-																		>
-																			{optionValue.length > 8 &&
-																				hasMultipleOptions
-																				? `${optionValue.substring(0, 6)}...`
-																				: optionValue}
-																		</button>
-																	);
-																})}
-															</div>
-														</div>
-													);
-												});
-											})()}
-										</div>
-									</div>
-								)}
-
-							<div className="product-quantity">
-								<h4 className="product-quantity__label">Quantity:</h4>
-								<div className="product-quantity__selector">
-									<button
-										className="product-quantity__button"
-										onClick={() => handleQuantityChange(false)}
-										disabled={quantity <= 1 || getCurrentStock() <= 0}
-									>
-										-
-									</button>
-									<input
-										ref={quantityInputRef}
-										type="number"
-										className="product-quantity__input"
-										value={quantity}
-										onChange={handleQuantityInputChange}
-										onBlur={handleQuantityBlur}
-										onClick={handleQuantitySelect}
-										onFocus={handleQuantitySelect}
-										onKeyDown={(e) => {
-											if (["e", "E", "+", "-", "."].includes(e.key)) {
-												e.preventDefault();
-											}
-										}}
-										min="1"
-										max={getCurrentStock()}
-										disabled={getCurrentStock() <= 0}
-									/>
-									<button
-										className="product-quantity__button"
-										onClick={() => handleQuantityChange(true)}
-										disabled={
-											quantity >= getCurrentStock() || getCurrentStock() <= 0
-										}
-									>
-										+
-									</button>
-								</div>
-								{getCurrentStock() <= 0 && (
-									<div className="product-quantity__stock-message">
-										<span className="product-quantity__stock-icon">ⓘ</span>
-										Out of stock
-									</div>
-								)}
-							</div>
-
-							<div className="product-actions">
-								<button
-									className="product-actions__button product-actions__button--primary"
-									onClick={handleAddToCart}
-									disabled={getCurrentStock() <= 0}
-								>
-									{getCurrentStock() > 0 ? "Add to Cart" : "Out of Stock"}
-								</button>
-
-								{getCurrentStock() > 0 ? (
-									<button
-										className="product-actions__button product-actions__button--secondary"
-										onClick={handleBuyNow}
-									>
-										Buy Now
-									</button>
-								) : (
-									<button
-										className="product-actions__button product-actions__button--secondary"
-										onClick={handleAddToWishlist}
-									>
-										Add to Wishlist
-									</button>
-								)}
-
-								{getCurrentStock() > 0 && (
-									<button
-										className="product-actions__button product-actions__button--secondary"
-										onClick={handleAddToWishlist}
-									>
-										Add to Wishlist
-									</button>
-								)}
-							</div>
-						</div>
-
-						{/* Vendor Details Section */}
-						<div className="vendor-details">
-							<div className="vendor-details__header">
-								<h3 className="vendor-details__title">Seller Information</h3>
-							</div>
-
-							<div className="vendor-details__content">
-								<div
-									className="vendor-details__profile"
-									onClick={handleVendorClick}
-								>
-									<div className="vendor-details__avatar">
-										{product.vendor?.businessName?.charAt(0).toUpperCase() ||
-											"U"}
-									</div>
-									<div className="vendor-details__info">
-										<h4 className="vendor-details__name">
-											{product.vendor?.businessName || "Unknown Vendor"}
-										</h4>
-										<p className="vendor-details__subtitle">Verified Seller</p>
-									</div>
-								</div>
-
-								<div className="vendor-details__features">
-									<div className="vendor-details__feature">
-										<div className="vendor-details__feature-icon">
-											<Truck style={{ opacity: "1", color: "#ff6b35" }} />
-										</div>
-										<div className="vendor-details__feature-text">
-											<span className="vendor-details__feature-title">
-												Fast Shipping
-											</span>
-											<span className="vendor-details__feature-desc">
-												14 business days
-											</span>
-										</div>
-									</div>
-									<div className="vendor-details__feature">
-										<div className="vendor-details__feature-icon">
-											<Undo2 style={{ opacity: "1", color: "#ff6b35" }} />
-										</div>
-										<div className="vendor-details__feature-text">
-											<span className="vendor-details__feature-title">
-												Easy Returns
-											</span>
-											<span className="vendor-details__feature-desc">
-												1 week return policy
-											</span>
-										</div>
-									</div>
-									<div className="vendor-details__feature">
-										<div className="vendor-details__feature-icon">
-											<ShieldCheck style={{ opacity: "1", color: "#ff6b35" }} />
-										</div>
-										<div className="vendor-details__feature-text">
-											<span className="vendor-details__feature-title">
-												Secure Payment
-											</span>
-											<span className="vendor-details__feature-desc">
-												Protected transactions
-											</span>
-										</div>
-									</div>
-									<div className="vendor-details__feature">
-										<div className="vendor-details__feature-icon">
-											<Phone style={{ opacity: "1", color: "#ff6b35" }} />
-										</div>
-										<div className="vendor-details__feature-text">
-											<span className="vendor-details__feature-title">
-												24/7 Support
-											</span>
-											<span className="vendor-details__feature-desc">
-												Customer service
-											</span>
-										</div>
-									</div>
-								</div>
-
-								<div className="vendor-details__actions">
-									<button
-										className="vendor-details__button vendor-details__button--primary"
-										onClick={handleVendorClick}
-									>
-										Visit Store
-									</button>
-								</div>
-
-								<div className="vendor-details__badges">
-									<div className="vendor-details__badge">✓ Verified</div>
-									<div className="vendor-details__badge">⭐ Top Rated</div>
-									<div className="vendor-details__badge">🔒 Trusted</div>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-
-				<div
-					id="reviews-section"
-					className="product-page__reviews"
-				>
-					<Reviews
-						productId={Number(id)}
-						initialReviews={reviews}
-						initialAverageRating={averageRating}
-						totalReviews={totalReviews}
-						currentPage={currentReviewPage}
-						totalPages={totalPages}
-						onReviewUpdate={async () => {
-							localStorage.removeItem(`${CACHE_KEY_REVIEWS}_${id}`);
-							setCurrentReviewPage(1);
-						}}
-						onPageChange={handleReviewPageChange}
-					/>
-				</div>
-
-				<div className="product-page__recommended">
-					<RecommendedProducts
-						products={recommendedProducts ?? []}
-						currentProductId={product.id}
-						{...(effectiveCategoryId ? { fallbackCategoryId: effectiveCategoryId } : {})}
-						{...(effectiveSubcategoryId ? { fallbackSubcategoryId: effectiveSubcategoryId } : {})}
-						isLoading={isLoadingRecommended}
-					/>
-				</div>
-
-				{showToast && (
-					<div className="toast">
-						<div className="toast__content">
-							<span className="toast__icon">✓</span>
-							<span className="toast__message">{toastMessage}</span>
-						</div>
-					</div>
-				)}
-
-				{authModalOpen && (
-					<AuthModal
-						isOpen={authModalOpen}
-						onClose={() => setAuthModalOpen(false)}
-					/>
-				)}
-			</main>
-			<Footer />
-		</div>
-	);
+  const toFullUrl = (imgUrl: string) => (!imgUrl ? "" : processImageUrl(imgUrl));
+
+  const { id: productId, categoryId, subcategoryId } = useParams<{
+    id: string; categoryId?: string; subcategoryId?: string;
+  }>();
+  const id = productId;
+
+  const [selectedColor, setSelectedColor] = useState("");
+  const [selectedVariant, setSelectedVariant] = useState<any>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [imageError, setImageError] = useState<boolean[]>([]);
+  const [currentReviewPage, setCurrentReviewPage] = useState(1);
+  const [isZoomActive, setIsZoomActive] = useState(false);
+  const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
+  const mainImageRef = useRef<HTMLDivElement>(null);
+  const quantityInputRef = useRef<HTMLInputElement>(null);
+  const ZOOM_LEVEL = 3;
+
+  const { handleCartOnAdd } = useCart();
+  const { token, isAuthenticated } = useAuth();
+  const router = useRouter();
+
+  /* ── Data fetching ─────────────────────────────────────────────────────── */
+  const { data: productData, isLoading: isProductLoading } = useQuery({
+    queryKey: ["product", id],
+    queryFn: async () => {
+      if (!id || isNaN(Number(id))) throw new Error("Invalid product ID");
+      const response = await axiosInstance.get(`/api/product/${id}`);
+      const apiProduct = response.data.product;
+      if (!apiProduct) throw new Error("Product not found");
+
+      const variantImages: string[] = [];
+      let allVariants: any[] = [];
+      let defaultVariant: any = null;
+
+      if (apiProduct.variants && Array.isArray(apiProduct.variants)) {
+        allVariants = apiProduct.variants.map((variant: any) => {
+          const variantImgUrls: string[] = [];
+          if (variant.variantImages && Array.isArray(variant.variantImages)) {
+            variant.variantImages.forEach((img: any) => {
+              try {
+                let imgUrl = "";
+                if (typeof img === "string") {
+                  try { const p = JSON.parse(img); imgUrl = p.url || p.imageUrl || img; } catch { imgUrl = img; }
+                } else if (img && typeof img === "object") { imgUrl = img.url || img.imageUrl || ""; }
+                if (imgUrl) { const f = toFullUrl(imgUrl); variantImgUrls.push(f); if (!variantImages.includes(f)) variantImages.push(f); }
+              } catch (e) { console.error(e, img); }
+            });
+          }
+          const basePrice = parseFloat(variant.basePrice) || 0;
+          const discount = parseFloat(variant.discount) || 0;
+          let price = basePrice, savings = 0;
+          if (variant.discountType === "PERCENTAGE") { savings = basePrice * (discount / 100); price = basePrice - savings; }
+          else if (variant.discountType === "FLAT") { savings = discount; price = basePrice - discount; }
+          const vd = { ...variant, variantImgUrls, calculatedPrice: price, calculatedSavings: savings, originalPrice: basePrice, stock: variant.stock || 0, status: variant.status || "AVAILABLE" };
+          if (!defaultVariant) defaultVariant = vd;
+          return vd;
+        });
+      }
+
+      const productImages = Array.isArray(apiProduct.productImages)
+        ? apiProduct.productImages.map((img: any) => {
+          try {
+            let imgUrl = "";
+            if (typeof img === "string") { try { const p = JSON.parse(img); imgUrl = p.url || p.imageUrl || img; } catch { imgUrl = img; } }
+            else if (img && typeof img === "object") { imgUrl = img.url || img.imageUrl || ""; }
+            return imgUrl ? toFullUrl(imgUrl) : "";
+          } catch { return ""; }
+        }).filter(Boolean) : [];
+
+      const allImages = [...new Set([...productImages, ...variantImages])].filter(Boolean);
+      let productPrice = 0, productOriginalPrice = 0;
+      if (apiProduct.hasVariants) {
+        if (defaultVariant) { productPrice = defaultVariant.calculatedPrice; productOriginalPrice = defaultVariant.originalPrice; }
+      } else {
+        const bp = parseFloat(apiProduct.basePrice) || 0, disc = parseFloat(apiProduct.discount) || 0;
+        productOriginalPrice = bp; productPrice = bp;
+        if (apiProduct.discountType === "PERCENTAGE") productPrice = bp - bp * (disc / 100);
+        else if (apiProduct.discountType === "FLAT") productPrice = bp - disc;
+      }
+      const derivedCategoryId = apiProduct?.category?.id != null ? Number(apiProduct.category.id) : (apiProduct as any)?.categoryId != null ? Number((apiProduct as any).categoryId) : undefined;
+      const derivedSubcategoryId = apiProduct?.subcategory?.id != null ? Number(apiProduct.subcategory.id) : (apiProduct as any)?.subcategoryId != null ? Number((apiProduct as any).subcategoryId) : undefined;
+      return {
+        product: {
+          id: apiProduct.id, name: apiProduct.name, description: apiProduct.description,
+          price: productPrice.toFixed(2), originalPrice: productOriginalPrice > productPrice ? productOriginalPrice.toFixed(2) : undefined,
+          rating: 0, ratingCount: "0", image: allImages[0] || "",
+          brand: apiProduct.brand?.name || "Unknown Brand",
+          category: derivedCategoryId != null ? { id: derivedCategoryId, name: apiProduct?.category?.name || "Category" } : undefined,
+          subcategory: derivedSubcategoryId != null ? { id: derivedSubcategoryId, name: apiProduct?.subcategory?.name || "Subcategory" } : undefined,
+          vendor: apiProduct.vendor || { id: null, businessName: "Unknown Vendor" },
+          productImages: allImages, colors: [], sizeOptions: [],
+          stock: apiProduct.stock || defaultVariant?.stock || 0,
+          isBestSeller: false, variants: allVariants, hasVariants: apiProduct.hasVariants || false, selectedVariant: defaultVariant,
+        },
+        vendorId: apiProduct.vendorId || null,
+      };
+    },
+    staleTime: 5 * 60 * 1000, gcTime: 10 * 60 * 1000,
+  });
+
+  const { data: reviewsData, isLoading: isReviewsLoading } = useQuery({
+    queryKey: ["reviews", id, currentReviewPage],
+    queryFn: async () => {
+      if (!id || isNaN(Number(id))) throw new Error("Invalid product ID");
+      const response = await axiosInstance.get<ReviewsResponse>(`/api/reviews/${id}?page=${currentReviewPage}`);
+      if (!response.data.success) throw new Error("Failed to fetch reviews");
+      return { reviews: response.data.data.reviews || [], averageRating: response.data.data.averageRating || 0, totalReviews: response.data.data.total || 0, totalPages: response.data.data.totalPages || 1 };
+    },
+    staleTime: 5 * 60 * 1000, gcTime: 10 * 60 * 1000,
+  });
+
+  const product = productData?.product;
+  const effectiveCategoryId = categoryId ?? (product?.category?.id != null ? String(product.category.id) : undefined);
+  const effectiveSubcategoryId = subcategoryId ?? (product?.subcategory?.id != null ? String(product.subcategory.id) : undefined);
+
+  const { data: recommendedProducts, isLoading: isLoadingRecommended } = useQuery({
+    queryKey: ["recommendedProducts", effectiveCategoryId, effectiveSubcategoryId],
+    queryFn: async () => {
+      const fetch = async (p: URLSearchParams) => {
+        const url = p.toString() ? `/api/categories/all/products?${p.toString()}` : `/api/categories/all/products`;
+        const res = await axiosInstance.get(url);
+        return ((res?.data?.data ?? []) as any[]).map((p) => ({ ...p, rating: p.avgRating || p.rating || 0, ratingCount: p.count || p.reviews?.length || 0 }));
+      };
+      try {
+        if (effectiveCategoryId && effectiveSubcategoryId) {
+          let d = await fetch(new URLSearchParams({ categoryId: String(effectiveCategoryId), subcategoryId: String(effectiveSubcategoryId) }));
+          if (!Array.isArray(d) || d.length <= 1) d = await fetch(new URLSearchParams({ categoryId: String(effectiveCategoryId) }));
+          if (!Array.isArray(d) || d.length <= 1) d = await fetch(new URLSearchParams());
+          return d;
+        }
+        if (effectiveSubcategoryId) { let d = await fetch(new URLSearchParams({ subcategoryId: String(effectiveSubcategoryId) })); if (!Array.isArray(d) || d.length <= 1) d = await fetch(new URLSearchParams()); return d; }
+        if (effectiveCategoryId) { let d = await fetch(new URLSearchParams({ categoryId: String(effectiveCategoryId) })); if (!Array.isArray(d) || d.length <= 1) d = await fetch(new URLSearchParams()); return d; }
+        return await fetch(new URLSearchParams());
+      } catch { return []; }
+    },
+    enabled: true, staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: categoryData } = useQuery<{ data: Category }>({
+    queryKey: ["category", categoryId],
+    queryFn: async () => { if (!categoryId) return null; try { const r = await axiosInstance.get(`/api/categories/${categoryId}`); return r.data; } catch { return null; } },
+    enabled: !!categoryId, staleTime: 5 * 60 * 1000,
+  });
+
+  const reviews = (reviewsData?.reviews || []).map((r: Review) => ({ ...r, userName: r.user?.username || r.user?.email?.split("@")[0] || "Anonymous" }));
+  const averageRating = reviewsData?.averageRating || 0;
+  const totalReviews = reviewsData?.totalReviews || 0;
+  const totalPages = reviewsData?.totalPages || 1;
+
+  /* ── Effects ───────────────────────────────────────────────────────────── */
+  useEffect(() => {
+    if (product) {
+      const dv = product.hasVariants && product.variants?.length > 0 ? product.variants[0] : null;
+      setSelectedColor(dv?.attributes?.color || "");
+      setSelectedVariant(dv);
+      const imgs = dv?.variantImgUrls?.length > 0 ? dv.variantImgUrls : product.productImages || [];
+      setImageError(new Array(imgs?.length || 1).fill(false));
+    }
+  }, [product]);
+
+  const getCurrentImages = () => {
+    if (selectedVariant?.variantImgUrls?.length > 0) return selectedVariant.variantImgUrls;
+    if (product?.hasVariants && product?.variants?.[0]?.variantImgUrls?.length > 0) return product.variants[0].variantImgUrls;
+    return product?.productImages || [];
+  };
+
+  useEffect(() => {
+    const imgs = getCurrentImages();
+    setImageError(new Array(imgs?.length || 1).fill(false));
+    if (selectedImageIndex >= (imgs?.length || 0)) setSelectedImageIndex(0);
+  }, [selectedVariant, product]);
+
+  useEffect(() => { setZoomPosition({ x: 50, y: 50 }); }, [selectedImageIndex, selectedVariant]);
+  useEffect(() => { return () => { setIsZoomActive(false); }; }, []);
+
+  /* ── Helpers ───────────────────────────────────────────────────────────── */
+  const getCurrentStock = () => selectedVariant ? selectedVariant.stock || 0 : product?.stock || 0;
+  const getCurrentPrice = () => selectedVariant ? selectedVariant.calculatedPrice || 0 : parseFloat(product?.price || "0");
+  const getOriginalPrice = () => selectedVariant ? selectedVariant.originalPrice || selectedVariant.calculatedPrice || 0 : parseFloat(product?.originalPrice || product?.price || "0");
+  const handleVariantSelect = (variant: any) => { setSelectedVariant(variant); setSelectedImageIndex(0); };
+
+  const handleMouseEnter = () => { const imgs = getCurrentImages(); if (imgs[selectedImageIndex] && !imageError[selectedImageIndex]) setIsZoomActive(true); };
+  const handleMouseLeave = () => setIsZoomActive(false);
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isZoomActive || !mainImageRef.current) return;
+    const rect = mainImageRef.current.getBoundingClientRect();
+    setZoomPosition({ x: Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100)), y: Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100)) });
+  };
+
+  const handleAddToCart = () => {
+    if (!isAuthenticated) { setAuthModalOpen(true); return; }
+    if (!product) return;
+    handleCartOnAdd({ ...product, category: typeof product.category === 'object' ? product.category?.name : product.category } as any, quantity, selectedVariant?.id);
+  };
+
+  const handleAddToWishlist = async () => {
+    if (!isAuthenticated || !product) { setAuthModalOpen(true); return; }
+    try { await addToWishlist(product.id, selectedVariant?.id || undefined, token || undefined); toast.success("Added to wishlist"); }
+    catch (e: unknown) {
+      const err = e as any;
+      const status = err?.response?.status;
+      const msg: string = err?.response?.data?.message || err?.response?.data?.error || err?.message || "";
+      if (status === 409 || /already/i.test(msg)) toast("Already present in the wishlist"); else toast.error("Failed to add to wishlist");
+    }
+  };
+
+  const handleBuyNow = () => {
+    if (!isAuthenticated) { setAuthModalOpen(true); return; }
+    if (!product) return;
+    const data = { product: { ...product, selectedColor, price: getCurrentPrice().toFixed(2), originalPrice: getOriginalPrice() > getCurrentPrice() ? getOriginalPrice().toFixed(2) : undefined, selectedVariant: selectedVariant ? { id: selectedVariant.id, attributes: selectedVariant.attributes, calculatedPrice: selectedVariant.calculatedPrice, originalPrice: selectedVariant.originalPrice, stock: selectedVariant.stock, variantImgUrls: selectedVariant.variantImgUrls } : undefined }, quantity };
+    router.push(`/checkout?${new URLSearchParams({ buyNow: 'true', productData: encodeURIComponent(JSON.stringify(data)) }).toString()}`);
+  };
+
+  const handleQuantityChange = (increment: boolean) => {
+    if (!product) return;
+    const stock = getCurrentStock();
+    if (increment && quantity < stock) setQuantity(q => q + 1);
+    else if (!increment && quantity > 1) setQuantity(q => q - 1);
+  };
+
+  const handleVendorClick = () => { const vid = product?.vendor?.id; if (vid) window.location.href = `/vendor/${vid}`; };
+
+  /* ── Loading ───────────────────────────────────────────────────────────── */
+  if (isProductLoading || isReviewsLoading || !product) {
+    return (<><Navbar /><Preloader /><Footer /></>);
+  }
+
+  const currentImages = getCurrentImages();
+  const currentImage = currentImages[selectedImageIndex] && !imageError[selectedImageIndex] ? currentImages[selectedImageIndex] : "";
+
+  /* ── Variant options renderer ──────────────────────────────────────────── */
+  const renderVariants = () => {
+    if (!product.hasVariants || !product.variants || product.variants.length <= 1) return null;
+    const attributeOptions: Record<string, Set<string>> = {};
+    product.variants.forEach((v: any) => {
+      if (v.attributes) Object.entries(v.attributes).forEach(([k, val]) => { if (!attributeOptions[k]) attributeOptions[k] = new Set(); attributeOptions[k].add(String(val)); });
+    });
+    const order = ["color", "size", "length"];
+    const types = Object.keys(attributeOptions);
+    const ordered = [...order.filter(t => types.includes(t)), ...types.filter(t => !order.includes(t)).sort()];
+    const selected = ordered.reduce((acc, k) => { acc[k] = selectedVariant?.attributes?.[k] || ""; return acc; }, {} as Record<string, string>);
+    return (
+      <div>
+        <p className="text-sm font-semibold text-gray-800 mb-2">Available Options:</p>
+        <div className="flex flex-col gap-2">
+          {ordered.map(attrType => {
+            const vals = [...(attributeOptions[attrType] || [])];
+            const hasMany = vals.length > 4;
+            return (
+              <div key={attrType} className="flex items-center gap-3 flex-wrap">
+                <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider w-12">{attrType}</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {vals.map(val => {
+                    const isActive = selected[attrType] === val;
+                    const sel = { ...selected, [attrType]: val };
+                    const match = product.variants.find((v: any) => Object.entries(sel).every(([k, sv]) => v.attributes?.[k] === sv) && v.stock > 0);
+                    const oos = !match;
+                    return (
+                      <button key={val}
+                        onClick={() => { if (oos) { toast(`This ${attrType} is out of stock.`); return; } setQuantity(1); handleVariantSelect(match); }}
+                        disabled={oos} title={val}
+                        className={[
+                          "px-3 py-1 rounded-md text-xs font-medium border transition-all",
+                          isActive ? "border-orange-500 bg-orange-50 text-orange-600 font-bold" : "border-gray-300 bg-white text-gray-600 hover:border-orange-400 hover:text-orange-500",
+                          oos ? "opacity-40 cursor-not-allowed line-through" : "",
+                          hasMany ? "px-2 text-[11px]" : "",
+                        ].join(" ")}
+                      >
+                        {val.length > 8 && hasMany ? `${val.substring(0, 6)}...` : val}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  /* ── JSX ───────────────────────────────────────────────────────────────── */
+  return (
+    <div className="bg-[#f0f2f4] min-h-screen">
+      <ScrollToTop />
+      <Navbar />
+
+      <main className="bg-[#f0f2f4] pb-12">
+
+        {/* ══════════════════════════════════════════
+            TOP PRODUCT SECTION
+        ══════════════════════════════════════════ */}
+        <div className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-16 pt-8 pb-6">
+          <div className="flex flex-col xl:flex-row gap-8 lg:gap-12 items-start bg-white p-6 sm:p-8 rounded-xl shadow-sm">
+
+            {/* ── COLUMN 1: Product Image ── */}
+            <div className="w-full xl:w-[450px] flex-shrink-0 flex flex-col gap-3">
+              {/* Main image */}
+              <div
+                ref={mainImageRef}
+                className="relative w-full aspect-square rounded-md overflow-hidden bg-gray-100 cursor-crosshair"
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+                onMouseMove={handleMouseMove}
+              >
+                {currentImage ? (
+                  <Image
+                    src={currentImage}
+                    alt={product.name}
+                    fill
+                    priority
+                    className="object-cover"
+                    onError={() => setImageError(prev => { const n = [...prev]; n[selectedImageIndex] = true; return n; })}
+                    onLoad={() => setZoomPosition({ x: 50, y: 50 })}
+                    draggable={false}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">No image available</div>
+                )}
+
+                {/* Zoom lens — desktop only */}
+                {isZoomActive && currentImage && (
+                  <div
+                    className="hidden lg:block absolute top-0 z-50 pointer-events-none rounded-xl border border-gray-200 shadow-2xl"
+                    style={{
+                      left: "calc(100% + 16px)",
+                      width: "420px",
+                      height: "420px",
+                      backgroundImage: `url(${currentImage})`,
+                      backgroundSize: `${ZOOM_LEVEL * 100}%`,
+                      backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                      backgroundRepeat: "no-repeat",
+                      backgroundColor: "#fff",
+                    }}
+                  />
+                )}
+              </div>
+
+              {/* Thumbnails */}
+              {currentImages.length > 1 && (
+                <div className="flex gap-2 flex-wrap">
+                  {currentImages.map((img: string, i: number) => (
+                    <button key={i} onClick={() => setSelectedImageIndex(i)}
+                      className={["w-[68px] h-[68px] rounded-lg overflow-hidden border-2 flex-shrink-0 transition-all", selectedImageIndex === i ? "border-orange-500" : "border-gray-200 hover:border-orange-300"].join(" ")}
+                    >
+                      {img && !imageError[i] ? (
+                        <Image src={img} alt={`view ${i + 1}`} width={72} height={72} className="w-full h-full object-cover"
+                          onError={() => setImageError(prev => { const n = [...prev]; n[i] = true; return n; })} />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-400 bg-gray-50">No img</div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* ── COLUMN 2: Product Info ── */}
+            <div className="flex-1 w-full min-w-0 flex flex-col gap-4 pt-2">
+
+              {/* Product name */}
+              <h1 className="text-[1.5rem] font-bold text-gray-900 leading-snug">
+                {product.name}
+              </h1>
+
+              {/* Price row */}
+              <div className="flex items-baseline gap-3 flex-wrap">
+                <span className="text-[1.25rem] font-bold text-[#ea5f0a] leading-none">
+                  Rs. {getCurrentPrice().toFixed(2)}
+                </span>
+                {getOriginalPrice() > getCurrentPrice() && (
+                  <>
+                    <span className="text-[1rem] text-gray-400 line-through">
+                      Rs. {getOriginalPrice().toFixed(2)}
+                    </span>
+                    <span className="text-[1rem] font-semibold text-green-500">
+                      Save Rs. {(getOriginalPrice() - getCurrentPrice()).toFixed(2)}
+                    </span>
+                  </>
+                )}
+              </div>
+
+              {/* Description */}
+              {product.description && (
+                <div className="mt-2">
+                  <p className="text-[1.1rem] font-medium text-gray-800 mb-2">Description</p>
+                  <div
+                    className="text-[0.95rem] text-gray-600 leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: sanitizeRichText(product.description) }}
+                  />
+                </div>
+              )}
+
+              {/* Variants */}
+              {renderVariants()}
+
+              {/* Quantity */}
+              <div className="flex flex-col gap-2 mt-2">
+                <span className="text-[0.95rem] text-gray-700">Quantity:</span>
+                <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden w-fit shadow-sm">
+                  <button
+                    onClick={() => handleQuantityChange(false)}
+                    disabled={quantity <= 1 || getCurrentStock() <= 0}
+                    className="w-10 h-10 flex items-center justify-center text-gray-500 text-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors bg-white"
+                  >
+                    -
+                  </button>
+                  <input
+                    ref={quantityInputRef}
+                    type="number"
+                    value={quantity}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v === "") { setQuantity(1); return; }
+                      const n = parseInt(v, 10);
+                      if (!isNaN(n)) setQuantity(n <= 0 ? 1 : n <= getCurrentStock() ? n : getCurrentStock());
+                    }}
+                    onBlur={() => { if (quantity < 1) setQuantity(1); }}
+                    onClick={() => quantityInputRef.current?.select()}
+                    onFocus={() => quantityInputRef.current?.select()}
+                    onKeyDown={(e) => { if (["e","E","+","-","."].includes(e.key)) e.preventDefault(); }}
+                    min="1" max={getCurrentStock()} disabled={getCurrentStock() <= 0}
+                    className="w-14 h-10 text-center text-[0.95rem] font-medium text-gray-900 outline-none  border-x border-gray-100 bg-white [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  />
+                  <button
+                    onClick={() => handleQuantityChange(true)}
+                    disabled={quantity >= getCurrentStock() || getCurrentStock() <= 0}
+                    className="w-10 h-10 flex items-center justify-center text-gray-500 text-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors bg-white"
+                  >
+                    +
+                  </button>
+                </div>
+                {getCurrentStock() <= 0 && (
+                  <span className="text-sm text-red-500 font-medium">ⓘ Out of stock</span>
+                )}
+              </div>
+
+              {/* ── Action Buttons ── */}
+              <div className="flex flex-col gap-3 mt-4">
+                {/* Row 1: Add to Cart + Buy Now — side by side */}
+                <div className="flex gap-4">
+                  <button
+                    onClick={handleAddToCart}
+                    disabled={getCurrentStock() <= 0}
+                    className="flex-1 h-12 bg-[#ea5f0a] hover:bg-[#d65509] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-[1rem] rounded-md transition-colors"
+                  >
+                    {getCurrentStock() > 0 ? "Add to Cart" : "Out of Stock"}
+                  </button>
+                  {getCurrentStock() > 0 && (
+                    <button
+                      onClick={handleBuyNow}
+                      className="flex-1 h-12 bg-white border border-[#ea5f0a] text-[#ea5f0a] hover:bg-[#fff7ed] font-bold text-[1rem] rounded-md transition-colors"
+                    >
+                      Buy Now
+                    </button>
+                  )}
+                </div>
+
+                {/* Row 2: Add to Wishlist — full width, same total width as row above */}
+                <button
+                  onClick={handleAddToWishlist}
+                  className="w-full h-12 bg-white border border-[#ea5f0a] text-[#ea5f0a] hover:bg-[#fff7ed] font-bold text-[1rem] rounded-md transition-colors"
+                >
+                  Add to Wishlist
+                </button>
+              </div>
+            </div>
+
+            {/* ── COLUMN 3: Seller Information ── */}
+            <div className="w-full xl:w-[320px] flex-shrink-0 bg-white border border-gray-200 rounded-xl p-6">
+
+              {/* Heading with orange underline */}
+              <div className="border-b-2 border-[#ea5f0a] pb-3 mb-5">
+                <h3 className="text-[1.1rem] font-medium text-gray-800">Seller Information</h3>
+              </div>
+
+              {/* Vendor profile */}
+              <div
+                className="flex items-center gap-3 mb-6 cursor-pointer group"
+                onClick={handleVendorClick}
+              >
+                <div className="w-12 h-12 rounded-full bg-[#6b46c1] text-white text-lg font-medium flex items-center justify-center flex-shrink-0">
+                  {product.vendor?.businessName?.charAt(0).toUpperCase() || "U"}
+                </div>
+                <div>
+                  <p className="text-[1rem] font-semibold text-gray-900 leading-tight group-hover:text-[#ea5f0a] transition-colors">
+                    {product.vendor?.businessName || "Unknown Vendor"}
+                  </p>
+                  <p className="text-[0.8rem] font-medium text-[#10b981] leading-tight mt-1">Verified Seller</p>
+                </div>
+              </div>
+
+              {/* Feature list */}
+              <div className="flex flex-col gap-5 mb-6">
+                {[
+                  { icon: <Truck size={20} className="text-[#ea5f0a]" />, title: "Fast Shipping", desc: "14 business days" },
+                  { icon: <Undo2 size={20} className="text-[#ea5f0a]" />, title: "Easy Returns", desc: "1 week return policy" },
+                  { icon: <ShieldCheck size={20} className="text-[#ea5f0a]" />, title: "Secure Payment", desc: "Protected transactions" },
+                  { icon: <Phone size={20} className="text-[#ea5f0a]" />, title: "24/7 Support", desc: "Customer service" },
+                ].map(({ icon, title, desc }) => (
+                  <div key={title} className="flex items-start gap-4">
+                    <div className="flex items-center justify-center flex-shrink-0 mt-0.5">
+                      {icon}
+                    </div>
+                    <div>
+                      <p className="text-[0.9rem] font-medium text-gray-900 leading-tight">{title}</p>
+                      <p className="text-[0.8rem] text-gray-500 leading-tight mt-1">{desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Visit Store button */}
+              <button
+                onClick={handleVendorClick}
+                className="w-full h-11 bg-[#ea5f0a] hover:bg-[#d65509] text-white font-medium text-[0.95rem] rounded-md transition-colors mb-5"
+              >
+                Visit Store
+              </button>
+
+              {/* Badge pills */}
+              <div className="flex gap-2 flex-wrap justify-between mt-2">
+                {[
+                  { id: "verified", icon: "✓", text: "Verified", color: "text-gray-700" },
+                  { id: "top_rated", icon: "⭐", text: "Top Rated", color: "text-gray-700" },
+                  { id: "trusted", icon: "🔒", text: "Trusted", color: "text-gray-700" },
+                ].map(({ id, icon, text, color }) => (
+                  <span key={id} className={`px-3 py-1 border border-[#ea5f0a]/40 rounded-full text-[0.75rem] font-medium ${color} bg-white flex items-center gap-1`}>
+                    <span className="opacity-90">{icon}</span> {text}
+                  </span>
+                ))}
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        {/* ══════════════════════════════════════════
+            REVIEWS SECTION
+        ══════════════════════════════════════════ */}
+        <div id="reviews-section" className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-16 mt-2">
+          <div className="bg-white rounded-2xl overflow-hidden">
+            <Reviews
+              productId={Number(id)}
+              initialReviews={reviews}
+              initialAverageRating={averageRating}
+              totalReviews={totalReviews}
+              currentPage={currentReviewPage}
+              totalPages={totalPages}
+              onReviewUpdate={async () => { localStorage.removeItem(`${CACHE_KEY_REVIEWS}_${id}`); setCurrentReviewPage(1); }}
+              onPageChange={(page) => { setCurrentReviewPage(page); document.getElementById("reviews-section")?.scrollIntoView({ behavior: "smooth" }); }}
+            />
+          </div>
+        </div>
+
+        {/* ══════════════════════════════════════════
+            RECOMMENDED PRODUCTS
+        ══════════════════════════════════════════ */}
+        <div className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-16 mt-6">
+          <RecommendedProducts
+            products={recommendedProducts ?? []}
+            currentProductId={product.id}
+            {...(effectiveCategoryId ? { fallbackCategoryId: effectiveCategoryId } : {})}
+            {...(effectiveSubcategoryId ? { fallbackSubcategoryId: effectiveSubcategoryId } : {})}
+            isLoading={isLoadingRecommended}
+          />
+        </div>
+      </main>
+
+      {authModalOpen && <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />}
+      <Footer />
+    </div>
+  );
 };
 
 export default ProductPage;
-
