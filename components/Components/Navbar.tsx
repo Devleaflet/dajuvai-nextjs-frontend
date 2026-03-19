@@ -897,7 +897,7 @@ const Navbar: React.FC = () => {
 
 							{user?.role === 'admin' && (
 								<NavLink
-									to="/admin-dashboard"
+									to="/admin/dashboard"
 									className="navbar__profile-card-link"
 									onClick={() => {
 										//("Admin Dashboard CLICKED");
@@ -913,7 +913,7 @@ const Navbar: React.FC = () => {
 
 							{vendorAuthState.isAuthenticated && vendorAuthState.vendor && (
 								<NavLink
-									to="/dashboard"
+									to="/vendor/dashboard"
 									className="navbar__profile-card-link"
 									onClick={() => {
 										//("Vendor Dashboard CLICKED");
@@ -928,7 +928,7 @@ const Navbar: React.FC = () => {
 							)}
 
 							<NavLink
-								to="/user-profile"
+								to="/profile"
 								className="navbar__profile-card-link"
 								onClick={() => setProfileDropdownOpen(false)}
 								style={({ isActive }) => ({
@@ -1185,7 +1185,7 @@ const Navbar: React.FC = () => {
 										<div className="navbar__profile-card-divider" />
 										{user?.role === 'admin' && (
 											<NavLink
-												to="/admin-dashboard"
+												to="/admin/dashboard"
 												className="navbar__profile-card-link"
 												onClick={() => setProfileDropdownOpen(false)}
 												style={({ isActive }) => ({
@@ -1199,7 +1199,7 @@ const Navbar: React.FC = () => {
 										{vendorAuthState.isAuthenticated &&
 											vendorAuthState.vendor && (
 												<NavLink
-													to="/dashboard"
+													to="/vendor/dashboard"
 													className="navbar__profile-card-link"
 													onClick={() => setProfileDropdownOpen(false)}
 													style={({ isActive }) => ({
@@ -1211,7 +1211,7 @@ const Navbar: React.FC = () => {
 												</NavLink>
 											)}
 										<NavLink
-											to="/user-profile"
+											to="/profile"
 											className="navbar__profile-card-link"
 											onClick={() => setProfileDropdownOpen(false)}
 											style={({ isActive }) => ({

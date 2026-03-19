@@ -1,0 +1,230 @@
+.admin-shell {
+  display: flex;
+  height: 100vh;
+  background: #f9fafb;
+  overflow: hidden;
+}
+
+.admin-shell__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.admin-shell__page {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 12px 20px 20px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.admin-topbar {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 22px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #ffffff;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.admin-topbar__title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  color: #111827;
+  letter-spacing: -0.2px;
+}
+
+.admin-topbar__profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.admin-topbar__profile-wrap {
+  position: relative;
+}
+
+.admin-topbar__user-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 0;
+}
+
+.admin-topbar__avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #7c4ddb;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.admin-topbar__meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.admin-topbar__name {
+  font-size: 17px;
+  color: #111827;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 230px;
+}
+
+.admin-topbar__chevron {
+  color: #6b7280;
+  line-height: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.admin-topbar__chevron--open {
+  transform: rotate(180deg);
+}
+
+.admin-topbar__menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 176px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 24px rgba(17, 24, 39, 0.12);
+  border: 1px solid #f1f5f9;
+  padding: 8px;
+  z-index: 40;
+}
+
+.admin-topbar__menu-item {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: 10px;
+  color: #1f2937;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.admin-topbar__menu-item:hover {
+  background: #f8fafc;
+}
+
+.admin-shell > .sidebar {
+  flex-shrink: 0;
+}
+
+/* Desktop behavior: fixed full-height sidebar and only content area scrolls */
+@media (min-width: 1000px) {
+  .admin-shell > .sidebar {
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    overflow-y: auto;
+  }
+}
+
+/* Hard guard: never show dashboard search controls in admin shell */
+.admin-shell__main .dashboard__search-container {
+  display: none !important;
+}
+
+/* Hide duplicated page-level admin chrome now moved into admin layout */
+.admin-shell__page .sidebar,
+.admin-shell__page .dashboard__header,
+.admin-shell__page .dashboard__search-container {
+  display: none !important;
+}
+
+/* Avoid nested page shells creating extra full-height constraints */
+.admin-shell__page .admin-content,
+.admin-shell__page .vendor-dash-container,
+.admin-shell__page .admin-layout {
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+@media (max-width: 1000px) {
+  .admin-shell {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .admin-shell__main {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .admin-shell > .sidebar {
+    height: auto;
+    overflow: visible;
+  }
+
+  .admin-shell__page {
+    overflow: visible;
+    padding: 10px 12px 84px;
+  }
+
+  .admin-topbar {
+    height: 56px;
+    padding: 0 12px;
+  }
+
+  .admin-topbar__title {
+    font-size: 20px;
+  }
+
+  .admin-topbar__name {
+    font-size: 14px;
+    max-width: 120px;
+  }
+
+  .admin-topbar__menu {
+    width: 144px;
+    top: calc(100% + 8px);
+  }
+
+  .admin-topbar__menu-item {
+    font-size: 14px;
+    padding: 10px 10px;
+  }
+
+  .admin-topbar__avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+  }
+}

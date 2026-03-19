@@ -1,8 +1,6 @@
 'use client';
 
 import React, { useEffect, useState } from "react";
-import { AdminSidebar } from "@/components/Components/AdminSidebar";
-import Header from "@/components/Components/Header";
 import { useAuth } from "@/lib/context/AuthContext";
 import { FiEdit2, FiTrash2, FiPlus, FiSearch } from "react-icons/fi";
 import { toast, ToastContainer } from "react-toastify";
@@ -204,10 +202,8 @@ const AdminPromo: React.FC = () => {
   if (!isAuthenticated) {
     return (
       <div className="admin-promo">
-        <AdminSidebar />
         <div className="admin-promo__content">
-          <Header onSearch={() => { }} showSearch={false} title="Promo Code Management" />
-          <div className="admin-promo__error">
+<div className="admin-promo__error">
             <h2>Access Denied</h2>
             <p>Please log in to access promo code management.</p>
           </div>
@@ -219,10 +215,23 @@ const AdminPromo: React.FC = () => {
   if (loading) {
     return (
       <div className="admin-promo">
-        <AdminSidebar />
         <div className="admin-promo__content">
-          <Header onSearch={() => { }} showSearch={false} title="Promo Code Management" />
-          <div className="admin-promo__header">
+          <div className="admin-promo__searchbar-row">
+            <div className="admin-promo__searchbar">
+              <FiSearch className="admin-promo__searchbar-icon" />
+              <input
+                type="text"
+                placeholder="Search"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
+                aria-label="Search promo codes"
+              />
+            </div>
+          </div>
+<div className="admin-promo__header">
             <div className="admin-promo__title-container">
               <h1 className="admin-promo__title">Promo Code Management</h1>
               <p className="admin-promo__description">
@@ -275,10 +284,23 @@ const AdminPromo: React.FC = () => {
 
   return (
     <div className="admin-promo">
-      <AdminSidebar />
       <div className="admin-promo__content">
-        <Header onSearch={setSearchQuery} showSearch={true} title="Promo Code Management" />
-        <div className="admin-promo__header">
+        <div className="admin-promo__searchbar-row">
+          <div className="admin-promo__searchbar">
+            <FiSearch className="admin-promo__searchbar-icon" />
+            <input
+              type="text"
+              placeholder="Search"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+              aria-label="Search promo codes"
+            />
+          </div>
+        </div>
+<div className="admin-promo__header">
           <div className="admin-promo__title-container">
             <h1 className="admin-promo__title">Promo Code Management</h1>
             <p className="admin-promo__description">
@@ -393,7 +415,7 @@ const AdminPromo: React.FC = () => {
                 className="admin-promo__modal-close"
                 onClick={() => setShowAddModal(false)}
               >
-                ×
+                X
               </button>
             </div>
             <form onSubmit={handleAddPromoCode} className="admin-promo__modal-form">
@@ -491,4 +513,7 @@ const AdminPromo: React.FC = () => {
 };
 
 export default AdminPromo;
+
+
+
 

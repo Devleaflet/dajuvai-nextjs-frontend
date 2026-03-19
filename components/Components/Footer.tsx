@@ -192,7 +192,7 @@ const Footer: React.FC = () => {
 
 								{/* Account Section */}
 								<div className="footer__section footer__account-section">
-									<h3 className="footer__section-title">Account</h3>
+									<h3 className="footer__section-title pt-5">Account</h3>
 									<ul className="footer__list">
 										<li>
 											<Link

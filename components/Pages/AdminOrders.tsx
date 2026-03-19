@@ -1,8 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from "react";
-import { AdminSidebar } from "@/components/Components/AdminSidebar";
-import Header from "@/components/Components/Header";
 import Pagination from "@/components/Components/Pagination";
 import OrderEditModal from "@/components/Components/Modal/OrderEditModal";
 import OrderDetailModal from "@/components/Components/Modal/OrderDetailModal";
@@ -12,6 +10,7 @@ import { OrderService } from "@/lib/services/orderService";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-hot-toast";
+import { FiSearch } from "react-icons/fi";
 
 const ORDER_STATUS_OPTIONS = [
   { value: "all", label: "All Statuses" },
@@ -350,17 +349,37 @@ const AdminOrders: React.FC = () => {
 
   return (
     <div className="admin-orders">
-      <AdminSidebar />
       <div className="admin-orders__content">
-        <Header
-          onSearch={handleSearch}
-          onSort={handleSort}
-          sortOption={sortOption}
-          showSearch={true}
-          title="Order Management"
-        />
+        <div className="admin-orders__searchbar-row">
+          <div className="admin-orders__searchbar">
+            <FiSearch className="admin-orders__searchbar-icon" />
+            <input
+              type="text"
+              placeholder="Search"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+              aria-label="Search orders"
+            />
+          </div>
+          <select
+            className="admin-orders__sort-select"
+            value={sortOption}
+            onChange={(e) => handleSort(e.target.value)}
+            aria-label="Sort orders"
+          >
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+            <option value="name-asc">Customer: A to Z</option>
+            <option value="name-desc">Customer: Z to A</option>
+          </select>
+        </div>
 
-        {/* Filter Section */}
+{/* Filter Section */}
         <div className="admin-orders__filters">
           <div className="admin-orders__filter-group">
             <label htmlFor="status-filter">Status:</label>
@@ -473,14 +492,14 @@ const AdminOrders: React.FC = () => {
                           onClick={() => viewOrderDetails(order)}
                           aria-label="View order details"
                         >
-                          👁
+                          View
                         </button>
                         <button
                           className="admin-orders__action-btn admin-orders__edit-btn"
                           onClick={() => editOrder(order)}
                           aria-label="Edit order"
                         >
-                          ✏️
+                          Edit
                         </button>
                       </td>
                     </tr>
@@ -490,9 +509,7 @@ const AdminOrders: React.FC = () => {
             </div>
             <div className="admin-orders__pagination-container">
               <div className="admin-orders__pagination-info">
-                Showing {indexOfFirstOrder + 1}-
-                {Math.min(indexOfLastOrder, filteredOrders.length)} out of{" "}
-                {filteredOrders.length}
+                Page {currentPage} of {Math.max(1, Math.ceil(filteredOrders.length / ordersPerPage))}
               </div>
               <Pagination
                 currentPage={currentPage}
@@ -521,3 +538,5 @@ const AdminOrders: React.FC = () => {
 };
 
 export default AdminOrders;
+
+

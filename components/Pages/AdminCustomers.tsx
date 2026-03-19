@@ -3,13 +3,12 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { AdminSidebar } from "@/components/Components/AdminSidebar";
-import Header from "@/components/Components/Header";
 import Pagination from "@/components/Components/Pagination";
 import { API_BASE_URL } from "@/lib/config";
 import { useAuth } from "@/lib/context/AuthContext";
 import "@/styles/AdminOrders.css";
 import "@/styles/AdminCustomers.css";
+import { FiSearch } from "react-icons/fi";
 
 // User interface based on API schema
 interface User {
@@ -230,7 +229,6 @@ const AdminCustomers: React.FC = () => {
 	if (!isAuthenticated) {
 		return (
 			<div className="admin-orders">
-				<AdminSidebar />
 				<div className="admin-orders__content">
 					<div className="admin-orders__error">
 						Please log in to access user management.
@@ -242,21 +240,26 @@ const AdminCustomers: React.FC = () => {
 
 	return (
 		<div className="admin-orders">
-			<AdminSidebar />
 			<div className="admin-orders__content">
 				{error && (
 					<div className="admin-orders__error">
 						{error}
-						<button onClick={() => setError(null)}>×</button>
+						<button onClick={() => setError(null)}>X</button>
 					</div>
 				)}
-				<Header
-					onSearch={handleSearch}
-					showSearch={true}
-					title="User Management"
-				/>
-
-				{/* Filter Section */}
+				<div className="admin-customers__searchbar-row">
+					<div className="admin-customers__searchbar">
+						<FiSearch className="admin-customers__searchbar-icon" />
+						<input
+							type="text"
+							placeholder="Search"
+							value={searchQuery}
+							onChange={(e) => handleSearch(e.target.value)}
+							aria-label="Search users"
+						/>
+					</div>
+				</div>
+{/* Filter Section */}
 				<div className="admin-orders__filters">
 					<div className="admin-orders__filter-group">
 						<label htmlFor="roleFilter">Role:</label>
@@ -305,13 +308,6 @@ const AdminCustomers: React.FC = () => {
 							setStartDate("");
 							setEndDate("");
 							setSearchQuery("");
-							// Clear the search input in Header component
-							const searchInput = document.querySelector(
-								'input[type="text"]'
-							) as HTMLInputElement;
-							if (searchInput) {
-								searchInput.value = "";
-							}
 						}}
 						className="admin-customers__clear-filters"
 					>
@@ -329,7 +325,7 @@ const AdminCustomers: React.FC = () => {
 									>
 										ID{" "}
 										{sortConfig?.key === "id" &&
-											(sortConfig.direction === "asc" ? "↑" : "↓")}
+											(sortConfig.direction === "asc" ? "^" : "v")}
 									</th>
 									<th
 										onClick={() => handleSort("username")}
@@ -337,7 +333,7 @@ const AdminCustomers: React.FC = () => {
 									>
 										Username{" "}
 										{sortConfig?.key === "username" &&
-											(sortConfig.direction === "asc" ? "↑" : "↓")}
+											(sortConfig.direction === "asc" ? "^" : "v")}
 									</th>
 									<th
 										onClick={() => handleSort("email")}
@@ -345,7 +341,7 @@ const AdminCustomers: React.FC = () => {
 									>
 										Email{" "}
 										{sortConfig?.key === "email" &&
-											(sortConfig.direction === "asc" ? "↑" : "↓")}
+											(sortConfig.direction === "asc" ? "^" : "v")}
 									</th>
 									<th
 										onClick={() => handleSort("role")}
@@ -353,7 +349,7 @@ const AdminCustomers: React.FC = () => {
 									>
 										Role{" "}
 										{sortConfig?.key === "role" &&
-											(sortConfig.direction === "asc" ? "↑" : "↓")}
+											(sortConfig.direction === "asc" ? "^" : "v")}
 									</th>
 									<th
 										onClick={() => handleSort("createdAt")}
@@ -361,7 +357,7 @@ const AdminCustomers: React.FC = () => {
 									>
 										Created At{" "}
 										{sortConfig?.key === "createdAt" &&
-											(sortConfig.direction === "asc" ? "↑" : "↓")}
+											(sortConfig.direction === "asc" ? "^" : "v")}
 									</th>
 								</tr>
 							</thead>
@@ -416,3 +412,6 @@ const AdminCustomers: React.FC = () => {
 };
 
 export default AdminCustomers;
+
+
+

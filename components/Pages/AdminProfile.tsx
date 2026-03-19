@@ -9,8 +9,6 @@ import axiosInstance from "@/lib/api/axiosInstance";
 import { API_BASE_URL } from "@/lib/config";
 import { useAuth } from "@/lib/context/AuthContext";
 import "@/styles/AdminProfile.css";
-import { AdminSidebar } from "@/components/Components/AdminSidebar";
-import Header from "@/components/Components/Header";
 import { secureStorage } from "@/lib/utils/secureStorage";
 
 interface AdminDetails {
@@ -586,10 +584,8 @@ const AdminProfile: React.FC = () => {
         </div>
       </Popup>
       <div className="admin-profile">
-        <AdminSidebar />
         <div className="admin-profile-main">
-          <Header showSearch={false} title="Admin Profile" onSearch={() => { }} />
-          <div className={`admin-profile-card ${activeTab === "details" || activeTab === "credentials" ? "admin-profile-card--wide" : ""}`}>
+<div className={`admin-profile-card ${activeTab === "details" || activeTab === "credentials" ? "admin-profile-card--wide" : ""}`}>
             <div className="admin-profile-sidebar">
               {isLoading['fetchAdmin'] ? (
                 <>
@@ -643,3 +639,5 @@ const AdminProfile: React.FC = () => {
 };
 
 export default AdminProfile;
+
+

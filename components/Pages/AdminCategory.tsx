@@ -1,8 +1,6 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { AdminSidebar } from "@/components/Components/AdminSidebar";
-import Header from "@/components/Components/Header";
 import { API_BASE_URL } from "@/lib/config";
 import { useAuth } from '@/lib/context/AuthContext';
 import { FiPlus, FiEdit2, FiTrash2, FiChevronDown, FiChevronUp } from 'react-icons/fi';
@@ -187,7 +185,7 @@ const AdminCategory: React.FC = () => {
         setNewCategoryStatus('Active');
         setNewCategoryImage(null);
         setNewCategoryImagePreview(null);
-        showToast('Category added successfully! 🎉', 'success');
+        showToast('Category added successfully!', 'success');
       } else {
         showToast(data.message || 'Failed to add category', 'error');
       }
@@ -231,7 +229,7 @@ const AdminCategory: React.FC = () => {
         setEditCategoryStatus('Active');
         setEditCategoryImage(null);
         setEditCategoryImagePreview(null);
-        showToast('Category updated successfully! ✨', 'success');
+        showToast('Category updated successfully!', 'success');
       } else {
         showToast(data.message || 'Failed to update category', 'error');
       }
@@ -256,7 +254,7 @@ const AdminCategory: React.FC = () => {
       if (response.ok) {
         setCategories(prev => prev.filter(c => c.id !== showDeleteModal.category!.id));
         setShowDeleteModal({ show: false, category: null });
-        showToast('Category deleted successfully! 🗑️', 'success');
+        showToast('Category deleted successfully!', 'success');
       } else {
         const data = await response.json();
         showToast(data.message || 'Failed to delete category', 'error');
@@ -311,7 +309,7 @@ const AdminCategory: React.FC = () => {
         setNewCategoryImage(null);
         setNewCategoryImagePreview(null);
         toast.dismiss(loadingToast);
-        showToast('Subcategory added successfully! 🎉', 'success');
+        showToast('Subcategory added successfully!', 'success');
       } else {
         toast.dismiss(loadingToast);
         showToast(data.message || 'Failed to add subcategory', 'error');
@@ -375,7 +373,7 @@ const AdminCategory: React.FC = () => {
         setEditCategoryImage(null);
         setEditCategoryImagePreview(null);
         toast.dismiss(loadingToast);
-        showToast('Subcategory updated successfully! ✨', 'success');
+        showToast('Subcategory updated successfully!', 'success');
       } else {
         toast.dismiss(loadingToast);
         showToast(data.message || 'Failed to update subcategory', 'error');
@@ -416,7 +414,7 @@ const AdminCategory: React.FC = () => {
           return cat;
         }));
         setShowDeleteSubcategoryModal({ show: false, categoryId: null, subcategory: null });
-        showToast('Subcategory deleted successfully! 🗑️', 'success');
+        showToast('Subcategory deleted successfully!', 'success');
       } else {
         const data = await response.json();
         showToast(data.message || 'Failed to delete subcategory', 'error');
@@ -462,10 +460,8 @@ const AdminCategory: React.FC = () => {
 
   return (
     <div className="admin-category">
-      <AdminSidebar />
       <div className="admin-category__content">
-        <Header onSearch={() => { }} showSearch={false} />
-        <div className="admin-category__header-row">
+<div className="admin-category__header-row">
           <h1 className="admin-category__title">Category Management</h1>
           <button className="admin-category__add-btn" onClick={() => setShowAddModal(true)}>
             <FiPlus style={{ marginRight: 8, verticalAlign: 'middle' }} /> Add Category
@@ -956,3 +952,6 @@ const AdminCategory: React.FC = () => {
 };
 
 export default AdminCategory;
+
+
+

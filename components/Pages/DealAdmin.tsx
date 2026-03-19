@@ -1,8 +1,6 @@
 'use client';
 
 import React, { useEffect, useState } from "react";
-import { AdminSidebar } from "@/components/Components/AdminSidebar";
-import Header from "@/components/Components/Header";
 import { useAuth } from "@/lib/context/AuthContext";
 import { FiEdit2, FiTrash2, FiPlus, FiSearch, FiFilter } from "react-icons/fi";
 import { toast, ToastContainer } from "react-toastify";
@@ -281,11 +279,8 @@ const DealAdmin: React.FC = () => {
 
   return (
     <div className="deal-admin">
-      <AdminSidebar />
       <div className="deal-admin__content">
-        <Header onSearch={() => { }} showSearch={false} title="Deal Management" />
-
-        <div className="deal-admin__header">
+<div className="deal-admin__header">
           <div className="deal-admin__header-content">
             <div className="deal-admin__title-section">
               <h1 className="deal-admin__title">Deal Management</h1>
@@ -656,4 +651,5 @@ const DealAdmin: React.FC = () => {
 };
 
 export default DealAdmin;
+
 

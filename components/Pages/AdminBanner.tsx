@@ -2,13 +2,11 @@
 
 import type React from "react";
 import { useState, useEffect } from "react";
-import { AdminSidebar } from "@/components/Components/AdminSidebar";
 import { Edit, X, ChevronLeft, ChevronRight } from "lucide-react";
 import "@/styles/AdminBanner.css";
 import DeleteModal from "@/components/Components/Modal/DeleteModal";
 import { API_BASE_URL } from "@/lib/config";
 import { useAuth } from "@/lib/context/AuthContext";
-import Header from "@/components/Components/Header";
 import toast from "react-hot-toast";
 
 // Types
@@ -682,11 +680,10 @@ const AdminBannerWithTabs = () => {
   if (!isAuthenticated) {
     return (
       <div className="admin-banner" style={{ display: "flex" }}>
-        <AdminSidebar />
         <div className="admin-banner__content">
           <div className="admin-banner__error">
             Please log in to access banner management.
-            <button onClick={() => setError(null)}>×</button>
+            <button onClick={() => setError(null)}>X</button>
           </div>
         </div>
       </div>
@@ -696,7 +693,6 @@ const AdminBannerWithTabs = () => {
   if (loading) {
     return (
       <div className="admin-banner" style={{ display: "flex" }}>
-        <AdminSidebar />
         <div className="admin-banner__content">
           <div className="admin-banner__header">
             <div className="admin-banner__title-container">
@@ -729,13 +725,11 @@ const AdminBannerWithTabs = () => {
 
   return (
     <div className="admin-banner" style={{ display: "flex" }}>
-      <AdminSidebar />
       <div className="admin-banner__content">
-        <Header onSearch={() => { }} showSearch={false} title="Banner Management" />
-        {error && (
+{error && (
           <div className="admin-banner__error">
             {error}
-            <button onClick={() => setError(null)}>×</button>
+            <button onClick={() => setError(null)}>X</button>
           </div>
         )}
 
@@ -784,22 +778,22 @@ const AdminBannerWithTabs = () => {
                 <thead>
                   <tr>
                     <th onClick={() => handleSort("id")} className="sortable">
-                      ID {sortConfig?.key === "id" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                      ID {sortConfig?.key === "id" && (sortConfig.direction === "asc" ? "^" : "v")}
                     </th>
                     <th onClick={() => handleSort("name")} className="sortable">
-                      Banner Name {sortConfig?.key === "name" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                      Banner Name {sortConfig?.key === "name" && (sortConfig.direction === "asc" ? "^" : "v")}
                     </th>
                     <th onClick={() => handleSort("type")} className="sortable">
-                      Type {sortConfig?.key === "type" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                      Type {sortConfig?.key === "type" && (sortConfig.direction === "asc" ? "^" : "v")}
                     </th>
                     <th onClick={() => handleSort("status")} className="sortable">
-                      Status {sortConfig?.key === "status" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                      Status {sortConfig?.key === "status" && (sortConfig.direction === "asc" ? "^" : "v")}
                     </th>
                     <th onClick={() => handleSort("dateRange")} className="sortable">
-                      Date Range {sortConfig?.key === "dateRange" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                      Date Range {sortConfig?.key === "dateRange" && (sortConfig.direction === "asc" ? "^" : "v")}
                     </th>
                     <th onClick={() => handleSort("createdBy")} className="sortable">
-                      Created By {sortConfig?.key === "createdBy" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                      Created By {sortConfig?.key === "createdBy" && (sortConfig.direction === "asc" ? "^" : "v")}
                     </th>
                     <th>Actions</th>
                   </tr>
@@ -1597,3 +1591,5 @@ const CreateBannerForm: React.FC<CreateBannerFormProps> = ({
 };
 
 export default AdminBannerWithTabs;
+
+

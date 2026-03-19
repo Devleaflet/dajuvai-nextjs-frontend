@@ -3,11 +3,9 @@
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import "@/styles/Notifications.css";
-import { AdminSidebar } from "@/components/Components/AdminSidebar";
 import { Sidebar } from "@/components/Components/Sidebar";
 import axiosInstance from "@/lib/api/axiosInstance";
 import { useAuth } from "@/lib/context/AuthContext";
-import Header from "@/components/Components/Header";
 import VendorHeader from "@/components/Components/VendorHeader";
 
 interface Notification {
@@ -131,57 +129,61 @@ export function Notifications() {
     }
   };
 
+  const notificationsContent = (
+    <div className={`notifications-main ${isMobile ? "notifications-main--mobile" : ""}`}>
+      <div className="notifications-container">
+        <div className="notifications-header">
+          <h1>Notifications</h1>
+          <span className="unread-badge">({unreadCount} Unread)</span>
+        </div>
+        <div className="tabs">
+          <button
+            className={`tab ${activeTab === "All" ? "active" : ""}`}
+            onClick={() => setActiveTab("All")}
+          >
+            All
+          </button>
+          <button
+            className={`tab ${activeTab === "Unread" ? "active" : ""}`}
+            onClick={() => setActiveTab("Unread")}
+          >
+            Unread
+          </button>
+        </div>
+        <div className="notifications-list">
+          {filteredNotifications.map((notification) => (
+            <div
+              key={notification.id}
+              className={`notification-item ${notification.read ? "read" : "unread"}`}
+              onClick={() => handleNotificationClick(notification)}
+            >
+              <div className="notification-icon">
+                {getIcon(notification.type)}
+              </div>
+              <div className="notification-content">
+                <p className="notification-title">{notification.title}</p>
+                <span className="notification-time">{notification.time}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  if (!isVendor) {
+    return notificationsContent;
+  }
+
   return (
     <div className="admin-layout">
-      {isVendor ? <Sidebar /> : <AdminSidebar />}
+      <Sidebar />
       <div style={{ flex: 1 }}>
-        {!isVendor ? <Header
+        <VendorHeader
           showSearch={false}
-          onSearch={() => { }}
-          title="Notification" /> :
-          <VendorHeader
-            showSearch={false}
-            title="Notification"
-          />}
-        <div className={`notifications-main ${isMobile ? "notifications-main--mobile" : ""}`}>
-          <div className="notifications-container">
-            <div className="notifications-header">
-              <h1>Notifications</h1>
-              <span className="unread-badge">({unreadCount} Unread)</span>
-            </div>
-            <div className="tabs">
-              <button
-                className={`tab ${activeTab === "All" ? "active" : ""}`}
-                onClick={() => setActiveTab("All")}
-              >
-                All
-              </button>
-              <button
-                className={`tab ${activeTab === "Unread" ? "active" : ""}`}
-                onClick={() => setActiveTab("Unread")}
-              >
-                Unread
-              </button>
-            </div>
-            <div className="notifications-list">
-              {filteredNotifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className={`notification-item ${notification.read ? "read" : "unread"}`}
-                  onClick={() => handleNotificationClick(notification)}
-                >
-                  <div className="notification-icon">
-                    {getIcon(notification.type)}
-                  </div>
-                  <div className="notification-content">
-                    <p className="notification-title">{notification.title}</p>
-                    <span className="notification-time">{notification.time}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+          title="Notification"
+        />
+        {notificationsContent}
       </div>
     </div>
   );

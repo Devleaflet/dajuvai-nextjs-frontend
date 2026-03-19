@@ -25,7 +25,7 @@ const Header: React.FC<HeaderProps> = ({
   onFilter,
   filterOption = "all"
 }) => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -93,47 +93,45 @@ const Header: React.FC<HeaderProps> = ({
           )}
         </div>
       </header>
-      <div>
-        {showControls && (
-          <div className="dashboard__search-container" style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-            {showSearch && (
-              <div className="dashboard__search" style={{ flex: 1, minWidth: 200 }}>
-                <input
-                  type="text"
-                  placeholder="Search"
-                  className="dashboard__search-input"
-                  onChange={handleInputChange}
-                />
-                <span className="dashboard__search-icon"></span>
-              </div>
-            )}
-            {onSort && (
-              <select
-                className="vendor-product__sort-select"
-                value={sortOption}
-                onChange={handleSortChange}
-                style={{ minWidth: 180, height: 38, borderRadius: 20, border: '1px solid #e5e7eb', padding: '0 12px', background: '#fff', fontSize: 14 }}
-              >
-                <option value="newest">Newest</option>
-                <option value="oldest">Oldest</option>
-                <option value="price-asc">Price: Low to High</option>
-                <option value="price-desc">Price: High to Low</option>
-              </select>
-            )}
-            {onFilter && (
-              <select
-                className="vendor-product__filter-select"
-                value={filterOption}
-                onChange={handleFilterChange}
-                style={{ minWidth: 180, height: 38, borderRadius: 20, border: '1px solid #e5e7eb', padding: '0 12px', background: '#fff', fontSize: 14 }}
-              >
-                <option value="all">All Products</option>
-                <option value="out_of_stock">Out of Stock</option>
-              </select>
-            )}
-          </div>
-        )}
-      </div>
+      {showControls && (
+        <div className="dashboard__search-container" style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+          {showSearch && (
+            <div className="dashboard__search" style={{ flex: 1, minWidth: 200 }}>
+              <input
+                type="text"
+                placeholder="Search"
+                className="dashboard__search-input"
+                onChange={handleInputChange}
+              />
+              <span className="dashboard__search-icon"></span>
+            </div>
+          )}
+          {onSort && (
+            <select
+              className="vendor-product__sort-select"
+              value={sortOption}
+              onChange={handleSortChange}
+              style={{ minWidth: 180, height: 38, borderRadius: 20, border: '1px solid #e5e7eb', padding: '0 12px', background: '#fff', fontSize: 14 }}
+            >
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+              <option value="price-asc">Price: Low to High</option>
+              <option value="price-desc">Price: High to Low</option>
+            </select>
+          )}
+          {onFilter && (
+            <select
+              className="vendor-product__filter-select"
+              value={filterOption}
+              onChange={handleFilterChange}
+              style={{ minWidth: 180, height: 38, borderRadius: 20, border: '1px solid #e5e7eb', padding: '0 12px', background: '#fff', fontSize: 14 }}
+            >
+              <option value="all">All Products</option>
+              <option value="out_of_stock">Out of Stock</option>
+            </select>
+          )}
+        </div>
+      )}
     </>
   );
 };

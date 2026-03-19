@@ -202,8 +202,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (token) {
       secureStorage.setItem("authToken", token);
+      document.cookie = `authToken=${token}; path=/; max-age=604800; SameSite=Lax`;
     } else {
       secureStorage.removeItem("authToken");
+      document.cookie = 'authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
     }
     if (user) {
       secureStorage.setItem("authUser", JSON.stringify(user));
@@ -290,8 +292,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [token, isAuthenticated, logout]);
 
   // Login function
-  const login = (newToken: string | null, newUser: UserData) => {
-    // Accept login if either a token or a user is provided (for cookie-based auth)
+  const login = useCallback((newToken: string | null, newUser: UserData) => {
     if (!newToken && !newUser) {
       logger.error("No token or user provided to login function");
       return;
@@ -300,16 +301,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setToken(newToken);
       if (typeof window !== 'undefined') {
         secureStorage.setItem("authToken", newToken);
+        document.cookie = `authToken=${newToken}; path=/; max-age=604800; SameSite=Lax`;
       }
     }
-    setUser(newUser);
-    if (typeof window !== 'undefined') {
-      secureStorage.setItem("authUser", JSON.stringify(newUser));
+    if (newUser) {
+      setUser(newUser);
+      if (typeof window !== 'undefined') {
+        secureStorage.setItem("authUser", JSON.stringify(newUser));
+      }
     }
-  };
+  }, []);
 
-  // Fetch user data by ID
-  const fetchUserData = async (userId: number): Promise<UserData | null> => {
+  // fetchUserData async function
+  const fetchUserData = useCallback(async (userId: number): Promise<UserData | null> => {
     const currentToken = token || (typeof window !== 'undefined' ? secureStorage.getItem("authToken") : null);
     logger.debug("fetchUserData called", { userId });
     logger.debug("Using token", { hasToken: !!currentToken });
@@ -317,7 +321,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       logger.error("No token available for fetching user data");
       return null;
     }
-
     try {
       setIsLoading(true);
       const response = await axios.get<{ success: boolean; data: UserData }>(
@@ -352,14 +355,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token, logout]);
 
   // Get user status
-  const getUserStatus = (): string => {
+  const getUserStatus = useCallback((): string => {
     if (isLoading) return "Loading...";
     if (!isAuthenticated || !user) return "Not logged in";
     return `Logged in as ${user.username || user.email || "User"}`;
-  };
+  }, [isLoading, isAuthenticated, user]);
 
   // Setup axios interceptors
   useEffect(() => {

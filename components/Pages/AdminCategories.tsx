@@ -6,8 +6,6 @@ import axios from "axios";
 import { toast } from "react-hot-toast";
 import { useAuth } from "@/lib/context/AuthContext";
 import { API_BASE_URL } from "@/lib/config";
-import { AdminSidebar } from "@/components/Components/AdminSidebar";
-import Header from "@/components/Components/Header";
 import Pagination from "@/components/Components/Pagination";
 import DeleteModal from "@/components/Components/Modal/DeleteModal";
 import CategoryEditModal from "@/components/Components/Modal/CategoryEditModal";
@@ -105,43 +103,30 @@ const mockCategories: Category[] = [
 ];
 
 const CACHE_KEY = "admin_categories";
-const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+const CACHE_TTL = 10 * 60 * 1000;
 
-// Skeleton Component
-const CategorySkeleton: React.FC = () => {
-  return (
-    <>
-      {Array.from({ length: 7 }).map((_, index) => (
-        <tr
-          key={index}
-          className="admin-categories__table-row admin-categories__skeleton-row"
-        >
-          <td>
-            <div className="admin-categories__skeleton admin-categories__skeleton-checkbox"></div>
-          </td>
-          <td className="admin-categories__name-cell">
-            <div className="admin-categories__category-container">
-              <div className="admin-categories__skeleton admin-categories__skeleton-image"></div>
-              <div className="admin-categories__skeleton admin-categories__skeleton-text admin-categories__skeleton-text--name"></div>
-            </div>
-          </td>
-          <td>
-            <div className="admin-categories__skeleton admin-categories__skeleton-text admin-categories__skeleton-text--status"></div>
-          </td>
-          <td>
-            <div className="admin-categories__skeleton admin-categories__skeleton-text admin-categories__skeleton-text--date"></div>
-          </td>
-          <td className="admin-categories__actions">
-            <div className="admin-categories__skeleton admin-categories__skeleton-button"></div>
-            <div className="admin-categories__skeleton admin-categories__skeleton-button"></div>
-            <div className="admin-categories__skeleton admin-categories__skeleton-button"></div>
-            <div className="admin-categories__skeleton admin-categories__skeleton-button"></div>
-          </td>
-        </tr>
-      ))}
-    </>
-  );
-};
+const CategorySkeleton: React.FC = () => (
+  <>
+    {Array.from({ length: 7 }).map((_, index) => (
+      <tr key={index} className="admin-categories__table-row admin-categories__skeleton-row">
+        <td className="admin-categories__name-cell">
+          <div className="admin-categories__category-container">
+            <div className="admin-categories__skeleton admin-categories__skeleton-image" />
+            <div className="admin-categories__skeleton admin-categories__skeleton-text admin-categories__skeleton-text--name" />
+          </div>
+        </td>
+        <td><div className="admin-categories__skeleton admin-categories__skeleton-text admin-categories__skeleton-text--status" /></td>
+        <td><div className="admin-categories__skeleton admin-categories__skeleton-text admin-categories__skeleton-text--date" /></td>
+        <td className="admin-categories__actions">
+          <div className="admin-categories__skeleton admin-categories__skeleton-button" />
+          <div className="admin-categories__skeleton admin-categories__skeleton-button" />
+          <div className="admin-categories__skeleton admin-categories__skeleton-button" />
+          <div className="admin-categories__skeleton admin-categories__skeleton-button" />
+        </td>
+      </tr>
+    ))}
+  </>
+);
 
 const AdminCategories: React.FC = () => {
   const { token } = useAuth();
@@ -177,10 +162,7 @@ const AdminCategories: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        // Clear cache to ensure fresh data
         localStorage.removeItem(CACHE_KEY);
-
-        // Try to load from cache first
         const cached = localStorage.getItem(CACHE_KEY);
         if (cached) {
           try {
@@ -189,17 +171,13 @@ const AdminCategories: React.FC = () => {
               setCategories(data);
               setFilteredCategories(data);
               setIsLoading(false);
-              return; // Exit early if valid cache is used
+              return;
             }
           } catch { }
         }
 
-        // Fetch fresh data
         const response = await axios.get(`${API_BASE_URL}/api/categories`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
+          headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
         });
         const formattedCategories: Category[] = await Promise.all(
           response.data.data.map(async (category: any) => {
@@ -207,12 +185,7 @@ const AdminCategories: React.FC = () => {
             try {
               const subResponse = await axios.get(
                 `${API_BASE_URL}/api/categories/${category.id}/subcategories`,
-                {
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                    Accept: "application/json",
-                  },
-                }
+                { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } }
               );
               subCategories = subResponse.data.data.map((sub: any) => ({
                 id: sub.id.toString(),
@@ -220,15 +193,12 @@ const AdminCategories: React.FC = () => {
                 image: sub.image || undefined,
               }));
             } catch (subErr) {
-              console.error(
-                `Failed to fetch subcategories for category ${category.id}:`,
-                subErr
-              );
+              console.error(`Failed to fetch subcategories for category ${category.id}:`, subErr);
             }
             return {
               id: category.id.toString(),
               name: category.name,
-              status: "Visible" as const, // Assuming API doesn't return status
+              status: "Visible" as const,
               date: new Date(category.createdAt).toLocaleDateString(),
               image: category.image || undefined,
               subCategories,
@@ -237,10 +207,7 @@ const AdminCategories: React.FC = () => {
         );
         setCategories(formattedCategories);
         setFilteredCategories(formattedCategories);
-        localStorage.setItem(
-          CACHE_KEY,
-          JSON.stringify({ data: formattedCategories, timestamp: Date.now() })
-        );
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ data: formattedCategories, timestamp: Date.now() }));
       } catch (err) {
         console.error("Fetch categories error:", err);
         if (axios.isAxiosError(err)) {
@@ -251,10 +218,7 @@ const AdminCategories: React.FC = () => {
           } else if (err.response?.status === 401) {
             setError("Unauthorized. Please log in as an admin.");
           } else {
-            setError(
-              (err.response?.data as ApiErrorResponse)?.message ||
-              "Failed to fetch categories"
-            );
+            setError((err.response?.data as ApiErrorResponse)?.message || "Failed to fetch categories");
             setCategories(mockCategories);
             setFilteredCategories(mockCategories);
           }
@@ -271,18 +235,13 @@ const AdminCategories: React.FC = () => {
     const fetchHomepageCategories = async () => {
       try {
         const response = await axios.get(`${API_BASE_URL}/api/home/category/section`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
+          headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
         });
         if (response.data.success) {
-          const selectedCategoryIds = response.data.data.map((item: any) => item.category.id.toString());
-          setHomepageCategories(selectedCategoryIds);
+          setHomepageCategories(response.data.data.map((item: any) => item.category.id.toString()));
         }
       } catch (err) {
         console.error("Fetch homepage categories error:", err);
-        setError("Failed to load homepage categories");
       }
     };
 
@@ -290,6 +249,7 @@ const AdminCategories: React.FC = () => {
     fetchHomepageCategories();
   }, [token]);
 
+  // Search filter
   useEffect(() => {
     const results = categories.filter(
       (category) =>
@@ -300,20 +260,12 @@ const AdminCategories: React.FC = () => {
     setCurrentPage(1);
   }, [searchQuery, categories]);
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-  };
-
   const handleHomepageCategoryChange = (categoryId: string) => {
     setHomepageCategories((prev) => {
-      if (prev.includes(categoryId)) {
-        return prev.filter((id) => id !== categoryId);
-      } else if (prev.length < 5) {
-        return [...prev, categoryId];
-      } else {
-        setError("You can only select up to 5 categories");
-        return prev;
-      }
+      if (prev.includes(categoryId)) return prev.filter((id) => id !== categoryId);
+      if (prev.length < 5) return [...prev, categoryId];
+      setError("You can only select up to 5 categories");
+      return prev;
     });
   };
 
@@ -324,33 +276,14 @@ const AdminCategories: React.FC = () => {
       const response = await axios.post(
         `${API_BASE_URL}/api/home/category/section`,
         { categoryId: homepageCategories },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Accept: "application/json" } }
       );
-      if (response.data.success) {
-        setShowHomepageModal(false);
-      } else {
-        setError(response.data.message || "Failed to update homepage categories");
-      }
+      if (response.data.success) setShowHomepageModal(false);
+      else setError(response.data.message || "Failed to update homepage categories");
     } catch (err) {
       console.error("Save homepage categories error:", err);
       if (axios.isAxiosError(err)) {
-        const status = err.response?.status;
-        const message = (err.response?.data as ApiErrorResponse)?.message || "Unknown error";
-        if (status === 400) {
-          setError("Invalid category selection.");
-        } else if (status === 401) {
-          setError("Unauthorized. Please log in as an admin.");
-        } else if (status === 403) {
-          setError("Forbidden. Admin access required.");
-        } else {
-          setError(message || "Failed to update homepage categories");
-        }
+        setError((err.response?.data as ApiErrorResponse)?.message || "Failed to update homepage categories");
       } else {
         setError("An unexpected error occurred while saving homepage categories");
       }
@@ -372,17 +305,10 @@ const AdminCategories: React.FC = () => {
       if (isAddingCategory) {
         const formData = new FormData();
         formData.append("name", updatedCategory.name);
-        if (imageFile) {
-          formData.append("image", imageFile);
-        }
-
+        if (imageFile) formData.append("image", imageFile);
         const response = await axios.post(`${API_BASE_URL}/api/categories`, formData, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
         });
-
         const newCategory: Category = {
           id: response.data.data.id.toString(),
           name: response.data.data.name,
@@ -391,32 +317,17 @@ const AdminCategories: React.FC = () => {
           image: response.data.data.image || undefined,
           subCategories: [],
         };
-
         const updatedCategories = [...categories, newCategory];
         setCategories(updatedCategories);
         setFilteredCategories(updatedCategories);
-        localStorage.setItem(
-          CACHE_KEY,
-          JSON.stringify({ data: updatedCategories, timestamp: Date.now() })
-        );
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ data: updatedCategories, timestamp: Date.now() }));
       } else if (updatedCategory.id) {
         const formData = new FormData();
         formData.append("name", updatedCategory.name);
-        if (imageFile) {
-          formData.append("image", imageFile);
-        }
-
-        const response = await axios.put(
-          `${API_BASE_URL}/api/categories/${updatedCategory.id}`,
-          formData,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
-
+        if (imageFile) formData.append("image", imageFile);
+        const response = await axios.put(`${API_BASE_URL}/api/categories/${updatedCategory.id}`, formData, {
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
+        });
         const updatedCategoryFromApi: Category = {
           id: response.data.data.id.toString(),
           name: response.data.data.name,
@@ -424,63 +335,18 @@ const AdminCategories: React.FC = () => {
           date: updatedCategory.date,
           image: response.data.data.image || updatedCategory.image,
           subCategories: response.data.data.subcategories?.map((sub: any) => ({
-            id: sub.id.toString(),
-            name: sub.name,
-            image: sub.image || undefined,
+            id: sub.id.toString(), name: sub.name, image: sub.image || undefined,
           })) || updatedCategory.subCategories,
         };
-
-        const updatedCategories = categories.map((category) =>
-          category.id === updatedCategory.id ? updatedCategoryFromApi : category
-        );
+        const updatedCategories = categories.map((c) => c.id === updatedCategory.id ? updatedCategoryFromApi : c);
         setCategories(updatedCategories);
         setFilteredCategories(updatedCategories);
-        localStorage.setItem(
-          CACHE_KEY,
-          JSON.stringify({ data: updatedCategories, timestamp: Date.now() })
-        );
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ data: updatedCategories, timestamp: Date.now() }));
       }
     } catch (err) {
       console.error("Save category error:", err);
       if (axios.isAxiosError(err)) {
-        const status = err.response?.status;
-        const message = (err.response?.data as ApiErrorResponse)?.message || "Unknown error";
-        if (status === 400) {
-          setError("Invalid category name or ID. Please provide valid data.");
-        } else if (status === 401) {
-          setError("Unauthorized. Please log in as an admin.");
-        } else if (status === 403) {
-          setError("Forbidden. Admin access required.");
-        } else if (status === 404) {
-          setError("Category not found.");
-        } else {
-          setError(message || "Failed to save category");
-        }
-        if (isAddingCategory) {
-          const newCategory: Category = {
-            ...updatedCategory,
-            id: `${Date.now()}`,
-            date: new Date().toLocaleDateString(),
-            subCategories: [],
-          };
-          const updatedCategories = [...categories, newCategory];
-          setCategories(updatedCategories);
-          setFilteredCategories(updatedCategories);
-          localStorage.setItem(
-            CACHE_KEY,
-            JSON.stringify({ data: updatedCategories, timestamp: Date.now() })
-          );
-        } else {
-          const updatedCategories = categories.map((category) =>
-            category.id === updatedCategory.id ? updatedCategory : category
-          );
-          setCategories(updatedCategories);
-          setFilteredCategories(updatedCategories);
-          localStorage.setItem(
-            CACHE_KEY,
-            JSON.stringify({ data: updatedCategories, timestamp: Date.now() })
-          );
-        }
+        setError((err.response?.data as ApiErrorResponse)?.message || "Failed to save category");
       } else {
         setError("An unexpected error occurred while saving category");
       }
@@ -504,176 +370,60 @@ const AdminCategories: React.FC = () => {
   const handleSaveSubCategory = async (categoryId: string, subCategory: SubCategory, imageFile?: File) => {
     setIsSubCategoryLoading(true);
     setError(null);
-
-    // Show loading toast
-    const loadingToast = toast.loading(
-      isAddingSubCategory ? 'Creating subcategory...' : 'Updating subcategory...',
-      {
-        position: 'top-right',
-      }
-    );
-
+    const loadingToast = toast.loading(isAddingSubCategory ? "Creating subcategory..." : "Updating subcategory...", { position: "top-right" });
     try {
       if (isAddingSubCategory) {
         const formData = new FormData();
         formData.append("name", subCategory.name);
-        if (imageFile) {
-          formData.append("image", imageFile);
-        }
-
+        if (imageFile) formData.append("image", imageFile);
         const response = await axios.post(
-          `${API_BASE_URL}/api/categories/${categoryId}/subcategories`,
-          formData,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
-            },
-          }
+          `${API_BASE_URL}/api/categories/${categoryId}/subcategories`, formData,
+          { headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" } }
         );
-
         const newSubCategory: SubCategory = {
           id: response.data.data.id.toString(),
           name: response.data.data.name,
           image: response.data.data.image || undefined,
         };
-
-        const updatedCategories = categories.map((category) =>
-          category.id === categoryId
-            ? { ...category, subCategories: [...category.subCategories, newSubCategory] }
-            : category
+        const updatedCategories = categories.map((c) =>
+          c.id === categoryId ? { ...c, subCategories: [...c.subCategories, newSubCategory] } : c
         );
         setCategories(updatedCategories);
         setFilteredCategories(updatedCategories);
-        localStorage.setItem(
-          CACHE_KEY,
-          JSON.stringify({ data: updatedCategories, timestamp: Date.now() })
-        );
-
-        // Dismiss loading toast and show success
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ data: updatedCategories, timestamp: Date.now() }));
         toast.dismiss(loadingToast);
-        toast.success('Subcategory created successfully! 🎉', {
-          position: 'top-right',
-          duration: 3000,
-        });
+        toast.success("Subcategory created successfully!", { position: "top-right", duration: 3000 });
       } else if (subCategory.id) {
         const formData = new FormData();
         formData.append("name", subCategory.name);
-        if (imageFile) {
-          formData.append("image", imageFile);
-        }
-
+        if (imageFile) formData.append("image", imageFile);
         const response = await axios.put(
-          `${API_BASE_URL}/api/categories/${categoryId}/subcategories/${subCategory.id}`,
-          formData,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
-            },
-          }
+          `${API_BASE_URL}/api/categories/${categoryId}/subcategories/${subCategory.id}`, formData,
+          { headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" } }
         );
-
         const updatedSubCategory: SubCategory = {
           id: response.data.data.id.toString(),
           name: response.data.data.name,
           image: response.data.data.image || subCategory.image,
         };
-
-        const updatedCategories = categories.map((category) =>
-          category.id === categoryId
-            ? {
-              ...category,
-              subCategories: category.subCategories.map((sub) =>
-                sub.id === subCategory.id ? updatedSubCategory : sub
-              ),
-            }
-            : category
+        const updatedCategories = categories.map((c) =>
+          c.id === categoryId
+            ? { ...c, subCategories: c.subCategories.map((s) => s.id === subCategory.id ? updatedSubCategory : s) }
+            : c
         );
         setCategories(updatedCategories);
         setFilteredCategories(updatedCategories);
-        localStorage.setItem(
-          CACHE_KEY,
-          JSON.stringify({ data: updatedCategories, timestamp: Date.now() })
-        );
-
-        // Dismiss loading toast and show success
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ data: updatedCategories, timestamp: Date.now() }));
         toast.dismiss(loadingToast);
-        toast.success('Subcategory updated successfully! ✨', {
-          position: 'top-right',
-          duration: 3000,
-        });
+        toast.success("Subcategory updated successfully!", { position: "top-right", duration: 3000 });
       }
     } catch (err) {
-      console.error("Save subcategory error:", err);
-
-      // Dismiss loading toast
       toast.dismiss(loadingToast);
-
-      if (axios.isAxiosError(err)) {
-        const status = err.response?.status;
-        const message = (err.response?.data as ApiErrorResponse)?.message || "Unknown error";
-        let errorMessage = "Failed to save subcategory";
-
-        if (status === 400) {
-          errorMessage = "Invalid subcategory name or ID.";
-        } else if (status === 401) {
-          errorMessage = "Unauthorized. Please log in as an admin.";
-        } else if (status === 403) {
-          errorMessage = "Forbidden. Admin access required.";
-        } else if (status === 404) {
-          errorMessage = "Category or subcategory not found.";
-        } else {
-          errorMessage = message || "Failed to save subcategory";
-        }
-
-        setError(errorMessage);
-        toast.error(errorMessage, {
-          position: 'top-right',
-          duration: 4000,
-        });
-        if (isAddingSubCategory) {
-          const newSubCategoryId = `${categoryId}-${Date.now()}`;
-          const updatedCategories = categories.map((category) =>
-            category.id === categoryId
-              ? {
-                ...category,
-                subCategories: [...category.subCategories, { ...subCategory, id: newSubCategoryId }],
-              }
-              : category
-          );
-          setCategories(updatedCategories);
-          setFilteredCategories(updatedCategories);
-          localStorage.setItem(
-            CACHE_KEY,
-            JSON.stringify({ data: updatedCategories, timestamp: Date.now() })
-          );
-        } else {
-          const updatedCategories = categories.map((category) =>
-            category.id === categoryId
-              ? {
-                ...category,
-                subCategories: category.subCategories.map((sub) =>
-                  sub.id === subCategory.id ? subCategory : sub
-                ),
-              }
-              : category
-          );
-          setCategories(updatedCategories);
-          setFilteredCategories(updatedCategories);
-          localStorage.setItem(
-            CACHE_KEY,
-            JSON.stringify({ data: updatedCategories, timestamp: Date.now() })
-          );
-        }
-      } else {
-        const errorMessage = "An unexpected error occurred while saving subcategory";
-        setError(errorMessage);
-        toast.error(errorMessage, {
-          position: 'top-right',
-          duration: 4000,
-        });
-      }
+      const msg = axios.isAxiosError(err)
+        ? (err.response?.data as ApiErrorResponse)?.message || "Failed to save subcategory"
+        : "An unexpected error occurred";
+      setError(msg);
+      toast.error(msg, { position: "top-right", duration: 4000 });
     } finally {
       setIsSubCategoryLoading(false);
       setShowSubCategoryModal(false);
@@ -694,104 +444,42 @@ const AdminCategories: React.FC = () => {
     }
   };
 
-  // Image change handlers
   const handleChangeCategoryImage = (categoryId: string) => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        handleCategoryImageChange(categoryId, file);
-      }
+      if (file) handleCategoryImageChange(categoryId, file);
     };
     input.click();
   };
 
   const handleCategoryImageChange = async (categoryId: string, file: File) => {
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file');
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size should be less than 5MB');
-      return;
-    }
-
+    if (!file.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image size should be less than 5MB"); return; }
     setCategoryImageChanging(categoryId);
-    setNewCategoryImage(file);
     setCategoryImagePreview(URL.createObjectURL(file));
-
-    const loadingToast = toast.loading('Updating category image...', {
-      position: 'top-right',
-    });
-
+    const loadingToast = toast.loading("Updating category image...", { position: "top-right" });
     try {
       const formData = new FormData();
-      formData.append('image', file);
-
-      const response = await axios.put(
-        `${API_BASE_URL}/api/categories/${categoryId}`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
-
+      formData.append("image", file);
+      const response = await axios.put(`${API_BASE_URL}/api/categories/${categoryId}`, formData, {
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
+      });
       if (response.data.success) {
-        const updatedCategories = categories.map((category) =>
-          category.id === categoryId
-            ? { ...category, image: response.data.data.image }
-            : category
+        const updatedCategories = categories.map((c) =>
+          c.id === categoryId ? { ...c, image: response.data.data.image } : c
         );
         setCategories(updatedCategories);
         setFilteredCategories(updatedCategories);
-        localStorage.setItem(
-          CACHE_KEY,
-          JSON.stringify({ data: updatedCategories, timestamp: Date.now() })
-        );
-
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ data: updatedCategories, timestamp: Date.now() }));
         toast.dismiss(loadingToast);
-        toast.success('Category image updated successfully! ✨', {
-          position: 'top-right',
-          duration: 3000,
-        });
+        toast.success("Category image updated successfully!", { position: "top-right", duration: 3000 });
       }
     } catch (err) {
-      console.error('Update category image error:', err);
       toast.dismiss(loadingToast);
-
-      if (axios.isAxiosError(err)) {
-        const status = err.response?.status;
-        const message = (err.response?.data as ApiErrorResponse)?.message || 'Unknown error';
-        let errorMessage = 'Failed to update category image';
-
-        if (status === 400) {
-          errorMessage = 'Invalid image file.';
-        } else if (status === 401) {
-          errorMessage = 'Unauthorized. Please log in as an admin.';
-        } else if (status === 403) {
-          errorMessage = 'Forbidden. Admin access required.';
-        } else if (status === 404) {
-          errorMessage = 'Category not found.';
-        } else {
-          errorMessage = message || 'Failed to update category image';
-        }
-
-        toast.error(errorMessage, {
-          position: 'top-right',
-          duration: 4000,
-        });
-      } else {
-        toast.error('An unexpected error occurred while updating image', {
-          position: 'top-right',
-          duration: 4000,
-        });
-      }
+      toast.error("Failed to update category image", { position: "top-right", duration: 4000 });
     } finally {
       setCategoryImageChanging(null);
       setNewCategoryImage(null);
@@ -800,109 +488,44 @@ const AdminCategories: React.FC = () => {
   };
 
   const handleChangeSubcategoryImage = (categoryId: string, subcategoryId: string) => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        handleSubcategoryImageChange(categoryId, subcategoryId, file);
-      }
+      if (file) handleSubcategoryImageChange(categoryId, subcategoryId, file);
     };
     input.click();
   };
 
   const handleSubcategoryImageChange = async (categoryId: string, subcategoryId: string, file: File) => {
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file');
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size should be less than 5MB');
-      return;
-    }
-
+    if (!file.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image size should be less than 5MB"); return; }
     setSubcategoryImageChanging(subcategoryId);
-    setNewSubcategoryImage(file);
     setSubcategoryImagePreview(URL.createObjectURL(file));
-
-    const loadingToast = toast.loading('Updating subcategory image...', {
-      position: 'top-right',
-    });
-
+    const loadingToast = toast.loading("Updating subcategory image...", { position: "top-right" });
     try {
       const formData = new FormData();
-      formData.append('image', file);
-
+      formData.append("image", file);
       const response = await axios.put(
-        `${API_BASE_URL}/api/categories/${categoryId}/subcategories/${subcategoryId}`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data',
-          },
-        }
+        `${API_BASE_URL}/api/categories/${categoryId}/subcategories/${subcategoryId}`, formData,
+        { headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" } }
       );
-
       if (response.data.success) {
-        const updatedCategories = categories.map((category) =>
-          category.id === categoryId
-            ? {
-              ...category,
-              subCategories: category.subCategories.map((sub) =>
-                sub.id === subcategoryId
-                  ? { ...sub, image: response.data.data.image }
-                  : sub
-              ),
-            }
-            : category
+        const updatedCategories = categories.map((c) =>
+          c.id === categoryId
+            ? { ...c, subCategories: c.subCategories.map((s) => s.id === subcategoryId ? { ...s, image: response.data.data.image } : s) }
+            : c
         );
         setCategories(updatedCategories);
         setFilteredCategories(updatedCategories);
-        localStorage.setItem(
-          CACHE_KEY,
-          JSON.stringify({ data: updatedCategories, timestamp: Date.now() })
-        );
-
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ data: updatedCategories, timestamp: Date.now() }));
         toast.dismiss(loadingToast);
-        toast.success('Subcategory image updated successfully! ✨', {
-          position: 'top-right',
-          duration: 3000,
-        });
+        toast.success("Subcategory image updated successfully!", { position: "top-right", duration: 3000 });
       }
     } catch (err) {
-      console.error('Update subcategory image error:', err);
       toast.dismiss(loadingToast);
-
-      if (axios.isAxiosError(err)) {
-        const status = err.response?.status;
-        const message = (err.response?.data as ApiErrorResponse)?.message || 'Unknown error';
-        let errorMessage = 'Failed to update subcategory image';
-
-        if (status === 400) {
-          errorMessage = 'Invalid image file.';
-        } else if (status === 401) {
-          errorMessage = 'Unauthorized. Please log in as an admin.';
-        } else if (status === 403) {
-          errorMessage = 'Forbidden. Admin access required.';
-        } else if (status === 404) {
-          errorMessage = 'Subcategory not found.';
-        } else {
-          errorMessage = message || 'Failed to update subcategory image';
-        }
-
-        toast.error(errorMessage, {
-          position: 'top-right',
-          duration: 4000,
-        });
-      } else {
-        toast.error('An unexpected error occurred while updating image', {
-          position: 'top-right',
-          duration: 4000,
-        });
-      }
+      toast.error("Failed to update subcategory image", { position: "top-right", duration: 4000 });
     } finally {
       setSubcategoryImageChanging(null);
       setNewSubcategoryImage(null);
@@ -930,7 +553,7 @@ const AdminCategories: React.FC = () => {
         await axios.delete(`${API_BASE_URL}/api/categories/${categoryToDelete.id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        const updatedCategories = categories.filter((category) => category.id !== categoryToDelete.id);
+        const updatedCategories = categories.filter((c) => c.id !== categoryToDelete.id);
         setCategories(updatedCategories);
         setFilteredCategories(updatedCategories);
         setCategoryToDelete(null);
@@ -939,15 +562,10 @@ const AdminCategories: React.FC = () => {
           `${API_BASE_URL}/api/categories/${subCategoryToDelete.categoryId}/subcategories/${subCategoryToDelete.subCategoryId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        const updatedCategories = categories.map((category) =>
-          category.id === subCategoryToDelete.categoryId
-            ? {
-              ...category,
-              subCategories: category.subCategories.filter(
-                (sub) => sub.id !== subCategoryToDelete.subCategoryId
-              ),
-            }
-            : category
+        const updatedCategories = categories.map((c) =>
+          c.id === subCategoryToDelete.categoryId
+            ? { ...c, subCategories: c.subCategories.filter((s) => s.id !== subCategoryToDelete.subCategoryId) }
+            : c
         );
         setCategories(updatedCategories);
         setFilteredCategories(updatedCategories);
@@ -955,45 +573,7 @@ const AdminCategories: React.FC = () => {
       }
     } catch (err) {
       console.error("Delete error:", err);
-      if (axios.isAxiosError(err)) {
-        const status = err.response?.status;
-        const message = (err.response?.data as ApiErrorResponse)?.message || "Unknown error";
-        if (status === 400) {
-          setError("Invalid category or subcategory ID.");
-        } else if (status === 401) {
-          setError("Unauthorized. Please log in as an admin.");
-        } else if (status === 403) {
-          setError("Forbidden. Admin access required.");
-        } else if (status === 404) {
-          setError("Category or subcategory not found.");
-        } else {
-          setError(message || "Failed to delete item");
-        }
-        if (categoryToDelete) {
-          const updatedCategories = categories.filter(
-            (category) => category.id !== categoryToDelete.id
-          );
-          setCategories(updatedCategories);
-          setFilteredCategories(updatedCategories);
-          setCategoryToDelete(null);
-        } else if (subCategoryToDelete) {
-          const updatedCategories = categories.map((category) =>
-            category.id === subCategoryToDelete.categoryId
-              ? {
-                ...category,
-                subCategories: category.subCategories.filter(
-                  (sub) => sub.id !== subCategoryToDelete.subCategoryId
-                ),
-              }
-              : category
-          );
-          setCategories(updatedCategories);
-          setFilteredCategories(updatedCategories);
-          setSubCategoryToDelete(null);
-        }
-      } else {
-        setError("An unexpected error occurred while deleting item");
-      }
+      setError(axios.isAxiosError(err) ? (err.response?.data as ApiErrorResponse)?.message || "Failed to delete" : "Unexpected error");
     } finally {
       setIsLoading(false);
       setShowDeleteModal(false);
@@ -1012,31 +592,45 @@ const AdminCategories: React.FC = () => {
 
   return (
     <div className="admin-categories">
-      <AdminSidebar />
+      {/* ── Search bar (full width, outside card) ── */}
+      <div className="admin-categories__search-bar-wrapper">
+        <svg className="admin-categories__search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <circle cx="11" cy="11" r="8" stroke="#9CA3AF" strokeWidth="2" />
+          <path d="M21 21L16.65 16.65" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+        <input
+          type="text"
+          className="admin-categories__search-input"
+          placeholder="Search"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+
       <div className="admin-categories__content">
         {error && (
           <div className="admin-categories__error">
             {error}
-            <button onClick={() => setError(null)}>×</button>
+            <button onClick={() => setError(null)}>✕</button>
           </div>
         )}
-        <Header onSearch={handleSearch} showSearch={true} title="Category Management" />
+
         <div className="admin-categories__list-container">
+          {/* ── Card Header ── */}
           <div className="admin-categories__header">
             <h2>Category Management</h2>
-            <div>
-              <button className="admin-categories__add-btn" onClick={handleAddCategory}>
-                <Plus size={16} style={{ marginRight: 8 }} /> Add Category
+            <div className="admin-categories__header-actions">
+              <button className="admin-categories__btn-add-category" onClick={handleAddCategory}>
+                <Plus size={16} />
+                Add Category
               </button>
-              <button
-                className="admin-categories__add-btn"
-                onClick={() => setShowHomepageModal(true)}
-                style={{ marginLeft: "10px", backgroundColor: "#f56a2c", color: "white" }}
-              >
+              <button className="admin-categories__btn-homepage" onClick={() => setShowHomepageModal(true)}>
                 Manage Homepage Categories
               </button>
             </div>
           </div>
+
+          {/* ── Table ── */}
           <div className="admin-categories__table-container">
             <table className="admin-categories__table">
               <thead className="admin-categories__table-head">
@@ -1050,16 +644,19 @@ const AdminCategories: React.FC = () => {
               <tbody>
                 {isLoading ? (
                   <CategorySkeleton />
-                ) : (
+                ) : currentCategories.length > 0 ? (
                   currentCategories.map((category) => (
                     <tr key={category.id} className="admin-categories__table-row">
+                      {/* Category Name + image */}
                       <td className="admin-categories__name-cell">
                         <div className="admin-categories__category-container">
                           <div className="admin-categories__image-container">
                             <div className="admin-categories__category-image">
                               {(categoryImagePreview && categoryImageChanging === category.id) || category.image ? (
                                 <img
-                                  src={(categoryImagePreview && categoryImageChanging === category.id) ? categoryImagePreview : (category.image || "/placeholder.svg")}
+                                  src={(categoryImagePreview && categoryImageChanging === category.id)
+                                    ? categoryImagePreview
+                                    : (category.image || "/placeholder.svg")}
                                   alt={category.name}
                                 />
                               ) : (
@@ -1070,134 +667,94 @@ const AdminCategories: React.FC = () => {
                                 onClick={() => handleChangeCategoryImage(category.id)}
                                 title="Change image"
                               >
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                                   <path d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 4H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                  <circle cx="12" cy="13" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                  <circle cx="12" cy="13" r="4" stroke="currentColor" strokeWidth="2" />
                                 </svg>
                               </button>
                             </div>
                           </div>
-                          <span>{category.name}</span>
+                          <span className="admin-categories__category-name">{category.name}</span>
                         </div>
                       </td>
+
+                      {/* Status */}
                       <td>
-                        <span
-                          className={`admin-categories__status admin-categories__status--${category.status.toLowerCase()}`}
-                        >
-                          <span className="admin-categories__status-dot"></span>
+                        <span className={`admin-categories__status admin-categories__status--${category.status.toLowerCase()}`}>
+                          <span className="admin-categories__status-dot" />
                           {category.status}
                         </span>
                       </td>
-                      <td>{category.date}</td>
-                      <td className="admin-categories__actions">
-                        <button
-                          className="admin-categories__action-btn admin-categories__delete-btn"
-                          onClick={() => confirmDeleteCategory(category)}
-                          aria-label="Delete category"
-                        >
-                          <svg
-                            width="20"
-                            height="20"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
+
+                      {/* Date */}
+                      <td className="admin-categories__date-cell">{category.date}</td>
+
+                      {/* Actions */}
+                      <td>
+                        <div className="admin-categories__actions">
+                          {/* Delete */}
+                          <button
+                            className="admin-categories__action-btn admin-categories__delete-btn"
+                            onClick={() => confirmDeleteCategory(category)}
+                            aria-label="Delete category"
                           >
-                            <path
-                              d="M3 6H5H21"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                            <path
-                              d="M8 6V4C8 2.96957 8.21071 2.46086 8.58579 2.08579C8.96086 1.71071 9.46957 1.5 10 1.5H14C14.5304 1.5 15.0391 1.71071 15.4142 2.08579C15.7893 2.46086 16 2.96957 16 3.5V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </button>
-                        <button
-                          className="admin-categories__action-btn admin-categories__view-btn"
-                          onClick={() => {
-                            setSelectedCategory(category);
-                            setShowSubcategoriesViewModal(true);
-                          }}
-                          aria-label="View category"
-                        >
-                          <svg
-                            width="20"
-                            height="20"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                              <path d="M3 6H5H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </button>
+
+                          {/* View subcategories */}
+                          <button
+                            className="admin-categories__action-btn admin-categories__view-btn"
+                            onClick={() => { setSelectedCategory(category); setShowSubcategoriesViewModal(true); }}
+                            aria-label="View subcategories"
                           >
-                            <path
-                              d="M12 5C7.63636 5 4 8.63636 4 12C4 15.3636 7.63636 19 12 19C16.3636 19 20 15.3636 20 12C20 8.63636 16.3636 5 12 5Z"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                            <path
-                              d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </button>
-                        <button
-                          className="admin-categories__action-btn admin-categories__edit-btn"
-                          onClick={() => editCategory(category)}
-                          aria-label="Edit category"
-                        >
-                          <svg
-                            width="20"
-                            height="20"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
+                            </svg>
+                          </button>
+
+                          {/* Edit */}
+                          <button
+                            className="admin-categories__action-btn admin-categories__edit-btn"
+                            onClick={() => editCategory(category)}
+                            aria-label="Edit category"
                           >
-                            <path
-                              d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20 20 18V13"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                            <path
-                              d="M18.5 2.50001C18.8978 2.10219 19.4374 1.87869 20 1.87869C20.5626 1.87869 21.1022 2.10219 21.5 2.50001C21.8978 2.89784 22.1213 3.4374 22.1213 4.00001C22.1213 4.56262 21.8978 5.10219 21.5 5.50001L12 15L8 16L9 12L18.5 2.50001Z"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </button>
-                        <button
-                          className="admin-categories__action-btn admin-categories__add-btn"
-                          onClick={() => handleAddSubCategory(category.id)}
-                          aria-label="Add subcategory"
-                        >
-                          ADD
-                        </button>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                              <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              <path d="M18.5 2.5C18.8978 2.10218 19.4374 1.87868 20 1.87868C20.5626 1.87868 21.1022 2.10218 21.5 2.5C21.8978 2.89782 22.1213 3.43739 22.1213 4C22.1213 4.56261 21.8978 5.10218 21.5 5.5L12 15L8 16L9 12L18.5 2.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </button>
+
+                          {/* Add subcategory */}
+                          <button
+                            className="admin-categories__action-btn admin-categories__add-sub-btn"
+                            onClick={() => handleAddSubCategory(category.id)}
+                            aria-label="Add subcategory"
+                          >
+                            ADD
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="admin-categories__no-data">
+                      {searchQuery ? `No categories found for "${searchQuery}"` : "No categories found"}
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
           </div>
 
-
-
+          {/* ── Pagination ── */}
           <div className="admin-categories__pagination-container">
             <div className="admin-categories__pagination-info">
-              Showing {indexOfFirstCategory + 1}-
-              {Math.min(indexOfLastCategory, filteredCategories.length)} out of {filteredCategories.length}
+              Showing {indexOfFirstCategory + 1}–{Math.min(indexOfLastCategory, filteredCategories.length)} out of {filteredCategories.length}
             </div>
             <Pagination
               currentPage={currentPage}
@@ -1206,6 +763,7 @@ const AdminCategories: React.FC = () => {
             />
           </div>
 
+          {/* ── Homepage Categories Modal ── */}
           {showHomepageModal && (
             <div className="admin-categories__modal-overlay">
               <div className="admin-categories__modal">
@@ -1214,12 +772,11 @@ const AdminCategories: React.FC = () => {
                 <div className="admin-categories__homepage-selection">
                   {categories.map((category) => (
                     <label key={category.id} className="admin-categories__checkbox-label">
-                      <input style={{
-                        height: "fit-content"
-                      }}
+                      <input
                         type="checkbox"
                         checked={homepageCategories.includes(category.id)}
                         onChange={() => handleHomepageCategoryChange(category.id)}
+                        style={{ height: "fit-content" }}
                       />
                       {category.name}
                     </label>
@@ -1242,21 +799,17 @@ const AdminCategories: React.FC = () => {
         category={selectedCategory}
         isAdding={isAddingCategory}
       />
-
       <SubCategoryModal
         show={showSubCategoryModal}
         onClose={() => setShowSubCategoryModal(false)}
         onSave={(subCategory, imageFile) => {
-          if (selectedCategory) {
-            handleSaveSubCategory(selectedCategory.id, subCategory, imageFile);
-          }
+          if (selectedCategory) handleSaveSubCategory(selectedCategory.id, subCategory, imageFile);
         }}
         subCategory={selectedSubCategory}
         categoryName={selectedCategory?.name || ""}
         isAdding={isAddingSubCategory}
         isLoading={isSubCategoryLoading}
       />
-
       <SubcategoriesViewModal
         show={showSubcategoriesViewModal}
         onClose={() => setShowSubcategoriesViewModal(false)}
@@ -1267,7 +820,6 @@ const AdminCategories: React.FC = () => {
         subcategoryImagePreview={subcategoryImagePreview}
         subcategoryImageChanging={subcategoryImageChanging}
       />
-
       <DeleteModal
         show={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}

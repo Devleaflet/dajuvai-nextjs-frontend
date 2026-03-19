@@ -1,146 +1,212 @@
-/* AdminCategories.css */
+/* ============================================================
+   AdminCategories.css  — matches the redesigned screenshot
+   ============================================================ */
+
+/* ── Page wrapper ── */
 .admin-categories {
-  display: flex;
+  padding: 24px;
+  margin: 0px;
+  /* background-color: #f0f2f5; */
   min-height: 100vh;
-  background-color: #f5f7fa;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+/* ── Full-width search bar (above the card) ── */
+.admin-categories__search-bar-wrapper {
+  position: relative;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.admin-categories__search-icon {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.admin-categories__search-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 20px 0 48px;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  background: #ffffff;
+  font-size: 15px;
+  color: #111827;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.admin-categories__search-input::placeholder {
+  color: #9ca3af;
+}
+
+.admin-categories__search-input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+/* ── Content area ── */
 .admin-categories__content {
-  flex: 1;
-  overflow-y: auto;
-  max-width: 100%;
+  width: 100%;
 }
 
+/* ── White card ── */
+.admin-categories__list-container {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+/* ── Card header ── */
 .admin-categories__header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin: 16px 2rem 24px 2rem;
-  padding-right: 15px;
-  padding-left: 15px;
+  justify-content: space-between;
+  padding: 24px 28px 20px;
+  border-bottom: 1px solid #f3f4f6;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
-.admin-categories__title {
-  font-size: 28px;
-  font-weight: 600;
-  color: #1a202c;
+.admin-categories__header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
   margin: 0;
 }
 
-.admin-categories__add-btn {
+.admin-categories__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* "+ Add Category" — outlined green */
+.admin-categories__btn-add-category {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  background-color: #ff6b35;
-  color: #ffffff;
-  border: none;
-  border-radius: 6px;
-  padding: 10px 20px;
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.1s ease;
-}
-
-.admin-categories__add-btn:hover {
-  background-color: #e05a2b;
-  transform: translateY(-1px);
-}
-
-.admin-categories__add-btn:active {
-  transform: translateY(0);
-}
-
-.admin-categories__list-container {
-  background-color: #ffffff;
+  gap: 6px;
+  height: 40px;
+  padding: 0 20px;
+  border: 1.5px solid #10b981;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
-  margin: 0 2rem;
+  background: transparent;
+  color: #10b981;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+  white-space: nowrap;
 }
 
+.admin-categories__btn-add-category:hover {
+  background: #ecfdf5;
+}
+
+/* "Manage Homepage Categories" — filled orange */
+.admin-categories__btn-homepage {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 8px;
+  background: #f56a2c;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  white-space: nowrap;
+}
+
+.admin-categories__btn-homepage:hover {
+  background: #e05520;
+}
+
+/* ── Table ── */
 .admin-categories__table-container {
   width: 100%;
   overflow-x: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #d1d5db #f3f4f6;
-}
-
-.admin-categories__table-container::-webkit-scrollbar {
-  height: 8px;
-}
-
-.admin-categories__table-container::-webkit-scrollbar-thumb {
-  background-color: #d1d5db;
-  border-radius: 4px;
-}
-
-.admin-categories__table-container::-webkit-scrollbar-track {
-  background-color: #f3f4f6;
 }
 
 .admin-categories__table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: auto;
-  min-width: 800px; /* Ensures table doesn't collapse too much on smaller screens */
+  min-width: 700px;
 }
 
-.admin-categories__table-head {
-  background-color: #f9fafb;
+.admin-categories__table-head tr {
+  border-bottom: 1px solid #f3f4f6;
 }
 
 .admin-categories__table-head th {
-  padding: 14px 16px;
+  padding: 14px 24px;
   text-align: left;
   font-size: 14px;
   font-weight: 600;
-  color: #4b5563;
-  border-bottom: 1px solid #e5e7eb;
+  color: #374151;
+  background: #ffffff;
   white-space: nowrap;
 }
 
+/* ── Table rows ── */
 .admin-categories__table-row {
-  border-bottom: 1px solid #f1f5f9;
-  transition: background-color 0.2s ease;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background-color 0.15s;
+}
+
+.admin-categories__table-row:last-child {
+  border-bottom: none;
 }
 
 .admin-categories__table-row:hover {
-  background-color: #f9fafb;
+  background-color: #fafafa;
 }
 
 .admin-categories__table-row td {
-  padding: 14px 16px;
-  color: #374151;
-  font-size: 14px;
+  padding: 18px 24px;
   vertical-align: middle;
+  font-size: 14px;
+  color: #374151;
 }
 
+/* ── Category name cell ── */
 .admin-categories__name-cell {
-  width: 35%;
-  min-width: 200px;
+  width: 40%;
 }
 
 .admin-categories__category-container {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
+}
+
+.admin-categories__image-container {
+  position: relative;
+  flex-shrink: 0;
 }
 
 .admin-categories__category-image {
-  width: 48px;
-  height: 48px;
-  border-radius: 6px;
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
   overflow: hidden;
   background-color: #f3f4f6;
-  flex-shrink: 0;
+  border: 1px solid #e5e7eb;
 }
 
 .admin-categories__category-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
 .admin-categories__no-image {
@@ -149,15 +215,48 @@
   justify-content: center;
   width: 100%;
   height: 100%;
-  font-size: 12px;
+  font-size: 11px;
   color: #9ca3af;
-  background-color: #f3f4f6;
+  text-align: center;
 }
 
-.admin-categories__status {
+.admin-categories__category-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: #111827;
+}
+
+/* ── Change image button (hover overlay) ── */
+.admin-categories__change-image-btn {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 22px;
+  height: 22px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  color: #4a5568;
+  opacity: 0.75;
+  transition: opacity 0.15s, color 0.15s;
+  backdrop-filter: blur(2px);
+  padding: 0;
+}
+
+.admin-categories__image-container:hover .admin-categories__change-image-btn {
+  opacity: 1;
+  color: #f56a2c;
+}
+
+/* ── Status badge ── */
+.admin-categories__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   font-size: 14px;
   font-weight: 500;
 }
@@ -171,370 +270,168 @@
 }
 
 .admin-categories__status-dot {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   background-color: currentColor;
   flex-shrink: 0;
 }
 
+/* ── Date cell ── */
+.admin-categories__date-cell {
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+/* ── Action buttons ── */
 .admin-categories__actions {
   display: flex;
-  gap: 8px;
+  align-items: center;
   justify-content: flex-end;
-  min-width: 160px;
+  gap: 8px;
 }
 
 .admin-categories__action-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 6px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 38px;
+  height: 38px;
   border: none;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease, transform 0.1s ease;
+  transition: background-color 0.15s, transform 0.1s;
+  padding: 0;
+  flex-shrink: 0;
 }
 
 .admin-categories__action-btn:hover {
   transform: translateY(-1px);
 }
 
-.admin-categories__view-btn {
-  background-color: #eff6ff;
-  color: #3b82f6;
+.admin-categories__action-btn:active {
+  transform: scale(0.95);
 }
 
-.admin-categories__view-btn:hover {
-  background-color: #dbeafe;
-}
-
-.admin-categories__edit-btn {
-  background-color: #fefce8;
-  color: #eab308;
-}
-
-.admin-categories__edit-btn:hover {
-  background-color: #fef9c3;
-}
-
+/* Red delete */
 .admin-categories__delete-btn {
-  background-color: #fef2f2;
+  background: #fef2f2;
   color: #ef4444;
 }
+.admin-categories__delete-btn:hover { background: #fee2e2; }
 
-.admin-categories__delete-btn:hover {
-  background-color: #fee2e2;
+/* Blue view */
+.admin-categories__view-btn {
+  background: #eff6ff;
+  color: #3b82f6;
 }
+.admin-categories__view-btn:hover { background: #dbeafe; }
 
-.admin-categories__add-btn {
-  background-color: #e9f7ef;
+/* Yellow edit */
+.admin-categories__edit-btn {
+  background: #fefce8;
+  color: #ca8a04;
+}
+.admin-categories__edit-btn:hover { background: #fef9c3; }
+
+/* Green ADD text button */
+.admin-categories__add-sub-btn {
+  background: #ecfdf5;
   color: #10b981;
-}
-
-.admin-categories__add-btn:hover {
-  background-color: #d1fae5;
-}
-
-.admin-categories__subcategories {
-  margin-top: 24px;
-  padding: 20px;
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
-.admin-categories__subcategories h3 {
-  margin: 0 0 16px;
-  font-size: 20px;
-  font-weight: 600;
-  color: #1a202c;
-}
-
-.admin-categories__subcategories-table {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: auto;
-  min-width: 600px;
-  background-color: #ffffff;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.admin-categories__subcategories-table th,
-.admin-categories__subcategories-table td {
-  padding: 12px 16px;
-  text-align: left;
-  border-bottom: 1px solid #f1f5f9;
-  font-size: 14px;
-  vertical-align: middle;
-}
-
-.admin-categories__subcategories-table th {
-  background-color: #f9fafb;
-  font-weight: 600;
-  color: #4b5563;
-  white-space: nowrap;
-}
-
-.admin-categories__subcategories-table tr:last-child td {
-  border-bottom: none;
-}
-
-.admin-categories__subcategories-table tr:hover {
-  background-color: #f9fafb;
-}
-
-.admin-categories__subcategories-table th:nth-child(1),
-.admin-categories__subcategories-table td:nth-child(1) {
-  width: 45%;
-  min-width: 150px;
-}
-
-.admin-categories__subcategories-table th:nth-child(2),
-.admin-categories__subcategories-table td:nth-child(2) {
-  width: 35%;
-  min-width: 100px;
-}
-
-.admin-categories__subcategories-table th:nth-child(3),
-.admin-categories__subcategories-table td:nth-child(3) {
-  width: 20%;
-  min-width: 100px;
-}
-
-.admin-categories__subcategory-image {
-  width: 48px;
-  height: 48px;
-  border-radius: 6px;
-  overflow: hidden;
-  background-color: #f3f4f6;
-  flex-shrink: 0;
-}
-
-.admin-categories__subcategory-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.admin-categories__subcategory-image .admin-categories__no-image {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
   font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  width: auto;
+  padding: 0 14px;
+  height: 38px;
+  border-radius: 8px;
+}
+.admin-categories__add-sub-btn:hover { background: #d1fae5; }
+
+/* ── No data ── */
+.admin-categories__no-data {
+  text-align: center;
   color: #9ca3af;
-  background-color: #f3f4f6;
+  font-style: italic;
+  padding: 48px 24px !important;
 }
 
+/* ── Pagination ── */
 .admin-categories__pagination-container {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 16px;
-  border-top: 1px solid #e5e7eb;
-  background-color: #ffffff;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-top: 1px solid #f3f4f6;
 }
 
 .admin-categories__pagination-info {
+  font-size: 13px;
   color: #6b7280;
+}
+
+/* ── Error banner ── */
+.admin-categories__error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #dc2626;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   font-size: 14px;
   font-weight: 500;
+  gap: 8px;
 }
 
-/* Skeleton Styles */
+.admin-categories__error button {
+  background: transparent;
+  border: none;
+  color: #dc2626;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+/* ── Skeletons ── */
 .admin-categories__skeleton {
-  background: #e0e0e0;
-  border-radius: 4px;
-  animation: pulse 1.2s infinite;
-}
-
-@keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.6; }
-  100% { opacity: 1; }
-}
-
-.admin-categories__skeleton-row {
-  height: 64px; /* Match row height */
-}
-
-.admin-categories__skeleton-checkbox {
-  width: 20px;
-  height: 20px;
-  margin: 0 auto;
+  background: linear-gradient(90deg, #f3f4f6 25%, #eaecee 50%, #f3f4f6 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s infinite;
+  border-radius: 6px;
 }
 
 .admin-categories__skeleton-image {
-  width: 48px;
-  height: 48px;
-  border-radius: 6px;
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
 }
 
-.admin-categories__skeleton-text {
-  height: 16px;
-  border-radius: 4px;
-}
-
-.admin-categories__skeleton-text--name {
-  width: 160px;
-}
-
-.admin-categories__skeleton-text--status {
-  width: 80px;
-}
-
-.admin-categories__skeleton-text--date {
-  width: 100px;
-}
+.admin-categories__skeleton-text { height: 14px; }
+.admin-categories__skeleton-text--name { width: 160px; }
+.admin-categories__skeleton-text--status { width: 70px; }
+.admin-categories__skeleton-text--date { width: 90px; }
 
 .admin-categories__skeleton-button {
-  width: 36px;
-  height: 36px;
-  border-radius: 6px;
-  display: inline-block;
-  margin: 0 4px;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
 }
 
-/* Error Message */
-.admin-categories__error {
-  color: #b91c1c;
-  background-color: #fef2f2;
-  padding: 12px 16px;
-  border-radius: 6px;
-  margin: 12px 0;
-  font-size: 14px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid #fee2e2;
+@keyframes skeleton-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
-.admin-categories__error::before {
-  content: "⚠";
-  font-size: 16px;
-}
-
-/* Responsive Design */
-@media (max-width: 1024px) {
-  .admin-categories__content {
-    padding: 16px;
-  }
-
-  .admin-categories__table-container,
-  .admin-categories__subcategories {
-    overflow-x: auto;
-  }
-
-  .admin-categories__table,
-  .admin-categories__subcategories-table {
-    min-width: 600px;
-  }
-
-  .admin-categories__actions {
-    min-width: 140px;
-  }
-
-  .admin-categories__title {
-    font-size: 24px;
-  }
-
-  .admin-categories__add-btn {
-    padding: 8px 16px;
-    font-size: 14px;
-  }
-}
-
-@media (max-width: 768px) {
-  .admin-categories {
-    flex-direction: column;
-  }
-
-  .admin-categories__content {
-    padding: 12px;
-  }
-
-  .admin-categories__header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .admin-categories__add-btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .admin-categories__table-head th,
-  .admin-categories__table-row td {
-    padding: 10px 12px;
-    font-size: 13px;
-  }
-
-  .admin-categories__subcategories-table th,
-  .admin-categories__subcategories-table td {
-    padding: 10px 12px;
-    font-size: 13px;
-  }
-
-  .admin-categories__category-image,
-  .admin-categories__subcategory-image {
-    width: 40px;
-    height: 40px;
-  }
-
-  .admin-categories__action-btn {
-    width: 32px;
-    height: 32px;
-  }
-
-  .admin-categories__pagination-container {
-    flex-direction: column;
-    gap: 12px;
-  }
-}
-
-@media (max-width: 480px) {
-  .admin-categories__title {
-    font-size: 20px;
-  }
-
-  .admin-categories__pagination-info {
-    font-size: 13px;
-  }
-
-  .admin-categories__skeleton-text--name {
-    width: 120px;
-  }
-
-  .admin-categories__skeleton-text--status {
-    width: 60px;
-  }
-
-  .admin-categories__skeleton-text--date {
-    width: 80px;
-  }
-}
-
-
-.row-skeleton {
-  /* Add styles previously defined for admin-categories__skeleton-row */
-  background: #f0f0f0;
-  animation: pulse 1.5s infinite;
-}
-
-
+/* ── Homepage modal ── */
 .admin-categories__modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -542,99 +439,112 @@
 }
 
 .admin-categories__modal {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  width: 400px;
-  max-width: 90%;
+  background: #fff;
+  padding: 28px;
+  border-radius: 12px;
+  width: 420px;
+  max-width: 92%;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.14);
 }
 
 .admin-categories__modal h2 {
-  margin-top: 0;
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
 }
 
-.admin-categories__modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.admin-categories__modal-actions button {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.admin-categories__modal-actions button:first-child {
-  background: #007bff;
-  color: white;
-}
-
-.admin-categories__modal-actions button:last-child {
-  background: #6c757d;
-  color: white;
+.admin-categories__modal p {
+  color: #6b7280;
+  font-size: 14px;
+  margin: 0 0 16px;
 }
 
 .admin-categories__homepage-selection {
-  max-height: 300px;
+  max-height: 280px;
   overflow-y: auto;
   margin-bottom: 20px;
+  border: 1px solid #f3f4f6;
+  border-radius: 8px;
 }
 
 .admin-categories__checkbox-label {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px;
+  padding: 10px 14px;
   cursor: pointer;
+  font-size: 14px;
+  color: #374151;
+  border-bottom: 1px solid #f9fafb;
+  transition: background 0.1s;
 }
 
-.admin-categories__checkbox-label input {
-  margin: 0;
-}
+.admin-categories__checkbox-label:last-child { border-bottom: none; }
+.admin-categories__checkbox-label:hover { background: #f9fafb; }
 
-/* Change Image Button Styles */
-.admin-categories__change-image-btn {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 24px;
-  height: 24px;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid #e2e8f0;
-  border-radius: 4px;
-  cursor: pointer;
+.admin-categories__modal-actions {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #4a5568;
-  transition: all 0.2s ease;
-  backdrop-filter: blur(4px);
+  justify-content: flex-end;
+  gap: 10px;
 }
 
-.admin-categories__change-image-btn:hover {
-  background: rgba(255, 255, 255, 1);
-  color: #f56a2c;
-  transform: scale(1.05);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.admin-categories__modal-actions button {
+  height: 38px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
 }
 
-.admin-categories__change-image-btn svg {
-  width: 14px;
-  height: 14px;
+.admin-categories__modal-actions button:first-child {
+  background: #4f46e5;
+  color: #fff;
 }
 
-.admin-categories__image-container {
-  position: relative;
-  display: inline-block;
+.admin-categories__modal-actions button:first-child:hover { background: #4338ca; }
+
+.admin-categories__modal-actions button:last-child {
+  background: #f3f4f6;
+  color: #374151;
 }
 
-.admin-categories__image-container:hover .admin-categories__change-image-btn {
-  opacity: 1;
-}
+.admin-categories__modal-actions button:last-child:hover { background: #e5e7eb; }
 
-.admin-categories__change-image-btn {
-  opacity: 0.8;
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .admin-categories { padding: 16px; }
+
+  .admin-categories__header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 18px 18px 14px;
+  }
+
+  .admin-categories__header-actions {
+    width: 100%;
+  }
+
+  .admin-categories__btn-add-category,
+  .admin-categories__btn-homepage {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .admin-categories__table-row td {
+    padding: 14px 16px;
+  }
+
+  .admin-categories__category-image {
+    width: 48px;
+    height: 48px;
+  }
+
+  .admin-categories__pagination-container {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
 }

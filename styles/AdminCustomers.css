@@ -1,5 +1,45 @@
 /* AdminCustomers.css */
 
+.admin-customers__searchbar-row {
+	margin: 0 2rem 1rem 2rem;
+}
+
+.admin-customers__searchbar {
+	position: relative;
+	width: 100%;
+}
+
+.admin-customers__searchbar-icon {
+	position: absolute;
+	left: 1rem;
+	top: 50%;
+	transform: translateY(-50%);
+	color: #9ca3af;
+	font-size: 1.2rem;
+	pointer-events: none;
+}
+
+.admin-customers__searchbar input {
+	width: 100%;
+	height: 48px;
+	border: 1px solid #d9dde3;
+	border-radius: 999px;
+	background: #f3f5f7;
+	color: #4b5563;
+	font-size: 1rem;
+	padding: 0 1rem 0 3rem;
+	outline: none;
+}
+
+.admin-customers__searchbar input::placeholder {
+	color: #9ca3af;
+}
+
+.admin-customers__searchbar input:focus {
+	border-color: #cbd5e1;
+	box-shadow: 0 0 0 2px rgba(203, 213, 225, 0.45);
+}
+
 /* Filter Section Styles */
 .admin-customers__filters {
 	display: flex;
@@ -77,6 +117,15 @@
 
 /* Responsive adjustments for filters */
 @media (max-width: 768px) {
+	.admin-customers__searchbar-row {
+		margin: 0 1rem 0.75rem 1rem;
+	}
+
+	.admin-customers__searchbar input {
+		height: 44px;
+		font-size: 0.95rem;
+	}
+
 	.admin-customers__filters {
 		flex-direction: column;
 		align-items: stretch;
@@ -106,3 +155,4 @@
 		width: 100%;
 	}
 }
+

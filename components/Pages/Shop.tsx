@@ -558,7 +558,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 		</div>
 
 		{/* Categories */}
-		<div className={`${selectedCategory !== undefined ? 'mb-5 pb-5 border-b border-gray-100' : 'mb-0'}`}>
+		<div className={`${selectedCategory !== undefined ? 'mb-5 pb-5 border-b border-gray-100' : 'mb-0'} `}>
 			<button
 				className="w-full flex items-center justify-between mb-3 group"
 				onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
@@ -591,7 +591,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 						}}
 						className="w-full py-2 px-3 border border-gray-200 rounded-lg text-xs outline-none focus:border-[#ff6b00] mb-3 bg-gray-50"
 					/>
-					<div className="flex flex-col gap-2">
+					<div className="flex flex-col gap-2 ">
 						{isLoadingCategories ? (
 							<p className="text-xs text-gray-400 text-center py-2">Loading...</p>
 						) : (
@@ -1097,7 +1097,7 @@ const Shop: React.FC = () => {
 
 			{/* Drawer panel */}
 			<div
-				className={`fixed top-0 left-0 h-full w-[85vw] max-w-[320px] z-50 transform transition-transform duration-300 ease-in-out lg:hidden ${isMobileFilterOpen ? 'translate-x-0' : '-translate-x-full'}`}
+				className={`fixed top-0 left-0 h-full w-[85vw] max-w-[350px] z-50 transform transition-transform duration-300 ease-in-out lg:hidden ${isMobileFilterOpen ? 'translate-x-0' : '-translate-x-full'}`}
 			>
 				<FilterPanel
 					{...filterPanelProps}
@@ -1107,7 +1107,7 @@ const Shop: React.FC = () => {
 
 			{/* ── MAIN SHOP CONTAINER ── */}
 			<div className="w-full bg-[#f0f0f0] min-h-screen">
-				<div className="w-full max-w-[1400px] mx-auto px-3 sm:px-5 py-4 sm:py-6">
+				<div className="w-full max-w-[1300px] mx-auto px-3 sm:px-5 py-4 sm:py-6">
 
 					{/* Page Title */}
 					<h2 className="text-lg sm:text-2xl font-semibold text-gray-800 mb-3 sm:mb-4 truncate">
@@ -1137,14 +1137,14 @@ const Shop: React.FC = () => {
 						</button>
 
 						{/* Search Form */}
-						<form onSubmit={handleSearchSubmit} className="flex gap-2 sm:gap-3 items-center flex-1 min-w-0">
+						<form onSubmit={handleSearchSubmit} className="flex gap-2 sm:gap-3 items-center  min-w-0">
 							<div className="flex-1 relative min-w-0">
 								<input
 									type="text"
 									value={searchInputValue}
 									onChange={handleSearchInputChange}
 									placeholder="Search products, brands..."
-									className="w-full py-2.5 sm:py-3 px-3 sm:px-4 pr-8 sm:pr-10 border border-gray-300 rounded-lg text-sm outline-none bg-white transition-colors focus:border-[#ff6b00] shadow-sm"
+									className="w-150 py-2.5 sm:py-3 px-3 sm:px-4 pr-8 sm:pr-10 border border-gray-300 rounded-lg text-sm outline-none bg-white transition-colors focus:border-[#ff6b00] shadow-sm"
 								/>
 								{searchInputValue && (
 									<button
@@ -1158,7 +1158,7 @@ const Shop: React.FC = () => {
 							</div>
 							<button
 								type="submit"
-								className="py-2.5 sm:py-3 px-4 sm:px-6 bg-[#ff6b00] text-white rounded-lg text-sm font-semibold cursor-pointer flex items-center gap-1.5 sm:gap-2 hover:bg-[#e05a00] transition-colors shadow-sm whitespace-nowrap flex-shrink-0"
+								className="py-2.5 sm:py-3 px-3 sm:px-6 bg-[#ff6b00] text-white rounded-lg text-sm font-semibold cursor-pointer flex items-center gap-1.5 sm:gap-2 hover:bg-[#e05a00] transition-colors shadow-sm whitespace-nowrap flex-shrink-0"
 							>
 								<Search size={15} className="sm:hidden" />
 								<span className="hidden sm:inline">Search</span>

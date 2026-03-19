@@ -1,8 +1,4 @@
-.admin-category {
-  display: flex;
-  min-height: 100vh;
-  background-color: #f8f9fa;
-}
+/* Container flex removed for new layout */
 
 .admin-category__content {
   flex: 1;
@@ -443,4 +439,5 @@
     width: 100%;
   }
 } 
+
 

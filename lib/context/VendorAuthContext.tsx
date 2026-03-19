@@ -54,6 +54,7 @@ export const VendorAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (savedToken && savedVendor) {
         try {
           const vendor = JSON.parse(savedVendor);
+          document.cookie = `vendorToken=${savedToken}; path=/; max-age=604800; SameSite=Lax`;
           setAuthState({
             token: savedToken,
             vendor,
@@ -116,6 +117,7 @@ export const VendorAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (typeof window !== 'undefined') {
       localStorage.setItem('vendorToken', token);
       localStorage.setItem('vendorData', JSON.stringify(vendor));
+      document.cookie = `vendorToken=${token}; path=/; max-age=604800; SameSite=Lax`;
     }
     axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   };
@@ -123,6 +125,9 @@ export const VendorAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const logout = () => {
     //("VendorAuthContext logout - using comprehensive logout");
     setAuthState({ token: null, vendor: null, isAuthenticated: false });
+    if (typeof window !== 'undefined') {
+      document.cookie = 'vendorToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+    }
     VendorAuthService.comprehensiveLogout();
   };
 

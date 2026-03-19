@@ -1,8 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { AdminSidebar } from "@/components/Components/AdminSidebar";
-import Header from "@/components/Components/Header";
 import Pagination from "@/components/Components/Pagination";
 import VendorEditModal from "@/components/Components/Modal/VendorEditModal";
 import VendorViewModal from "@/components/Components/Modal/VendorViewModal";
@@ -17,6 +15,7 @@ import {
 import "@/styles/AdminVendor.css";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { FiSearch } from "react-icons/fi";
 
 // Use the detailed vendor type for internal operations
 type Vendor = ComponentVendor;
@@ -661,6 +660,7 @@ const AdminVendor: React.FC = () => {
 		statusFilter,
 		startDate,
 		endDate,
+		searchQuery,
 		vendors,
 	]);
 
@@ -668,26 +668,8 @@ const AdminVendor: React.FC = () => {
 		(query: string) => {
 			setSearchQuery(query);
 			setCurrentPage(1);
-
-			const searchTerm = query.toLowerCase();
-			const filtered = vendors.filter((vendor) => {
-				const districtName =
-					typeof vendor.district === "object" && vendor.district
-						? vendor.district.name
-						: typeof vendor.district === "string"
-							? vendor.district
-							: "";
-				return (
-					(vendor.businessName || "").toLowerCase().includes(searchTerm) ||
-					(vendor.email || "").toLowerCase().includes(searchTerm) ||
-					(vendor.phoneNumber || "").toLowerCase().includes(searchTerm) ||
-					districtName.toLowerCase().includes(searchTerm)
-				);
-			});
-
-			setFilteredVendors(filtered);
 		},
-		[vendors]
+		[]
 	);
 
 	const handleSort = (key: keyof Vendor) => {
@@ -714,6 +696,24 @@ const AdminVendor: React.FC = () => {
 
 	const handleFilter = () => {
 		let filtered = [...vendors];
+
+		if (searchQuery.trim()) {
+			const searchTerm = searchQuery.toLowerCase();
+			filtered = filtered.filter((vendor) => {
+				const districtName =
+					typeof vendor.district === "object" && vendor.district
+						? vendor.district.name
+						: typeof vendor.district === "string"
+							? vendor.district
+							: "";
+				return (
+					(vendor.businessName || "").toLowerCase().includes(searchTerm) ||
+					(vendor.email || "").toLowerCase().includes(searchTerm) ||
+					(vendor.phoneNumber || "").toLowerCase().includes(searchTerm) ||
+					districtName.toLowerCase().includes(searchTerm)
+				);
+			});
+		}
 
 		if (districtFilter !== "all") {
 			filtered = filtered.filter((vendor) => {
@@ -882,14 +882,20 @@ const AdminVendor: React.FC = () => {
 
 	return (
 		<div className="admin-vendors">
-			<AdminSidebar />
 			<div style={{ display: "flex", flexDirection: "column", flex: "1" }}>
-				<Header
-					onSearch={handleSearch}
-					showSearch={true}
-					title="Vendor Management"
-				/>
-				<div className="admin-vendors__content">
+<div className="admin-vendors__content">
+					<div className="admin-vendors__searchbar-row">
+						<div className="admin-vendors__searchbar">
+							<FiSearch className="admin-vendors__searchbar-icon" />
+							<input
+								type="text"
+								placeholder="Search"
+								value={searchQuery}
+								onChange={(e) => handleSearch(e.target.value)}
+								aria-label="Search vendors"
+							/>
+						</div>
+					</div>
 					{unapprovedCount > 0 && (
 						<div className="admin-vendors__unapproved-count">
 							<span>{unapprovedCount} unapproved vendors</span>
@@ -1082,6 +1088,9 @@ const AdminVendor: React.FC = () => {
 							</table>
 						</div>
 						<div className="admin-vendors__pagination-container">
+							<div className="admin-vendors__pagination-info">
+								Page {currentPage} of {Math.max(1, Math.ceil(filteredVendors.length / vendorsPerPage))}
+							</div>
 							<Pagination
 								currentPage={currentPage}
 								totalPages={Math.ceil(filteredVendors.length / vendorsPerPage)}
@@ -1138,3 +1147,6 @@ const AdminVendor: React.FC = () => {
 };
 
 export default AdminVendor;
+
+
+

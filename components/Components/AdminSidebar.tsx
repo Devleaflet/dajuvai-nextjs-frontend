@@ -25,7 +25,7 @@ export function AdminSidebar({ ...props }: React.HTMLAttributes<HTMLDivElement>)
     <div className={`sidebar ${isMobile ? "sidebar--dock" : ""}`} {...props}>
       {!isMobile && (
         <div className="sidebar__header">
-          <Link href="/admin-dashboard" className="sidebar__logo">
+          <Link href="/admin/dashboard" className="sidebar__logo">
             <svg
               width="32"
               height="32"
@@ -53,8 +53,8 @@ export function AdminSidebar({ ...props }: React.HTMLAttributes<HTMLDivElement>)
 
       <nav className="sidebar__nav">
         <NavItem
-          to="/admin-dashboard"
-          active={pathname === "/admin-dashboard"}
+          to="/admin/dashboard"
+          active={pathname === "/admin/dashboard"}
           icon={
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <rect x="3" y="3" width="7" height="9" rx="2" stroke="currentColor" strokeWidth="2" />
@@ -67,8 +67,8 @@ export function AdminSidebar({ ...props }: React.HTMLAttributes<HTMLDivElement>)
           Dashboard
         </NavItem>
         <NavItem
-          to="/admin-catalog"
-          active={pathname === "/admin-catalog"}
+          to="/admin/catalog"
+          active={pathname === "/admin/catalog"}
           icon={
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M19 11H5M19 11C20.1046 11 21 11.8954 21 13V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V13C3 11.8954 3.89543 11 5 11M19 11V9C19 7.89543 18.1046 7 17 7M5 11V9C5 7.89543 5.89543 7 7 7M7 7V5C7 3.89543 7.89543 3 9 3H15C16.1046 3 17 3.89543 17 5V7M7 7H17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -78,8 +78,8 @@ export function AdminSidebar({ ...props }: React.HTMLAttributes<HTMLDivElement>)
           Catalog
         </NavItem>
         <NavItem
-          to="/admin-products"
-          active={pathname === "/admin-products"}
+          to="/admin/products"
+          active={pathname === "/admin/products"}
           icon={
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M20 7L12 3L4 7M20 7V17L12 21M20 7L12 11M12 21L4 17V7M12 21V11M4 7L12 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -89,8 +89,8 @@ export function AdminSidebar({ ...props }: React.HTMLAttributes<HTMLDivElement>)
           Products
         </NavItem>
         <NavItem
-          to="/admin-categories"
-          active={pathname === "/admin-categories"}
+          to="/admin/categories"
+          active={pathname === "/admin/categories"}
           icon={
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M4 9H20M4 15H20M10 3V21M14 3V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -100,8 +100,8 @@ export function AdminSidebar({ ...props }: React.HTMLAttributes<HTMLDivElement>)
           Categories
         </NavItem>
         <NavItem
-          to="/admin-deals"
-          active={pathname === "/admin-deals"}
+          to="/admin/deals"
+          active={pathname === "/admin/deals"}
           icon={
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -111,8 +111,8 @@ export function AdminSidebar({ ...props }: React.HTMLAttributes<HTMLDivElement>)
           Deals
         </NavItem>
         <NavItem
-          to="/admin-promo"
-          active={pathname === "/admin-promo"}
+          to="/admin/promo"
+          active={pathname === "/admin/promo"}
           icon={
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -122,8 +122,8 @@ export function AdminSidebar({ ...props }: React.HTMLAttributes<HTMLDivElement>)
           Promo Codes
         </NavItem>
         <NavItem
-          to="/admin-banner"
-          active={pathname === "/admin-banner"}
+          to="/admin/banner"
+          active={pathname === "/admin/banner"}
           icon={
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M3 12C3 4.5885 4.5885 3 12 3C19.4115 3 21 4.5885 21 12C21 19.4115 19.4115 21 12 21C4.5885 21 3 19.4115 3 12Z" stroke="currentColor" strokeWidth="2" />
@@ -135,8 +135,8 @@ export function AdminSidebar({ ...props }: React.HTMLAttributes<HTMLDivElement>)
           Banners
         </NavItem>
         <NavItem
-          to="/admin-orders"
-          active={pathname === "/admin-orders"}
+          to="/admin/orders"
+          active={pathname === "/admin/orders"}
           icon={
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M9 5H7C5.89543 5 5 5.89543 5 7V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V7C19 5.89543 18.1046 5 17 5H15M9 5C9 6.10457 9.89543 7 11 7H13C14.1046 7 15 6.10457 15 5M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5M12 12H15M12 16H15M9 12H9.01M9 16H9.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -146,8 +146,8 @@ export function AdminSidebar({ ...props }: React.HTMLAttributes<HTMLDivElement>)
           Orders
         </NavItem>
         <NavItem
-          to="/admin-notifications"
-          active={pathname === "/admin-notifications"}
+          to="/admin/notifications"
+          active={pathname === "/admin/notifications"}
           icon={
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -158,8 +158,8 @@ export function AdminSidebar({ ...props }: React.HTMLAttributes<HTMLDivElement>)
           Notifications
         </NavItem>
         <NavItem
-          to="/admin-customers"
-          active={pathname === "/admin-customers"}
+          to="/admin/customers"
+          active={pathname === "/admin/customers"}
           icon={
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -170,8 +170,8 @@ export function AdminSidebar({ ...props }: React.HTMLAttributes<HTMLDivElement>)
           Customers
         </NavItem>
         <NavItem
-          to="/admin-vendors"
-          active={pathname === "/admin-vendors"}
+          to="/admin/vendors"
+          active={pathname === "/admin/vendors"}
           icon={
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M19 21V5C19 3.89543 18.1046 3 17 3H7C5.89543 3 5 3.89543 5 5V21M19 21H5M19 21H21M5 21H3M9 7H15M9 11H15M9 15H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -209,8 +209,8 @@ export function AdminSidebar({ ...props }: React.HTMLAttributes<HTMLDivElement>)
           )}
         </div>
         <NavItem
-          to="/admin-profile"
-          active={pathname === "/admin-profile"}
+          to="/admin/profile"
+          active={pathname === "/admin/profile"}
           icon={
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M20 21V19C20 17.8954 19.1046 17 18 17H6C4.89543 17 4 17.8954 4 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

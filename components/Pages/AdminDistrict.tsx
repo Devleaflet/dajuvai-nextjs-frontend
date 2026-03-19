@@ -1,14 +1,12 @@
 'use client';
 
 import React, { useEffect, useState } from "react";
-import { AdminSidebar } from "@/components/Components/AdminSidebar";
-import Header from "@/components/Components/Header";
 import { API_BASE_URL } from "@/lib/config";
 import { useAuth } from "@/lib/context/AuthContext";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "@/styles/AdminDistrict.css";
-import { FiEdit2, FiTrash2, FiPlus } from "react-icons/fi";
+import { FiEdit2, FiTrash2, FiPlus, FiSearch } from "react-icons/fi";
 import AuthModal from "@/components/Components/AuthModal";
 
 interface District {
@@ -229,14 +227,20 @@ const AdminDistrict: React.FC = () => {
 
 	return (
 		<div className="admin-district">
-			<AdminSidebar />
 			<div className="admin-district__content">
-				<Header
-					onSearch={handleSearch}
-					showSearch={true}
-					title="District Management"
-				/>
-				<div className="admin-district__header-row">
+<div className="admin-district__searchbar-row">
+					<div className="admin-district__searchbar">
+						<FiSearch className="admin-district__searchbar-icon" />
+						<input
+							type="text"
+							placeholder="Search"
+							value={searchQuery}
+							onChange={(e) => handleSearch(e.target.value)}
+							aria-label="Search districts"
+						/>
+					</div>
+				</div>
+<div className="admin-district__header-row">
 					<button
 						className="admin-district__add-btn"
 						onClick={() => setShowAddModal(true)}
@@ -418,3 +422,6 @@ const AdminDistrict: React.FC = () => {
 };
 
 export default AdminDistrict;
+
+
+

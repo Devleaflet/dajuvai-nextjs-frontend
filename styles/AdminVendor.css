@@ -22,18 +22,52 @@
 }
 
 /* Admin Vendors Page */
-.admin-vendors {
-	display: flex;
-	min-height: 100vh;
-	background-color: #f8f9fa;
-	font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-		sans-serif;
-}
+/* Container flex removed for new layout */
 
 .admin-vendors__content {
 	width: 100%;
 	flex: 1;
 	padding: 24px;
+}
+
+.admin-vendors__searchbar-row {
+	margin: 0 0 16px 0;
+}
+
+.admin-vendors__searchbar {
+	position: relative;
+	width: 100%;
+}
+
+.admin-vendors__searchbar-icon {
+	position: absolute;
+	left: 1rem;
+	top: 50%;
+	transform: translateY(-50%);
+	color: #9ca3af;
+	font-size: 1.2rem;
+	pointer-events: none;
+}
+
+.admin-vendors__searchbar input {
+	width: 100%;
+	height: 46px;
+	border: 1px solid #d9dde3;
+	border-radius: 999px;
+	background: #f3f5f7;
+	color: #4b5563;
+	font-size: 1rem;
+	padding: 0 1rem 0 3rem;
+	outline: none;
+}
+
+.admin-vendors__searchbar input::placeholder {
+	color: #9ca3af;
+}
+
+.admin-vendors__searchbar input:focus {
+	border-color: #cbd5e1;
+	box-shadow: 0 0 0 2px rgba(203, 213, 225, 0.45);
 }
 
 .admin-vendors__header {
@@ -271,11 +305,69 @@
 	justify-content: space-between;
 	align-items: center;
 	margin-top: 16px;
+	gap: 12px;
 }
 
 .admin-vendors__pagination-info {
-	font-size: 14px;
+	font-size: 18px;
+	color: #111827;
+	font-weight: 500;
+}
+
+.admin-vendors__pagination-container .vendor-product__pagination {
+	margin-top: 0;
+	gap: 10px;
+}
+
+.admin-vendors__pagination-container .vendor-product__pagination-info {
+	display: none;
+}
+
+.admin-vendors__pagination-container .vendor-product__pagination-pages {
+	gap: 6px;
+}
+
+.admin-vendors__pagination-container .vendor-product__pagination-btn,
+.admin-vendors__pagination-container .vendor-product__pagination-page {
+	height: 40px;
+	border: 1px solid #d9dde3;
+	border-radius: 6px;
+	background: #ffffff;
+	color: #4b5563;
+	font-size: 16px;
+	font-weight: 500;
+	line-height: 1;
+}
+
+.admin-vendors__pagination-container .vendor-product__pagination-btn {
+	padding: 0 18px;
+}
+
+.admin-vendors__pagination-container .vendor-product__pagination-page {
+	min-width: 40px;
+	width: auto;
+	padding: 0 10px;
+}
+
+.admin-vendors__pagination-container .vendor-product__pagination-page--active {
+	background: #ff7f32;
+	border-color: #ff7f32;
+	color: #ffffff;
+}
+
+.admin-vendors__pagination-container .vendor-product__pagination-ellipsis {
 	color: #6b7280;
+	font-size: 16px;
+	font-weight: 600;
+	line-height: 40px;
+	padding: 0 4px;
+}
+
+.admin-vendors__pagination-container .vendor-product__pagination-btn:disabled {
+	background: #f3f4f6;
+	color: #b5bdc9;
+	border-color: #e5e7eb;
+	cursor: not-allowed;
 }
 
 .admin-vendors__skeleton {
@@ -574,6 +666,11 @@
 		padding: 16px;
 	}
 
+	.admin-vendors__searchbar input {
+		height: 44px;
+		font-size: 0.95rem;
+	}
+
 	.admin-vendors__filter-container {
 		flex-direction: column;
 	}
@@ -582,6 +679,26 @@
 	.admin-vendors__filter-date,
 	.admin-vendors__filter-button {
 		width: 100%;
+	}
+
+	.admin-vendors__pagination-container {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.admin-vendors__pagination-info {
+		font-size: 16px;
+	}
+
+	.admin-vendors__pagination-container .vendor-product__pagination-btn,
+	.admin-vendors__pagination-container .vendor-product__pagination-page {
+		font-size: 14px;
+		height: 36px;
+	}
+
+	.admin-vendors__pagination-container .vendor-product__pagination-ellipsis {
+		font-size: 14px;
+		line-height: 36px;
 	}
 
 	.vendor-edit-modal__content {
@@ -610,3 +727,4 @@
 		font-size: 12px;
 	}
 }
+

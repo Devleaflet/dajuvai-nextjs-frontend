@@ -4,8 +4,6 @@ import { Chart } from 'chart.js/auto';
 import { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import axiosInstance from "@/lib/api/axiosInstance";
-import { AdminSidebar } from "@/components/Components/AdminSidebar";
-import Header from "@/components/Components/Header";
 import Skeleton from "@/components/Components/Skeleton/Skeleton";
 import { useAuth } from "@/lib/context/AuthContext";
 import "@/styles/AdminDashboard.css";
@@ -724,14 +722,8 @@ export function AdminDashboard() {
 	if (error) {
 		return (
 			<div className="vendor-dash-container">
-				<AdminSidebar />
 				<div className={`dashboard ${isMobile ? 'dashboard--mobile' : ''}`}>
-					<Header
-						onSearch={() => { }}
-						showSearch={false}
-						title="Dashboard"
-					/>
-					<main
+<main
 						className="dashboard__main"
 						style={{
 							paddingBottom: isMobile ? `${docketHeight + 24}px` : '24px',
@@ -755,14 +747,8 @@ export function AdminDashboard() {
 
 	return (
 		<div className="vendor-dash-container">
-			<AdminSidebar />
 			<div className={`dashboard ${isMobile ? 'dashboard--mobile' : ''}`}>
-				<Header
-					onSearch={() => { }}
-					showSearch={false}
-					title="Dashboard"
-				/>
-				<main
+<main
 					className="dashboard__main"
 					style={{
 						paddingBottom: isMobile ? `${docketHeight + 24}px` : '24px',
@@ -976,3 +962,4 @@ export function AdminDashboard() {
 		</div>
 	);
 }
+

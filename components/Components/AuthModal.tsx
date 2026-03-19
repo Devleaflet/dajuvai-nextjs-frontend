@@ -362,7 +362,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
 				const role = response.data.data.role;
 				if (role === "admin" || role === "staff") {
-					router.push("/admin-dashboard");
+					router.push("/admin/dashboard");
 				} else {
 					router.push("/");
 				}

@@ -3,10 +3,8 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Search, Plus, Edit, Trash2, X } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import "@/styles/AdminCatalog.css";
-import { AdminSidebar } from "@/components/Components/AdminSidebar";
-import Header from "@/components/Components/Header";
 import { API_BASE_URL } from "@/lib/config";
 import { useAuth } from "@/lib/context/AuthContext";
 
@@ -319,7 +317,7 @@ const AdminCatalog = () => {
 			}
 
 			const result = await res.json();
-			//(`✅ ${selectedProductSource} section saved`, result);
+			//(`OK ${selectedProductSource} section saved`, result);
 			const successMessage = editingHomepage
 				? "Homepage section updated successfully"
 				: "Homepage section added successfully";
@@ -327,7 +325,7 @@ const AdminCatalog = () => {
 			fetchHomepageSections();
 			openHomepageModal(undefined, -1);
 		} catch (err) {
-			console.error("❌ Error:", err);
+			console.error("Error:", err);
 		}
 	};
 
@@ -496,14 +494,8 @@ const AdminCatalog = () => {
 					},
 				}}
 			/> */}
-			<AdminSidebar />
 			<div className="admin-catalog__container">
-				<Header
-					onSearch={() => { }}
-					showSearch={false}
-					title="Content Management"
-				/>
-				<div className="admin-catalog__content">
+<div className="admin-catalog__content">
 					<div className="admin-catalog__card">
 						<div className="admin-catalog__card-header">
 							<div className="admin-catalog__section-info">
@@ -1156,3 +1148,6 @@ const AdminCatalog = () => {
 };
 
 export default AdminCatalog;
+
+
+

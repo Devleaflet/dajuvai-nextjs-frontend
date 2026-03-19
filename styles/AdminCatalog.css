@@ -1,11 +1,5 @@
 /* Admin Catalog - Clean Minimal Design */
-.admin-catalog {
-	display: flex;
-	min-height: 100vh;
-	background-color: #fafafa;
-	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
-		sans-serif;
-}
+/* Container flex removed for new layout */
 
 .admin-catalog__container {
 	flex: 1;
@@ -131,14 +125,17 @@
 
 .admin-catalog__table-container {
 	padding: 0;
+	
 }
 
 .admin-catalog__table {
+	
 	width: 100%;
 }
 
 .admin-catalog__table-head {
 	font-size: 12px;
+	height: 50px;
 	font-weight: 600;
 	color: #6b7280;
 	text-transform: uppercase;
@@ -146,6 +143,7 @@
 	padding: 12px 24px;
 	border-bottom: 1px solid #e5e7eb;
 	background: #f9fafb;
+
 }
 
 .admin-catalog__table-row {
@@ -857,3 +855,4 @@
 	border: 2px solid #3b82f6;
 	background: #f0f9ff;
 }
+
