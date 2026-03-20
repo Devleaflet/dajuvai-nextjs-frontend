@@ -15,29 +15,34 @@ interface ApiProduct {
 	name: string;
 	description: string | null;
 	basePrice: string | null;
+	finalPrice?: string | null;
 	stock: number | null;
 	discount: string;
 	discountType: string;
 	size?: string[];
-	productImages: string[];
+	productImages: Array<string | { url?: string; image?: string }>;
 	status: string;
 	vendorId: number;
+	subcategoryId?: number;
 	hasVariants?: boolean;
 	variants?: Array<{
-		id: number;
+		id?: number;
 		sku: string;
-		basePrice: string;
-		discount: string;
-		discountType: string;
-		attributes?: Record<string, any>;
-		variantImages?: string[];
+		basePrice?: string | number;
+		finalPrice?: string | number;
+		price?: string | number;
+		discount?: string | number;
+		discountType?: string;
+		attributes?: Record<string, any> | Array<any>;
+		variantImages?: Array<string | { url?: string; image?: string }>;
+		images?: Array<string | { url?: string; image?: string }>;
 		stock: number | null;
 	}>;
-	subcategory: {
+	subcategory?: {
 		id: number;
 		name: string;
 	};
-	vendor: {
+	vendor?: {
 		id: number;
 		businessName: string;
 		email: string;
@@ -51,16 +56,20 @@ interface ApiProduct {
 }
 
 interface VendorInfo {
+	id?: number;
 	businessName: string;
 	email?: string;
-
+	phoneNumber?: string;
 	districtName?: string;
+	description?: string;
+	profilePicture?: string;
 }
 
 interface VendorStoreResponse {
 	success: boolean;
 	data: {
-		products: ApiProduct[];
+		product?: ApiProduct[];
+		products?: ApiProduct[];
 		total: number;
 	};
 }
@@ -77,130 +86,217 @@ const VendorStore: React.FC = () => {
 	const [sortBy, setSortBy] = useState<
 		"relevance" | "price_asc" | "price_desc" | "name_asc" | "name_desc"
 	>("relevance");
+	const resolvedVendorId = Array.isArray(vendorId) ? vendorId[0] : vendorId;
 
 	useEffect(() => {
-		const fetchVendorProducts = async () => {
+		let isMounted = true;
+
+		const normalizeVendor = (v: any): VendorInfo => ({
+			id: v?.id,
+			businessName: v?.businessName || v?.name || "Unknown Vendor",
+			email: v?.email,
+			phoneNumber: v?.phoneNumber,
+			districtName: v?.district?.name || v?.districtName,
+			description: v?.description || v?.about || v?.bio,
+			profilePicture: v?.profilePicture,
+		});
+
+		const getImageUrl = (img: any): string => {
+			if (!img) return "";
+			if (typeof img === "string") return img;
+			if (typeof img === "object") return img.url || img.image || "";
+			return "";
+		};
+
+		const normalizeVariantAttributes = (attrs: any): Record<string, string> => {
+			if (!attrs) return {};
+			if (!Array.isArray(attrs) && typeof attrs === "object") {
+				return Object.entries(attrs).reduce((acc, [k, v]) => {
+					if (v !== undefined && v !== null && String(v).trim() !== "") {
+						acc[String(k).toLowerCase()] = String(v);
+					}
+					return acc;
+				}, {} as Record<string, string>);
+			}
+			if (!Array.isArray(attrs)) return {};
+			const out: Record<string, string> = {};
+			attrs.forEach((a) => {
+				const key = (a?.attributeType || a?.name || "").toLowerCase();
+				const val = Array.isArray(a?.attributeValues)
+					? a.attributeValues[0]
+					: a?.value || a?.attributeValue;
+				if (key && val) out[key] = val;
+			});
+			return out;
+		};
+
+		const fetchVendorData = async () => {
+			if (!resolvedVendorId) {
+				setLoading(false);
+				return;
+			}
+
 			try {
 				setLoading(true);
-				const response = await axiosInstance.get<VendorStoreResponse>(
-					`/api/vendors/${vendorId}/products?page=${page}&limit=${limit}`
-				);
-				if (response.data.success) {
-					const products = response.data.data.products;
-					// Set vendor info from first product if available
-					if (products && products.length > 0 && products[0]?.vendor) {
-						const v = products[0].vendor;
-						setVendorInfo({
-							businessName: v?.businessName || "",
-							email: v?.email,
-							districtName: v?.district?.name,
-						});
-					} else {
-						setVendorInfo(null);
+
+				const [productsResult, vendorResult] = await Promise.allSettled([
+					axiosInstance.get<VendorStoreResponse>(
+						`/api/vendors/${resolvedVendorId}/products?page=${page}&limit=${limit}`
+					),
+					axiosInstance.get(`/api/vendors/${resolvedVendorId}`),
+				]);
+
+				if (!isMounted) return;
+
+				let vData: unknown = null;
+				if (vendorResult.status === "fulfilled") {
+					vData =
+						vendorResult.value?.data?.data ||
+						vendorResult.value?.data?.vendor ||
+						vendorResult.value?.data;
+					if (vData) setVendorInfo(normalizeVendor(vData));
+				} else {
+					console.warn("Vendor details API failed", vendorResult.reason);
+				}
+
+				if (
+					productsResult.status === "fulfilled" &&
+					productsResult.value.data.success
+				) {
+					const products =
+						productsResult.value.data.data.product ||
+						productsResult.value.data.data.products ||
+						[];
+
+					// Fallback vendor info from products if vendor API missing
+					if (!vData && products && products.length > 0 && products[0]?.vendor) {
+						setVendorInfo(normalizeVendor(products[0].vendor));
 					}
 
-					const transformedProducts: DisplayProduct[] = products.map(
-						(product) => {
-							//("vendorproduct", product);
-							// Calculate product-level price if basePrice is present; otherwise defer to variants
-							const hasBase =
-								product.basePrice !== null && product.basePrice !== undefined;
-							const basePrice = hasBase
-								? parseFloat(String(product.basePrice))
-								: NaN;
-							const discount = parseFloat(String(product.discount || "0"));
-							let priceNum = hasBase && isFinite(basePrice) ? basePrice : 0;
-							let originalPrice: string | undefined = undefined;
-							const discountType = (product.discountType || "").toUpperCase();
-							if (
-								hasBase &&
-								isFinite(basePrice) &&
-								discount > 0 &&
-								(discountType === "PERCENTAGE" ||
-									discountType === "FLAT" ||
-									discountType === "FIXED")
-							) {
+					const transformedProducts: DisplayProduct[] = products.map((product) => {
+						const hasBase = product.basePrice !== null && product.basePrice !== undefined;
+						const basePrice = hasBase ? parseFloat(String(product.basePrice)) : NaN;
+						const finalPrice = parseFloat(String(product.finalPrice ?? ""));
+						const discount = parseFloat(String(product.discount || "0"));
+						let priceNum = isFinite(finalPrice)
+							? finalPrice
+							: hasBase && isFinite(basePrice)
+								? basePrice
+								: 0;
+						let originalPrice: string | undefined = undefined;
+						const discountType = (product.discountType || "").toUpperCase();
+						if (
+							hasBase &&
+							isFinite(basePrice) &&
+							(discount > 0 || (isFinite(finalPrice) && finalPrice < basePrice)) &&
+							(discountType === "PERCENTAGE" ||
+								discountType === "FLAT" ||
+								discountType === "FIXED")
+						) {
+							if (!isFinite(finalPrice)) {
 								if (discountType === "PERCENTAGE") {
 									priceNum = basePrice - (basePrice * discount) / 100;
 									originalPrice = basePrice.toFixed(2);
-								} else if (
-									discountType === "FLAT" ||
-									discountType === "FIXED"
-								) {
+								} else if (discountType === "FLAT" || discountType === "FIXED") {
 									priceNum = basePrice - discount;
 									originalPrice = basePrice.toFixed(2);
 								}
+							} else if (finalPrice < basePrice) {
+								originalPrice = basePrice.toFixed(2);
+							}
+						}
+
+						const variants = (product.variants || []).map((v: any) => {
+							const vBase = v.basePrice ?? v.price;
+							const vFinal = v.finalPrice;
+							const vDiscount = v.discount ?? product.discount;
+							const vDiscountType = (v.discountType || product.discountType || "").toUpperCase();
+							let vPriceNum = vFinal ? parseFloat(String(vFinal)) : vBase ? parseFloat(String(vBase)) : 0;
+							if (vPriceNum && vDiscount && vDiscountType === "PERCENTAGE") {
+								vPriceNum = vPriceNum - (vPriceNum * parseFloat(String(vDiscount))) / 100;
+							} else if (vPriceNum && vDiscount && (vDiscountType === "FLAT" || vDiscountType === "FIXED")) {
+								vPriceNum = vPriceNum - parseFloat(String(vDiscount));
 							}
 
-							// Map variants (if any) and normalize images
-							const variants = (product.variants || []).map((v) => ({
-								id: v.id,
-								sku: v.sku,
-								basePrice: v.basePrice,
-								discount: v.discount,
-								discountType: v.discountType,
-								images: v.variantImages || [],
-								stock: v.stock ?? 0,
-								attributes: v.attributes || {},
-							}));
-
 							return {
-								id: product.id,
-								title: product.name,
-								name: product.name,
-								description: product.description || "",
-								// If product-level price is unavailable, set 0 to trigger variant-based price in ProductCard
-								price: priceNum > 0 ? priceNum.toFixed(2) : 0,
-								originalPrice: originalPrice,
-								discount: discount > 0 ? String(product.discount) : undefined,
-								// Map rating info from backend if present
-								rating:
-									Number(
-										(product as any).avgRating ?? (product as any).rating ?? 0
-									) || 0,
-								ratingCount: String(
-									(Array.isArray((product as any).reviews)
-										? (product as any).reviews.length
-										: undefined) ??
-									(product as any).count ??
-									(product as any).ratingCount ??
-									0
-								),
-								isBestSeller: false,
-								freeDelivery: false,
-								category: product.subcategory.name,
-								subcategory: {
-									id: product.subcategory.id,
-									name: product.subcategory.name,
-								},
-								image:
-									(product.productImages && product.productImages[0]) ||
-									"/assets/logo.webp",
-								vendor: product.vendor.businessName,
-								vendorId: product.vendorId,
-								productImages: product.productImages || [],
-								variants,
-								basePrice: product.basePrice || undefined,
-								discountType: (product.discountType || "").toUpperCase() as any,
-								colors: [],
-								memoryOptions: product.size || [],
-								stock: product.stock ?? 0,
-								piece: product.stock ?? 0,
+								id: v.id || v.sku,
+								sku: v.sku,
+								basePrice: vBase,
+								discount: vDiscount,
+								discountType: vDiscountType,
+								images: (v.variantImages || v.images || []).map(getImageUrl).filter(Boolean),
+								stock: v.stock ?? 0,
+								attributes: normalizeVariantAttributes(v.attributes),
+								price: vPriceNum,
 							};
-						}
-					);
+						});
+
+						const productImages = (product.productImages || []).map(getImageUrl).filter(Boolean);
+						const firstVariantImg = variants[0]?.images?.[0];
+
+						return {
+							id: product.id,
+							title: product.name,
+							name: product.name,
+							description: product.description || "",
+							price: priceNum > 0 ? priceNum.toFixed(2) : 0,
+							originalPrice: originalPrice,
+							discount: discount > 0 ? String(product.discount) : undefined,
+							rating: Number((product as any).avgRating ?? (product as any).rating ?? 0) || 0,
+							ratingCount: String(
+								(Array.isArray((product as any).reviews)
+									? (product as any).reviews.length
+									: undefined) ??
+								(product as any).count ??
+								(product as any).ratingCount ??
+								0
+							),
+							isBestSeller: false,
+							freeDelivery: false,
+							category: product.subcategory?.name || "",
+							subcategory: product.subcategory
+								? { id: product.subcategory.id, name: product.subcategory.name }
+								: product.subcategoryId
+									? { id: product.subcategoryId, name: "Subcategory" }
+								: undefined,
+							image: productImages[0] || firstVariantImg || "/assets/logo.webp",
+							vendor: product.vendor?.businessName || "Unknown Vendor",
+							vendorId: product.vendorId,
+							productImages,
+							variants,
+							basePrice: product.basePrice || undefined,
+							discountType: (product.discountType || "").toUpperCase() as any,
+							colors: [],
+							memoryOptions: product.size || [],
+							stock: product.stock ?? 0,
+							piece: product.stock ?? 0,
+						};
+					});
 					setVendorProducts(transformedProducts);
-					setTotalProducts(response.data.data.total);
+					setTotalProducts(productsResult.value.data.data.total);
+				} else {
+					console.error(
+						"Vendor products API failed",
+						productsResult.status === "rejected" ? productsResult.reason : productsResult.value.data
+					);
+					setVendorProducts([]);
+					setTotalProducts(0);
 				}
 			} catch (error) {
-				console.error("Error fetching vendor products:", error);
+				if (!isMounted) return;
+				console.error("Error fetching vendor page data:", error);
+				setVendorProducts([]);
 			} finally {
-				setLoading(false);
+				if (isMounted) setLoading(false);
 			}
 		};
 
-		fetchVendorProducts();
-	}, [vendorId, page, limit]);
+		fetchVendorData();
+
+		return () => {
+			isMounted = false;
+		};
+	}, [resolvedVendorId, page, limit]);
 
 	const handlePageChange = (newPage: number) => {
 		if (newPage > 0 && newPage <= Math.ceil(totalProducts / limit)) {
@@ -388,15 +484,22 @@ const VendorStore: React.FC = () => {
 			<div className="vendor-store">
 				<header className="vendor-store__header">
 					<div className="vendor-store__logo">
-						<span className="vendor-store__logo-letter">
-							{vendorInfo?.businessName?.[0] || "U"}
-						</span>
+						{vendorInfo?.profilePicture ? (
+							<img
+								src={vendorInfo.profilePicture}
+								alt={vendorInfo.businessName}
+								className="vendor-store__logo-image"
+							/>
+						) : (
+							<span className="vendor-store__logo-letter">
+								{vendorInfo?.businessName?.[0]?.toUpperCase() || "U"}
+							</span>
+						)}
 					</div>
 					<div className="vendor-store__info">
 						<h1>{vendorInfo?.businessName || "Unknown Vendor"}</h1>
 						<p className="vendor-store__description">
-							A trusted vendor offering a wide range of products, ensuring
-							quality and affordability.
+							{vendorInfo?.description || "A trusted vendor offering quality products."}
 						</p>
 					</div>
 					<div className="vendor-hero__chips">
@@ -407,6 +510,16 @@ const VendorStore: React.FC = () => {
 							>
 								<FiMail className="chip-icon" />
 								<span className="chip-text">{vendorInfo.email}</span>
+							</div>
+						)}
+
+						{vendorInfo?.phoneNumber && (
+							<div
+								className="vendor-hero__chip"
+								title={vendorInfo.phoneNumber}
+							>
+								<FiPhone className="chip-icon" />
+								<span className="chip-text">{vendorInfo.phoneNumber}</span>
 							</div>
 						)}
 
@@ -434,6 +547,18 @@ const VendorStore: React.FC = () => {
 								</div>
 							</div>
 						</div>
+
+						{vendorInfo?.phoneNumber && (
+							<div className="vendor-details__item">
+								<div className="vendor-detail-row">
+									<FiPhone className="vendor-detail-icon" />
+									<div>
+										<strong>Phone:</strong>{" "}
+										<span>{vendorInfo.phoneNumber}</span>
+									</div>
+								</div>
+							</div>
+						)}
 
 						<div className="vendor-details__item">
 							<div className="vendor-detail-row">

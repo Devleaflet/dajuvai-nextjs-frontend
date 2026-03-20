@@ -284,26 +284,28 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 			className="product-card-wrapper"
 		>
 			<div className="product-card">
-				{isBestSeller && (
-					<span className="product-card__badge">Best seller</span>
-				)}
- 
-				<ProductActions
-					product={{
-						id: product.id,
-						...(product.variants && { variants: product.variants.map(v => ({ id: v.id || 0 })) })
-					}}
-					onAddToCart={handleAddToCart}
-					onToggleWishlist={handleWishlist}
-					isWishlisted={isWishlisted}
-					wishlistLoading={wishlistLoading}
-					cartOpen={cartOpen}
-				/>
- 
-				<ProductImageGallery
-					images={productImages}
-					alt={title || "Product image"}
-				/>
+				<div className="product-card__media">
+					{isBestSeller && (
+						<span className="product-card__badge">Best seller</span>
+					)}
+	
+					<ProductActions
+						product={{
+							id: product.id,
+							...(product.variants && { variants: product.variants.map(v => ({ id: v.id || 0 })) })
+						}}
+						onAddToCart={handleAddToCart}
+						onToggleWishlist={handleWishlist}
+						isWishlisted={isWishlisted}
+						wishlistLoading={wishlistLoading}
+						cartOpen={cartOpen}
+					/>
+	
+					<ProductImageGallery
+						images={productImages}
+						alt={title || "Product image"}
+					/>
+				</div>
  
 				<ProductInfo
 					product={{

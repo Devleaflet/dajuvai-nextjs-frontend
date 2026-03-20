@@ -60,7 +60,7 @@ const ProductActions: React.FC<ProductActionsProps> = ({
 
           <div className="product-card__cart-button">
             <FaCartPlus
-              style={{ color: '#ea5f0a', width: '25px' }}
+              style={{ color: '#ea5f0a', width: '18px', height: '18px' }}
               onClick={handleCartClick}
             />
           </div>

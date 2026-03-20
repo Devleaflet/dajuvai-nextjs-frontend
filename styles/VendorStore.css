@@ -634,3 +634,14 @@
 		width: 95%;
 	}
 }
+
+/* Keep shared ProductCard from shrinking only on VendorStore page */
+.vendor-store__product-grid {
+	justify-items: stretch;
+}
+
+.vendor-store__product-grid .product-card-wrapper,
+.vendor-store__product-grid .product-card {
+	width: 100%;
+	min-width: 0;
+}

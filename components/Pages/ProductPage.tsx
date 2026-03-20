@@ -269,7 +269,10 @@ const ProductPage = () => {
     else if (!increment && quantity > 1) setQuantity(q => q - 1);
   };
 
-  const handleVendorClick = () => { const vid = product?.vendor?.id; if (vid) window.location.href = `/vendor/${vid}`; };
+  const handleVendorClick = () => {
+    const vid = product?.vendor?.id;
+    if (vid) window.location.href = `/vendor-store/${vid}`;
+  };
 
   /* ── Loading ───────────────────────────────────────────────────────────── */
   if (isProductLoading || isReviewsLoading || !product) {

@@ -1,4 +1,4 @@
-import ProfilePage from '@/components/Pages/ProfilePage';
+import UserProfile from '@/components/Pages/UserProfile';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,5 +8,5 @@ export const metadata = {
 };
 
 export default function Page() {
-  return <ProfilePage />;
+  return <UserProfile />;
 }
