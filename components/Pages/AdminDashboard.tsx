@@ -1,6 +1,6 @@
 'use client';
 
-import { Chart } from 'chart.js/auto';
+import type { Chart as ChartJS } from 'chart.js';
 import { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import axiosInstance from "@/lib/api/axiosInstance";
@@ -29,6 +29,15 @@ const REVENUE_CACHE_KEY = 'admin_dashboard_revenue';
 const VENDORS_CACHE_KEY = 'admin_dashboard_vendors_sales';
 const TOP_PRODUCTS_CACHE_KEY = 'admin_dashboard_top_products';
 const CACHE_TTL = 5 * 60 * 1000;
+
+let chartModulePromise: Promise<typeof import('chart.js/auto')> | null = null;
+
+const loadChartModule = () => {
+	if (!chartModulePromise) {
+		chartModulePromise = import('chart.js/auto');
+	}
+	return chartModulePromise;
+};
 
 interface StatData {
 	totalSales: number;
@@ -122,9 +131,9 @@ export function AdminDashboard() {
 	const [error, setError] = useState<string | null>(null);
 	const docketHeight = useDocketHeight();
 
-	const revenueChartRef = useRef<Chart | null>(null);
-	const vendorChartRef = useRef<Chart | null>(null);
-	const topProductsChartRef = useRef<Chart | null>(null);
+	const revenueChartRef = useRef<ChartJS | null>(null);
+	const vendorChartRef = useRef<ChartJS | null>(null);
+	const topProductsChartRef = useRef<ChartJS | null>(null);
 
 
 
@@ -377,9 +386,15 @@ export function AdminDashboard() {
 	}, [token]);
 
 	useEffect(() => {
-		const ctx = document.getElementById('revenue-chart') as HTMLCanvasElement;
+		let disposed = false;
 
-		if (ctx && revenue.length > 0) {
+		const renderRevenueChart = async () => {
+			const ctx = document.getElementById('revenue-chart') as HTMLCanvasElement | null;
+			if (!ctx || revenue.length === 0) return;
+
+			const { Chart } = await loadChartModule();
+			if (disposed) return;
+
 			if (revenueChartRef.current) {
 				revenueChartRef.current.destroy();
 			}
@@ -449,19 +464,35 @@ export function AdminDashboard() {
 				},
 			});
 
+			if (disposed) {
+				newChart.destroy();
+				return;
+			}
+
 			revenueChartRef.current = newChart;
-		}
+		};
+
+		renderRevenueChart();
 
 		return () => {
+			disposed = true;
 			if (revenueChartRef.current) {
 				revenueChartRef.current.destroy();
+				revenueChartRef.current = null;
 			}
 		};
 	}, [revenue]);
 
 	useEffect(() => {
-		const ctx = document.getElementById('vendor-chart') as HTMLCanvasElement;
-		if (ctx && vendorsSales.length > 0) {
+		let disposed = false;
+
+		const renderVendorChart = async () => {
+			const ctx = document.getElementById('vendor-chart') as HTMLCanvasElement | null;
+			if (!ctx || vendorsSales.length === 0) return;
+
+			const { Chart } = await loadChartModule();
+			if (disposed) return;
+
 			if (vendorChartRef.current) {
 				vendorChartRef.current.destroy();
 			}
@@ -508,20 +539,35 @@ export function AdminDashboard() {
 					},
 				},
 			});
+			if (disposed) {
+				chart.destroy();
+				return;
+			}
+
 			vendorChartRef.current = chart;
-		}
+		};
+
+		renderVendorChart();
+
 		return () => {
+			disposed = true;
 			if (vendorChartRef.current) {
 				vendorChartRef.current.destroy();
+				vendorChartRef.current = null;
 			}
 		};
 	}, [vendorsSales]);
 
 	useEffect(() => {
-		const ctx = document.getElementById(
-			'top-products-chart'
-		) as HTMLCanvasElement;
-		if (ctx && topProducts.length > 0) {
+		let disposed = false;
+
+		const renderTopProductsChart = async () => {
+			const ctx = document.getElementById('top-products-chart') as HTMLCanvasElement | null;
+			if (!ctx || topProducts.length === 0) return;
+
+			const { Chart } = await loadChartModule();
+			if (disposed) return;
+
 			if (topProductsChartRef.current) {
 				topProductsChartRef.current.destroy();
 			}
@@ -598,12 +644,21 @@ export function AdminDashboard() {
 				},
 			});
 
+			if (disposed) {
+				chart.destroy();
+				return;
+			}
+
 			topProductsChartRef.current = chart;
-		}
+		};
+
+		renderTopProductsChart();
 
 		return () => {
+			disposed = true;
 			if (topProductsChartRef.current) {
 				topProductsChartRef.current.destroy();
+				topProductsChartRef.current = null;
 			}
 		};
 	}, [topProducts]);

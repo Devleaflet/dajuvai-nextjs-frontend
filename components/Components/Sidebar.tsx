@@ -8,7 +8,9 @@ import "@/styles/Sidebar.css";
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> { }
 
 export function Sidebar({ ...props }: SidebarProps) {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 1000);
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 1000 : false
+  );
 
   useEffect(() => {
     const handleResize = () => {

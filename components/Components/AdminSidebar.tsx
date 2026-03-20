@@ -7,7 +7,9 @@ import "@/styles/Sidebar.css";
 import { useAuth } from "@/lib/context/AuthContext";
 
 export function AdminSidebar({ ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 1000);
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 1000 : false
+  );
   const { user } = useAuth();
 
   useEffect(() => {
