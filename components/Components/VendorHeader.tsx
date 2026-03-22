@@ -12,7 +12,7 @@ interface VendorHeaderProps {
 }
 
 const VendorHeader: React.FC<VendorHeaderProps> = ({ title, onSearch, showSearch = true }) => {
-  const { authState, logout } = useVendorAuth();
+  const { authState } = useVendorAuth();
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -39,17 +39,47 @@ const VendorHeader: React.FC<VendorHeaderProps> = ({ title, onSearch, showSearch
 
   return (
     <>
-      <header className="dashboard__header">
-        <h1 className="dashboard__title">{title}</h1>
+      <header
+        className="dashboard__header"
+        style={{
+          height: 56,
+          minHeight: 56,
+          boxSizing: 'border-box',
+          gap: 12,
+          overflow: 'hidden',
+        }}
+      >
+        <h1
+          className="dashboard__title"
+          style={{
+            margin: 0,
+            lineHeight: '1.2',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {title}
+        </h1>
         <div className="dashboard__user" ref={dropdownRef}>
           <div className="dashboard__avatar">
             <span className="dashboard__avatar-text">
               {authState.vendor?.businessName ? authState.vendor.businessName.charAt(0).toUpperCase() : "DV"}
             </span>
           </div>
-          <div className="dashboard__user-info">
-            <p className="dashboard__username">{authState.vendor?.businessName || "Unknown Vendor"}</p>
-            <p className="dashboard__email">{authState.vendor?.email || "Unknown Email"}</p>
+          <div className="dashboard__user-info" style={{ minWidth: 0, maxWidth: 320 }}>
+            <p
+              className="dashboard__username"
+              style={{ margin: 0, lineHeight: '1.2', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+            >
+              {authState.vendor?.businessName || "Unknown Vendor"}
+            </p>
+            <p
+              className="dashboard__email"
+              style={{ margin: 0, lineHeight: '1.2', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+            >
+              {authState.vendor?.email || "Unknown Email"}
+            </p>
           </div>
           <button className="dashboard__dropdown-button" onClick={() => setDropdownOpen(v => !v)}>
             <span className="dashboard__dropdown-icon"></span>

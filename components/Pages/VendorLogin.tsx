@@ -89,7 +89,7 @@ const VendorLogin: React.FC<VendorLoginProps> = ({ isOpen, onClose }) => {
       if (response.success && response.token && response.vendor) {
         vendorLogin(response.token, response.vendor);
         //("----------token-------", response.token)
-        router.push("/dashboard");
+        router.push("/vendor/dashboard");
         onClose();
       } else if (response.message === "Vendor not approved") {
         toast.error("Your account is pending approval. Please wait for admin approval.");

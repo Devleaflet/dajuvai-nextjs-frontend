@@ -4,11 +4,9 @@ import { useState, useRef, useEffect } from "react";
 import { useQuery } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import "@/styles/Dashboard.css";
-import { Sidebar } from "./Sidebar";
 import { Chart } from "chart.js/auto";
 import { useDocketHeight } from "@/lib/hooks/UseDockerHeight";
 import { useVendorAuth } from "@/lib/context/VendorAuthContext";
-import VendorHeader from "./VendorHeader";
 import axiosInstance from "@/lib/api/axiosInstance";
 
 const TopProducts = dynamic(() => import("./VendorDashboard/TopProducts"), {
@@ -23,12 +21,15 @@ const VendorRevenueBySubCategory = dynamic(() => import("./VendorDashboard/Reven
   ssr: false
 });
 
-interface DashboardProps {
-  version?: string;
+interface LowStockItem {
+  productid: number | string;
+  productname: string;
+  stock: number;
+  variantStatus?: string;
+  status?: string;
 }
 
-
-export function Dashboard({ version = "123456" }: DashboardProps) {
+export function Dashboard() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [days, setDays] = useState<number>(10); // State for days selector
   const [showAllLowStock, setShowAllLowStock] = useState<boolean>(false); // State for showing more data
@@ -110,7 +111,7 @@ export function Dashboard({ version = "123456" }: DashboardProps) {
     queryFn: async () => {
       if (!authState.token) throw new Error("No authentication token available");
       // Fetch all pages of data
-      let allData: any[] = [];
+      let allData: LowStockItem[] = [];
       let currentPage = 1;
       let totalPages = 1;
 
@@ -240,59 +241,53 @@ export function Dashboard({ version = "123456" }: DashboardProps) {
 
   if (statsLoading || salesLoading || lowStockLoading) {
     return (
-      <div className="vendor-dash-container">
-        <Sidebar />
-        <div className={`dashboard ${isMobile ? "dashboard--mobile" : ""}`}>
-          <VendorHeader title="Dashboard" showSearch={false} />
-          <main className="dashboard__main" style={{ paddingBottom: isMobile ? `${docketHeight + 24}px` : "24px" }}>
-            {/* Stats Section Skeleton */}
-            <div className="dashboard__stats">
-              {[...Array(4)].map((_, index) => (
-                <div key={index} className="stats-card">
-                  <div className="stats-card__header">
-                    <div className="skeleton" style={{ width: "80px", height: "14px" }}></div>
-                    <div className="skeleton" style={{ width: "32px", height: "32px", borderRadius: "50%" }}></div>
-                  </div>
-                  <div className="stats-card__content">
-                    <div className="skeleton" style={{ width: "60px", height: "24px", marginBottom: "8px" }}></div>
-                    <div className="skeleton" style={{ width: "100px", height: "12px" }}></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            {/* Charts Section Skeleton */}
-            <div className="dashboard__two-columns">
-              <div className="dashboard__column">
-                <div className="section-card revenue-analytics">
-                  <div className="skeleton" style={{ width: "100%", height: "300px" }}></div>
-                </div>
+      <main className="dashboard__main" style={{ paddingBottom: isMobile ? `${docketHeight + 24}px` : "24px" }}>
+        {/* Stats Section Skeleton */}
+        <div className="dashboard__stats">
+          {[...Array(4)].map((_, index) => (
+            <div key={index} className="stats-card">
+              <div className="stats-card__header">
+                <div className="skeleton" style={{ width: "80px", height: "14px" }}></div>
+                <div className="skeleton" style={{ width: "32px", height: "32px", borderRadius: "50%" }}></div>
               </div>
-              <div className="dashboard__column">
-                <div className="section-card">
-                  <div className="skeleton" style={{ width: "100%", height: "300px" }}></div>
-                </div>
+              <div className="stats-card__content">
+                <div className="skeleton" style={{ width: "60px", height: "24px", marginBottom: "8px" }}></div>
+                <div className="skeleton" style={{ width: "100px", height: "12px" }}></div>
               </div>
             </div>
-            {/* Full Width Sections Skeleton */}
-            <div style={{ marginTop: "32px" }}>
-              <div className="section-card">
-                <div className="skeleton" style={{ width: "100%", height: "250px" }}></div>
-              </div>
-            </div>
-            <div style={{ marginTop: "24px" }}>
-              <div className="section-card">
-                <div className="skeleton" style={{ width: "100%", height: "250px" }}></div>
-              </div>
-            </div>
-            {/* Low Stock Table Skeleton */}
-            <div className="dashboard__table-section">
-              <div className="section-card">
-                <div className="skeleton" style={{ width: "100%", height: "200px" }}></div>
-              </div>
-            </div>
-          </main>
+          ))}
         </div>
-      </div>
+        {/* Charts Section Skeleton */}
+        <div className="dashboard__two-columns">
+          <div className="dashboard__column">
+            <div className="section-card revenue-analytics">
+              <div className="skeleton" style={{ width: "100%", height: "300px" }}></div>
+            </div>
+          </div>
+          <div className="dashboard__column">
+            <div className="section-card">
+              <div className="skeleton" style={{ width: "100%", height: "300px" }}></div>
+            </div>
+          </div>
+        </div>
+        {/* Full Width Sections Skeleton */}
+        <div style={{ marginTop: "32px" }}>
+          <div className="section-card">
+            <div className="skeleton" style={{ width: "100%", height: "250px" }}></div>
+          </div>
+        </div>
+        <div style={{ marginTop: "24px" }}>
+          <div className="section-card">
+            <div className="skeleton" style={{ width: "100%", height: "250px" }}></div>
+          </div>
+        </div>
+        {/* Low Stock Table Skeleton */}
+        <div className="dashboard__table-section">
+          <div className="section-card">
+            <div className="skeleton" style={{ width: "100%", height: "200px" }}></div>
+          </div>
+        </div>
+      </main>
     );
   }
   if (statsError || salesError || lowStockError) {
@@ -302,11 +297,7 @@ export function Dashboard({ version = "123456" }: DashboardProps) {
   const displayedData = getDisplayedLowStockData();
 
   return (
-    <div className="vendor-dash-container">
-      <Sidebar />
-      <div className={`dashboard ${isMobile ? "dashboard--mobile" : ""}`}>
-        <VendorHeader title="Dashboard" showSearch={false} />
-        <main className="dashboard__main" style={{ paddingBottom: isMobile ? `${docketHeight + 24}px` : "24px" }}>
+    <main className="dashboard__main" style={{ paddingBottom: isMobile ? `${docketHeight + 24}px` : "24px" }}>
           {/* Stats Section */}
           <div className="dashboard__stats">
             <StatsCard
@@ -431,11 +422,7 @@ export function Dashboard({ version = "123456" }: DashboardProps) {
               )}
             </div>
           </div>
-
-
-        </main>
-      </div>
-    </div>
+    </main>
   );
 }
 

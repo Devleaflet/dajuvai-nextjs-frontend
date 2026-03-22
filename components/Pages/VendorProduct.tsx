@@ -9,13 +9,11 @@ import EditProductModal from "@/components/Components/Modal/EditProductModalRede
 import NewProductModal from "@/components/Components/NewProductModalRedesigned";
 import Pagination from "@/components/Components/Pagination";
 import ProductList from "@/components/Components/ProductList";
-import { Sidebar } from "@/components/Components/Sidebar";
 import { Product } from "@/components/Components/Types/Product";
 import { useVendorAuth } from "@/lib/context/VendorAuthContext";
 import "@/styles/VendorProduct.css";
 import { Product as ApiProduct, ProductFormData } from "@/lib/types/product";
 import * as XLSX from "xlsx";
-import VendorHeader from "@/components/Components/VendorHeader";
 
 const ProductListSkeleton: React.FC = () => {
 	return (
@@ -788,66 +786,42 @@ const VendorProduct: React.FC = () => {
 	};
 
 	return (
-		<div className="vendor-dash-container">
-			<Sidebar />
-			<div className={`dashboard ${isMobile ? "dashboard--mobile" : ""}`}>
-				<VendorHeader
-					showSearch={false}
-					title="Product Management"
-				/>
+		<>
+			<div className="vendor-product__search-row dashboard__search-container">
 				<div
-					className="dashboard__search-container"
-					style={{
-						display: "flex",
-						alignItems: "center",
-						gap: "16px",
-						flexWrap: "wrap",
-					}}
+					className="dashboard__search"
 				>
-					<div
-						className="dashboard__search"
-						style={{ flex: 1, minWidth: 200 }}
-					>
-						<input
-							className="dashboard__search-input"
-							type="text"
-							placeholder="Search products..."
-							value={searchQuery}
-							onChange={(e) => {
-								setSearchQuery(e.target.value);
-								setCurrentPage(1);
-							}}
-						/>
-						<span className="dashboard__search-icon" />
-					</div>
-					<select
-						className="vendor-product__sort-select"
-						value={sortOption}
-						onChange={(e) => setSortOption(e.target.value)}
-						style={{
-							minWidth: 180,
-							height: 38,
-							borderRadius: 20,
-							border: "1px solid #e5e7eb",
-							padding: "0 12px",
-							background: "#fff",
-							fontSize: 14,
+					<input
+						className="dashboard__search-input"
+						type="text"
+						placeholder="Search products..."
+						value={searchQuery}
+						onChange={(e) => {
+							setSearchQuery(e.target.value);
+							setCurrentPage(1);
 						}}
-					>
-						<option value="newest">Newest</option>
-						<option value="oldest">Oldest</option>
-						<option value="price-asc">Price: Low to High</option>
-						<option value="price-desc">Price: High to Low</option>
-						<option value="name-asc">Name: A-Z</option>
-						<option value="name-desc">Name: Z-A</option>
-					</select>
+					/>
+					<span className="dashboard__search-icon" />
 				</div>
-				<main
-					className="dashboard__main"
-					style={{
-						paddingBottom: isMobile ? `${docketHeight + 24}px` : "24px",
-					}}
+				<select
+					className="vendor-product__sort-select"
+					value={sortOption}
+					onChange={(e) => setSortOption(e.target.value)}
 				>
+					<option value="newest">Newest</option>
+					<option value="oldest">Oldest</option>
+					<option value="price-asc">Price: Low to High</option>
+					<option value="price-desc">Price: High to Low</option>
+					<option value="name-asc">Name: A-Z</option>
+					<option value="name-desc">Name: Z-A</option>
+				</select>
+			</div>
+			<main
+				className="dashboard__main"
+				style={{
+					paddingBottom: isMobile ? `${docketHeight + 24}px` : "24px",
+				}}
+			>
 					<div className="vendor-product__actions">
 						<button
 							className="vendor-product__add-btn"
@@ -932,9 +906,8 @@ const VendorProduct: React.FC = () => {
 					) : (
 						<div className="vendor-product__no-results">No product found.</div>
 					)}
-				</main>
-			</div>
-		</div>
+			</main>
+		</>
 	);
 };
 

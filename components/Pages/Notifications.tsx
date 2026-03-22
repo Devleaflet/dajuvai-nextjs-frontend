@@ -3,10 +3,8 @@
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import "@/styles/Notifications.css";
-import { Sidebar } from "@/components/Components/Sidebar";
 import axiosInstance from "@/lib/api/axiosInstance";
 import { useAuth } from "@/lib/context/AuthContext";
-import VendorHeader from "@/components/Components/VendorHeader";
 
 interface Notification {
   id: number;
@@ -32,7 +30,7 @@ export function Notifications() {
 
   const pathname = usePathname();
   const router = useRouter();
-  const isVendor = pathname === "/vendor/notifications";
+  const isVendor = pathname.startsWith("/vendor/");
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeTab, setActiveTab] = useState("All");
@@ -110,7 +108,7 @@ export function Notifications() {
       const match = notification.title.match(/#(\d+)/);
       if (match) {
         const orderId = match[1];
-        const path = isVendor ? `/vendor-orders?orderId=${orderId}` : `/admin-orders?orderId=${orderId}`;
+        const path = isVendor ? `/vendor/orders?orderId=${orderId}` : `/admin/orders?orderId=${orderId}`;
         router.push(path);
       }
     }
@@ -171,20 +169,5 @@ export function Notifications() {
     </div>
   );
 
-  if (!isVendor) {
-    return notificationsContent;
-  }
-
-  return (
-    <div className="admin-layout">
-      <Sidebar />
-      <div style={{ flex: 1 }}>
-        <VendorHeader
-          showSearch={false}
-          title="Notification"
-        />
-        {notificationsContent}
-      </div>
-    </div>
-  );
+  return notificationsContent;
 }

@@ -1,0 +1,305 @@
+.vendor-profile-page {
+  width: 100%;
+  padding: 15px;
+  
+  /* background: #f4f6f8; */
+  min-height: calc(100vh - 60px);
+}
+
+.vendor-profile-page__card {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 32px;
+  background: #ffffff;
+  padding: 32px;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); /* very soft shadow */
+  
+}
+
+.vendor-profile-page__sidebar {
+  background: #f8f9fa;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  min-width: 200px;
+  height: max-content;
+  border-radius: 8px;
+}
+
+.vendor-profile-page__avatar,
+.vendor-profile-page__avatar-image {
+  width: 74px;
+  height: 74px;
+  border-radius: 999px;
+}
+
+.vendor-profile-page__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ea4f3f;
+  color: #ffffff;
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.vendor-profile-page__avatar-image {
+  object-fit: cover;
+  border: 1px solid #d6d9de;
+}
+
+.vendor-profile-page__side-btn {
+  width: 100%;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2f3746;
+  background: #eef1f5;
+  cursor: pointer;
+  transition: filter 0.2s ease;
+}
+
+.vendor-profile-page__side-btn:hover {
+  filter: brightness(0.98);
+}
+
+.vendor-profile-page__side-btn--active {
+  background: #ff7b16;
+  color: #ffffff;
+}
+
+.vendor-profile-page__side-btn--muted {
+  background: #eef0f3;
+}
+
+.vendor-profile-page__content {
+  background: transparent;
+  padding: 0;
+}
+
+.vendor-profile-page__title {
+  margin: 0 0 24px;
+  font-size: 28px;
+  font-weight: 700;
+  color: #1e2530;
+}
+
+.vendor-profile-page__state {
+  border: 1px dashed #cfd5de;
+  border-radius: 6px;
+  background: #f7f9fb;
+  color: #5b6472;
+  padding: 12px;
+  font-size: 13px;
+}
+
+.vendor-profile-page__state--error {
+  border-color: #edb6b6;
+  color: #9b2f2f;
+  background: #fff6f6;
+}
+
+.vendor-profile-page__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 24px;
+}
+
+.vendor-profile-page__field label,
+.vendor-profile-page__document-group > label {
+  display: block;
+  margin-bottom: 6px;
+  color: #30394a;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.vendor-profile-page__field-value {
+  min-height: 38px;
+  border-radius: 4px;
+  background: #f4f5f7;
+  padding: 8px 12px;
+  color: #1f2937;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  border: none;
+}
+
+.vendor-profile-page__document-group {
+  margin-top: 24px;
+}
+
+.vendor-profile-page__document-box,
+.vendor-profile-page__payment-box {
+  border-radius: 4px;
+  background: #f4f5f7;
+  min-height: 92px;
+  padding: 12px;
+  border: none;
+}
+
+.vendor-profile-page__document-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.vendor-profile-page__document-thumb {
+  width: 72px;
+  height: 72px;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid #d4d9df;
+  display: block;
+  background: #f5f7fa;
+}
+
+.vendor-profile-page__document-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vendor-profile-page__empty-inline {
+  color: #717a88;
+  font-size: 12px;
+}
+
+.vendor-profile-page__payment-list {
+  display: grid;
+  gap: 8px;
+}
+
+.vendor-profile-page__payment-item {
+  border: 1px solid #d4d9df;
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: #f6f8fb;
+  font-size: 12px;
+  color: #374151;
+}
+
+.vendor-profile-page__empty-payment {
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 4px;
+}
+
+.vendor-profile-page__empty-icon {
+  font-size: 20px;
+}
+
+.vendor-profile-page__empty-payment h4 {
+  margin: 2px 0 0;
+  color: #334155;
+  font-size: 14px;
+}
+
+.vendor-profile-page__empty-payment p {
+  margin: 0 0 8px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.vendor-profile-page__add-payment-btn,
+.vendor-profile-page__edit-btn,
+.vendor-profile-page__credentials-card button {
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffffff;
+  background: #ff7b16;
+  cursor: pointer;
+}
+
+.vendor-profile-page__add-payment-btn {
+  background: #4caf50;
+}
+
+.vendor-profile-page__edit-btn {
+  margin-top: 12px;
+}
+
+.vendor-profile-page__credentials {
+  display: grid;
+  gap: 12px;
+}
+
+.vendor-profile-page__credentials-card {
+  border: 1px solid #d4d9df;
+  border-radius: 6px;
+  background: #ffffff;
+  padding: 12px;
+}
+
+.vendor-profile-page__credentials-card h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: #1e2530;
+}
+
+.vendor-profile-page__credentials-card form {
+  display: grid;
+  gap: 8px;
+}
+
+.vendor-profile-page__credentials-card input {
+  border: 1px solid #d4d9df;
+  border-radius: 6px;
+  background: #f6f8fb;
+  padding: 10px;
+  font-size: 13px;
+}
+
+.vendor-profile-page__message {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #334155;
+}
+
+@media (max-width: 900px) {
+  .vendor-profile-page__card {
+    grid-template-columns: 1fr;
+  }
+
+  .vendor-profile-page__sidebar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .vendor-profile-page__avatar-wrap {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .vendor-profile-page {
+    padding: 12px;
+  }
+
+  .vendor-profile-page__content {
+    padding: 12px;
+  }
+
+  .vendor-profile-page__grid {
+    grid-template-columns: 1fr;
+  }
+}

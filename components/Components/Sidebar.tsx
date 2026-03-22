@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import "@/styles/Sidebar.css";
 
-interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> { }
+type SidebarProps = React.HTMLAttributes<HTMLDivElement>;
 
 export function Sidebar({ ...props }: SidebarProps) {
   const [isMobile, setIsMobile] = useState(() =>
@@ -57,39 +57,39 @@ export function Sidebar({ ...props }: SidebarProps) {
 
       <nav className="sidebar__nav">
         {/* Pass the current location to NavItem */}
-        <NavItem to="/dashboard" icon="dashboard" active={pathname === "/dashboard"}>
+        <NavItem to="/vendor/dashboard" icon="dashboard" active={pathname === "/vendor/dashboard"}>
           Dashboard
         </NavItem>
         <NavItem
-          to="/vendor-product"
+          to="/vendor/products"
           icon="products"
-          active={pathname === "/vendor-product"}
+          active={pathname === "/vendor/products"}
         >
           Products
         </NavItem>
         <NavItem
-          to="/vendor-orders"
+          to="/vendor/orders"
           icon="orders"
-          active={pathname === "/vendor-orders"}
+          active={pathname === "/vendor/orders"}
         >
           Orders
         </NavItem>
         <NavItem
-          to="/vendor-notifications"
+          to="/vendor/notifications"
           icon={
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           }
-          active={pathname === "/vendor-notifications"}
+          active={pathname === "/vendor/notifications"}
         >
           Notifications
         </NavItem>
         <NavItem
-          to="/vendor-profile"
+          to="/vendor/profile"
           icon="profile"
-          active={pathname === "/vendor-profile"}
+          active={pathname === "/vendor/profile"}
         >
           Profile
         </NavItem>

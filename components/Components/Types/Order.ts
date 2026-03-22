@@ -11,19 +11,19 @@ export interface Order {
 
 export interface OrderDetail {
   id: number;
-  orderedBy: { id: number; username: string; email: string };
-  shippingAddress: { province: string; district: string; city: string; localAddress?: string };
+  orderedBy: { id: number; username?: string; name?: string; email?: string };
+  shippingAddress: { province: string; district: string; city: string; localAddress?: string; streetAddress?: string };
   orderItems: Array<{
     id: number;
     productId: number;
     quantity: number;
-    price: string;
+    price: string | number;
     product: { name: string };
-    vendor: { id: number; businessName: string };
+    vendor: { id: number; businessName?: string; name?: string };
   }>;
-  totalPrice: string;
-  shippingFee: string;
-  paymentMethod: string;
-  status: string;
-  createdAt: string;
+  totalPrice?: string | number;
+  shippingFee?: string | number;
+  paymentMethod?: string;
+  status?: string;
+  createdAt?: string;
 }

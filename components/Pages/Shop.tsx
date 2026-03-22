@@ -1198,7 +1198,7 @@ const Shop: React.FC = () => {
 
 						{/* ── PRODUCT GRID ── */}
 						<div className="flex-1 min-w-0">
-							<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3 md:gap-4 w-full ">
+							<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-4 sm:gap-x-5 sm:gap-y-5 md:gap-x-6 md:gap-y-6 w-full">
 								{isLoadingProducts ? (
 									Array(10).fill(null).map((_, index) => (
 										<ProductCardSkeleton key={index} count={1} />
