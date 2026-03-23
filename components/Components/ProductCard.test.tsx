@@ -95,8 +95,7 @@ describe('ProductCard', () => {
 
   it('should not display discount label when no discount', () => {
     const productWithoutDiscount = createMockProduct({
-      discount: 0,
-      discountType: undefined,
+      discount: "0",
     });
     render(<ProductCard product={productWithoutDiscount} />);
     // Check that there's no discount percentage displayed
@@ -117,7 +116,7 @@ describe('ProductCard', () => {
 
     if (card && card.parentElement) {
       fireEvent.click(card.parentElement);
-      expect(mockPush).toHaveBeenCalledWith(`/product-page/${mockProduct.id}`);
+      expect(mockPush).toHaveBeenCalledWith(`/product/${mockProduct.id}`);
     }
   });
 

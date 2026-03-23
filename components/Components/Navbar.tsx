@@ -492,7 +492,7 @@ const Navbar: React.FC = () => {
 	const handleSearchResultClick = (productId: number) => {
 		setShowSearchDropdown(false);
 		setSearchQuery('');
-		router.push(`/product-page/${productId}`);
+		router.push(`/product/${productId}`);
 	};
 
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {

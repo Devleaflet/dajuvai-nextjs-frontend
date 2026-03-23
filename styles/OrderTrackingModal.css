@@ -81,13 +81,13 @@
 }
 
 .error-icon {
-  font-size: 48px;
+  font-size: 40px;
   
   display: block;
 }
 
 .error-message {
-  font-size: 16px;
+  font-size: 14px;
   color: #dc3545;
   font-weight: 500;
   margin: 0;

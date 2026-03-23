@@ -48,7 +48,7 @@ export const mockProduct = {
   description: 'Test product description',
   basePrice: 1000,
   price: 800,
-  discount: 20,
+  discount: "20",
   discountType: 'PERCENTAGE' as const,
   stock: 10,
   image: '/test-image.jpg',

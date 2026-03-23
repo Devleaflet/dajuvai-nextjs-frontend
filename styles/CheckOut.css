@@ -146,12 +146,12 @@
 	align-items: center;
 	gap: 6px;
 	color: #dc3545;
-	font-size: 13px;
+	font-size: 12px;
 	margin-top: 4px;
 }
 
 .error-icon {
-	font-size: 12px;
+	font-size: 11px;
 	flex-shrink: 0;
 }
 

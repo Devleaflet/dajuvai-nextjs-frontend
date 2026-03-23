@@ -202,7 +202,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 		}
  
 		// Navigate to product page
-		router.push(`/product-page/${product.id}`);
+		router.push(`/product/${product.id}`);
  
 		// Force scroll to top on next tick
 		setTimeout(() => {

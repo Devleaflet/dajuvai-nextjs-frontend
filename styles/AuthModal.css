@@ -1007,18 +1007,20 @@ body.auth-modal--open {
 }
 
 /* Error message styling */
-.error-message {
+.auth-modal .error-message {
 	display: flex;
 	align-items: center;
 	color: #e74c3c;
-	font-size: 0.875rem;
+	font-size: 0.8rem;
 	margin-top: 0.5rem;
 	gap: 0.5rem;
 	font-weight: 500;
 }
 
-.error-icon {
-	font-size: 0.875rem;
+.auth-modal .error-icon {
+	font-size: 0.72rem;
+	width: 0.72rem;
+	height: 0.72rem;
 	flex-shrink: 0;
 }
 

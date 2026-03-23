@@ -28,7 +28,7 @@ const AuthRedirect: React.FC = () => {
 
     const isPublicRoute = publicRoutes.some(route =>
       pathname === route ||
-      pathname.startsWith('/product-page/') ||
+      pathname.startsWith('/product/') ||
       pathname.startsWith('/shop/') ||
       pathname.startsWith('/vendor/')
     );

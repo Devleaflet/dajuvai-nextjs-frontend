@@ -60,7 +60,7 @@ const Catalog: React.FC = () => {
 
   const handleProductClick = (product: Product) => {
     // Navigate using product ID only; ProductPage derives category/subcategory from product
-    router.push(`/product-page/${product.id}`);
+    router.push(`/product/${product.id}`);
   };
 
   const calculateDiscountedPrice = (product: Product) => {
