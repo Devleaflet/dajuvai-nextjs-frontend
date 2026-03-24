@@ -566,7 +566,7 @@ const Navbar: React.FC = () => {
 				) : (
 					<div
 						className="navbar__dropdown-link"
-						style={{ color: '#666', fontStyle: 'italic' }}
+						style={{ color: '#666' }}
 					>
 						No subcategories
 					</div>
@@ -970,10 +970,10 @@ const Navbar: React.FC = () => {
 				onKeyDown={handleKeyDown}
 				onClick={() => setIsLifted(true)}
 				onBlur={() => setIsLifted(false)}
-				className={`w-full py-3 px-6 pr-16 rounded-full border-2 border-gray-200 
-					focus:border-orange-500 focus:outline-none
+				className={`w-full py-3 px-6 pr-16 rounded-[25px] border-2 border-[#e0e0e0] 
+					focus:border-orange-500 focus:outline-none outline-none
 					hover:border-orange-500
-					transition-all duration-300 ease-in-out
+					transition-all duration-300 ease-in-out bg-[#f8f9fa] text-[1rem]
 					text-gray-700 placeholder-gray-400 ${isLifted ? '-translate-y-0.5' : ''}`}
 				autoComplete="off"
 			/>

@@ -24,10 +24,19 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Validate and process images array
-  const validImages = images && images.length > 0
-    ? images.map(img => processImageUrl(img))
-    : ['/assets/logo.webp'];
+  // Build a clean list of unique, non-placeholder images for accurate dot count.
+  const normalizedImages = Array.isArray(images)
+    ? images
+        .filter((img): img is string => typeof img === 'string' && img.trim().length > 0)
+        .map((img) => processImageUrl(img))
+    : [];
+
+  const uniqueImages = Array.from(new Set(normalizedImages));
+  const realImages = uniqueImages.filter((img) => img !== '/assets/logo.webp');
+
+  const validImages = realImages.length > 0
+    ? realImages
+    : (uniqueImages.length > 0 ? uniqueImages : ['/assets/logo.webp']);
   const hasMultipleImages = validImages.length > 1;
 
   // Reset currentIndex if it's out of bounds
@@ -84,8 +93,6 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
   const displayImage = imageError
     ? '/assets/logo.webp'
     : (validImages[currentIndex] || '/assets/logo.webp');
-  const maxDotsToShow = 5;
-  const shouldShowMoreIndicator = validImages.length > maxDotsToShow;
 
   return (
     <div
@@ -135,7 +142,7 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
             role="tablist"
             aria-label="Image navigation"
           >
-            {validImages.slice(0, maxDotsToShow).map((_, index) => (
+            {validImages.map((_, index) => (
               <span
                 key={index}
                 role="tab"
@@ -147,14 +154,6 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
                 onKeyDown={(e) => handleKeyDown(index, e)}
               />
             ))}
-            {shouldShowMoreIndicator && (
-              <span
-                className="product-card__dot product-card__dot--more"
-                aria-label={`${validImages.length - maxDotsToShow} more images`}
-              >
-                +{validImages.length - maxDotsToShow}
-              </span>
-            )}
           </div>
         </div>
       )}

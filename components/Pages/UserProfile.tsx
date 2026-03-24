@@ -179,7 +179,7 @@ const UserProfile: React.FC = () => {
 		});
 	};
 
-	const formatPaymentMethod = (method: string) => {
+	const formatPaymentMethod = (method?: string) => {
 		const methodMap: { [key: string]: string } = {
 			CASH_ON_DELIVERY: "Cash on Delivery",
 			COD: "Cash on Delivery",
@@ -192,7 +192,21 @@ const UserProfile: React.FC = () => {
 			ESEWA: "eSewa",
 			KHALTI: "Khalti",
 		};
+		if (!method) return "N/A";
 		return methodMap[method] || method;
+	};
+
+	const formatOrderDate = (createdAt?: string) => {
+		if (!createdAt) return "N/A";
+		return new Date(createdAt).toLocaleDateString();
+	};
+
+	const getOrderStatus = (status?: string) => status || "Pending";
+
+	const formatOrderAmount = (amount?: string | number) => {
+		const parsedAmount =
+			typeof amount === "number" ? amount : Number.parseFloat(amount || "0");
+		return Number.isFinite(parsedAmount) ? parsedAmount.toLocaleString() : "0";
 	};
 
 	const showPopup = (type: "success" | "error", content: string) => {
@@ -1104,16 +1118,16 @@ const UserProfile: React.FC = () => {
 												className="order-item__date"
 												data-label="Date"
 											>
-												{new Date(order.createdAt).toLocaleDateString()}
+												{formatOrderDate(order.createdAt)}
 											</div>
 											<div
 												className="order-item__status"
 												data-label="Status"
 											>
 												<span
-													className={`status-badge status-${order.status.toLowerCase()}`}
+													className={`status-badge status-${getOrderStatus(order.status).toLowerCase()}`}
 												>
-													{order.status}
+													{getOrderStatus(order.status)}
 												</span>
 											</div>
 											<div
@@ -1186,11 +1200,11 @@ const UserProfile: React.FC = () => {
 												data-label="Total"
 											>
 												<div className="order-total__amount">
-													Rs. {parseFloat(order.totalPrice).toLocaleString()}
+													Rs. {formatOrderAmount(order.totalPrice)}
 												</div>
 												<div className="order-total__shipping">
 													Shipping: Rs.{" "}
-													{parseFloat(order.shippingFee).toLocaleString()}
+													{formatOrderAmount(order.shippingFee)}
 												</div>
 												<div className="order-total__delivery">
 													<small>
@@ -1214,16 +1228,16 @@ const UserProfile: React.FC = () => {
 										className="order-item__date"
 										data-label="Date"
 									>
-										{new Date(order.createdAt).toLocaleDateString()}
+										{formatOrderDate(order.createdAt)}
 									</div>
 									<div
 										className="order-item__status"
 										data-label="Status"
 									>
 										<span
-											className={`status-badge status-${order.status.toLowerCase()}`}
+											className={`status-badge status-${getOrderStatus(order.status).toLowerCase()}`}
 										>
-											{order.status}
+											{getOrderStatus(order.status)}
 										</span>
 									</div>
 									<div
@@ -1296,11 +1310,11 @@ const UserProfile: React.FC = () => {
 										data-label="Total"
 									>
 										<div className="order-total__amount">
-											Rs. {parseFloat(order.totalPrice).toLocaleString()}
+											Rs. {formatOrderAmount(order.totalPrice)}
 										</div>
 										<div className="order-total__shipping">
 											Shipping: Rs.{" "}
-											{parseFloat(order.shippingFee).toLocaleString()}
+											{formatOrderAmount(order.shippingFee)}
 										</div>
 										<div className="order-total__delivery">
 											<small>

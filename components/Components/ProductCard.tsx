@@ -73,13 +73,38 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 	// Memoize product images array
 	const productImages = useMemo(() => {
 		const images: string[] = [];
+		const seenImageKeys = new Set<string>();
+
+		const buildImageKey = (url: string): string => {
+			if (!url) return "";
+			const cleaned = url.trim();
+			if (!cleaned) return "";
+
+			// Normalize for dedupe: ignore query/hash and trailing slash.
+			const [withoutHash = ""] = cleaned.split("#");
+			const [withoutQuery = ""] = withoutHash.split("?");
+			return withoutQuery.replace(/\/+$/, "").toLowerCase();
+		};
+
+		const addImageIfUnique = (rawImage: unknown) => {
+			if (typeof rawImage !== "string" || !rawImage.trim()) return;
+			const normalizedUrl = processImageUrl(rawImage);
+			if (!normalizedUrl) return;
+
+			const key = buildImageKey(normalizedUrl);
+			if (!key || seenImageKeys.has(key)) return;
+
+			seenImageKeys.add(key);
+			images.push(normalizedUrl);
+		};
  
 		try {
 			const variantsArray: any[] = Array.isArray(product?.variants)
 				? product.variants
 				: [];
- 
-			// Process variants in order (position first, then id)
+
+			// For product cards, prefer the primary variant image set so dot count reflects
+			// the currently represented variant rather than all combined product images.
 			if (variantsArray.length > 0) {
 				const orderedVariants = [...variantsArray].sort((a: any, b: any) => {
 					const ap = Number(a?.position);
@@ -90,60 +115,27 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 					if (Number.isFinite(aid) && Number.isFinite(bid)) return aid - bid;
 					return 0;
 				});
- 
-				orderedVariants.forEach((variant) => {
-					// Add variant.image
-					if (typeof variant?.image === "string" && variant.image.trim()) {
-						const url = processImageUrl(variant.image);
-						if (url && !images.includes(url)) {
-							images.push(url);
-						}
-					}
- 
-					// Add variant.images array
-					if (Array.isArray(variant?.images)) {
-						variant.images.forEach((img: any) => {
-							if (typeof img === "string" && img.trim()) {
-								const url = processImageUrl(img);
-								if (url && !images.includes(url)) {
-									images.push(url);
-								}
-							}
-						});
-					}
- 
-					// Add variant.variantImages array
-					if (Array.isArray(variant?.variantImages)) {
-						variant.variantImages.forEach((img: any) => {
-							if (typeof img === "string" && img.trim()) {
-								const url = processImageUrl(img);
-								if (url && !images.includes(url)) {
-									images.push(url);
-								}
-							}
-						});
-					}
-				});
-			}
- 
-			// Add product.productImages array
-			if (Array.isArray(product?.productImages)) {
-				product.productImages.forEach((img: any) => {
-					if (typeof img === "string" && img.trim()) {
-						const url = processImageUrl(img);
-						if (url && !images.includes(url)) {
-							images.push(url);
-						}
-					}
-				});
-			}
- 
-			// Add main product.image
-			if (typeof product?.image === "string" && product.image.trim()) {
-				const url = processImageUrl(product.image);
-				if (url && !images.includes(url)) {
-					images.push(url);
+
+				const primaryVariant = orderedVariants[0];
+
+				addImageIfUnique(primaryVariant?.image);
+
+				if (Array.isArray(primaryVariant?.images)) {
+					primaryVariant.images.forEach((img: unknown) => addImageIfUnique(img));
 				}
+
+				if (Array.isArray(primaryVariant?.variantImages)) {
+					primaryVariant.variantImages.forEach((img: unknown) => addImageIfUnique(img));
+				}
+			}
+
+			// Fall back to product-level image pools when primary variant set is unavailable.
+			if (images.length === 0) {
+				if (Array.isArray(product?.productImages)) {
+					product.productImages.forEach((img: unknown) => addImageIfUnique(img));
+				}
+
+				addImageIfUnique(product?.image);
 			}
  
 			// If no images found, use the primary image from utility function

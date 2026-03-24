@@ -169,6 +169,7 @@
 	padding: 12px;
 	container-type: inline-size;
 	transition: transform 0.2s ease, box-shadow 0.2s ease;
+	
 }
 
 .product-card:hover {
@@ -189,6 +190,7 @@
 	border-radius: 20px;
 	text-transform: uppercase;
 	pointer-events: none;
+	
 }
 
 .product-card__media {
@@ -242,15 +244,35 @@
 
 .product-card__cart-button {
         position: absolute;
-        bottom: 8px;
-        right: 8px;
-        background: #e8e8e8;
-        transform: scale(1.05);
+        bottom: 150px;
+		right:8px;
+        transform: translateY(-5px) scale(1.05);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+		background-color: #ede6e6;
+		height: 32px;
+		width: 32px;
+        box-sizing: border-box;
+		border-radius: 50%;
+		
+		transition: background-color 0.2s;
+}
+
+.product-card__cart-button:hover {
+        background-color: #ea5f0a;
+        cursor: pointer;
 }
 
 .product-card__cart-button svg {
         width: 18px !important;
         height: 18px !important;
+        transition: color 0.2s, fill 0.2s;
+}
+
+.product-card__cart-button:hover svg {
+        color: #ffffff !important;
+        fill: #ffffff !important;
 }
 
 .product__info {
@@ -396,39 +418,30 @@
 	display: flex;
 	gap: 4px;
 	align-items: center;
-	padding: 4px 8px;
-	background: rgba(0, 0, 0, 0.5);
-	border-radius: 12px;
 }
 
 .product-card__dot {
-	width: 5px;
-	height: 5px;
+	width: 8px;
+	height: 8px;
 	border-radius: 50%;
-	background: rgba(255, 255, 255, 0.5);
+	background: #d1d5db;
 	cursor: pointer;
 	transition: all 0.2s ease;
-	border: none;
+	border: 0;
+	box-sizing: border-box;
 	padding: 0;
 }
 
 .product-card__dot:hover {
-	background: rgba(255, 255, 255, 0.8);
+	background: #9ca3af;
 }
 
 .product-card__dot--active {
-	background: #ff9f00;
-	width: 5px;
+	background: #111827;
+	width: 10px;
+	height: 10px;
+	border: 2px solid #ff9f00;
 	border-radius: 50%;
-}
-
-.product-card__dot--more {
-	font-size: 9px;
-	color: #ffffff;
-	font-weight: 600;
-	width: auto;
-	padding: 0 3px;
-	background: transparent;
 }
 
 /* Skeleton */

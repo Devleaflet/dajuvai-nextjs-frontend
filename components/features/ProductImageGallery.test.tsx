@@ -78,12 +78,20 @@ describe('ProductImageGallery', () => {
     expect(dots[1]).toHaveClass('product-card__dot--active');
   });
 
-  it('should limit dots to 5 images', () => {
+  it('should display one dot per image', () => {
     const manyImages = Array.from({ length: 10 }, (_, i) => `/assets/product${i + 1}.jpg`);
     const { container } = render(<ProductImageGallery images={manyImages} alt="Test Product" />);
 
     const dots = container.querySelectorAll('.product-card__dot');
-    expect(dots).toHaveLength(5);
+    expect(dots).toHaveLength(10);
+  });
+
+  it('should ignore placeholder images when real images exist', () => {
+    const mixedImages = ['/assets/logo.webp', '/assets/product1.jpg', '/assets/product2.jpg'];
+    const { container } = render(<ProductImageGallery images={mixedImages} alt="Test Product" />);
+
+    const dots = container.querySelectorAll('.product-card__dot');
+    expect(dots).toHaveLength(2);
   });
 
   it('should call onError callback when provided', () => {
