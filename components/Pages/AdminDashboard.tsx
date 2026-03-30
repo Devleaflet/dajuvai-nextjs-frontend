@@ -306,22 +306,25 @@ export function AdminDashboard() {
 			};
 
 			const grossRevenueValue = toNumber(
-				root.grossRevenue ??
-					root.totalGrossRevenue ??
-					root.totalRevenue ??
-					root.revenue ??
-					root.amount ??
-					root.value
+				root['grossRevenue'] ??
+					root['totalGrossRevenue'] ??
+					root['totalRevenue'] ??
+					root['revenue'] ??
+					root['amount'] ??
+					root['value']
 			);
 
 			const trendRaw =
-				root.trendText ?? root.trendLabel ?? root.comparison ?? root.changeLabel;
+				root['trendText'] ??
+				root['trendLabel'] ??
+				root['comparison'] ??
+				root['changeLabel'];
 			const trendValue = toNumber(
-				root.trendPercentage ??
-					root.trendPercent ??
-					root.percentageChange ??
-					root.changePercent ??
-					root.trend
+				root['trendPercentage'] ??
+					root['trendPercent'] ??
+					root['percentageChange'] ??
+					root['changePercent'] ??
+					root['trend']
 			);
 			const trendText =
 				typeof trendRaw === 'string' && trendRaw.trim().length > 0
@@ -494,10 +497,10 @@ export function AdminDashboard() {
 			const parsedOrdersToday =
 				typeof ordersTodayPayload === 'object' && ordersTodayPayload !== null
 					? toCount(
-							(ordersTodayPayload as Record<string, unknown>).ordersTodayCount ??
-								(ordersTodayPayload as Record<string, unknown>).ordersToday ??
-								(ordersTodayPayload as Record<string, unknown>).count ??
-								(ordersTodayPayload as Record<string, unknown>).total
+							(ordersTodayPayload as Record<string, unknown>)['ordersTodayCount'] ??
+								(ordersTodayPayload as Record<string, unknown>)['ordersToday'] ??
+								(ordersTodayPayload as Record<string, unknown>)['count'] ??
+								(ordersTodayPayload as Record<string, unknown>)['total']
 						)
 					: toCount(ordersTodayPayload);
 
@@ -509,16 +512,16 @@ export function AdminDashboard() {
 					: {};
 
 			const parsedPendingApprovals = toCount(
-				needsActionData.pendingApprovals ??
-					needsActionData.pendingVendorApprovals ??
-					needsActionData.pendingVendors ??
-					needsActionData.unapprovedVendors
+				needsActionData['pendingApprovals'] ??
+					needsActionData['pendingVendorApprovals'] ??
+					needsActionData['pendingVendors'] ??
+					needsActionData['unapprovedVendors']
 			);
 
 			const parsedDelayedOrders = toCount(
-				needsActionData.delayedOrders ??
-					needsActionData.delayed ??
-					needsActionData.ordersDelayed
+				needsActionData['delayedOrders'] ??
+					needsActionData['delayed'] ??
+					needsActionData['ordersDelayed']
 			);
 
 			setOrdersToday(parsedOrdersToday);
@@ -614,20 +617,20 @@ export function AdminDashboard() {
 
 			const normalizedStats: UserStatsSummary = {
 				totalUsers: toCount(
-					usersStatsRecord.totalUsers ??
-						usersStatsRecord.users ??
-						usersStatsRecord.total ??
-						usersStatsRecord.totalCustomers
+					usersStatsRecord['totalUsers'] ??
+						usersStatsRecord['users'] ??
+						usersStatsRecord['total'] ??
+						usersStatsRecord['totalCustomers']
 				),
 				activeUsers: toCount(
-					usersStatsRecord.activeUsers ??
-						usersStatsRecord.onlineUsers ??
-						usersStatsRecord.active
+					usersStatsRecord['activeUsers'] ??
+						usersStatsRecord['onlineUsers'] ??
+						usersStatsRecord['active']
 				),
 				newUsers: toCount(
-					usersStatsRecord.newUsers ??
-						usersStatsRecord.newUsersToday ??
-						usersStatsRecord.new
+					usersStatsRecord['newUsers'] ??
+						usersStatsRecord['newUsersToday'] ??
+						usersStatsRecord['new']
 				),
 			};
 
@@ -636,9 +639,9 @@ export function AdminDashboard() {
 			const usersHeatCandidate = Array.isArray(usersHeatPayload)
 				? usersHeatPayload
 				: typeof usersHeatPayload === 'object' && usersHeatPayload !== null
-					? ((usersHeatPayload as Record<string, unknown>).items ??
-						(usersHeatPayload as Record<string, unknown>).rows ??
-						(usersHeatPayload as Record<string, unknown>).heat ??
+					? ((usersHeatPayload as Record<string, unknown>)['items'] ??
+						(usersHeatPayload as Record<string, unknown>)['rows'] ??
+						(usersHeatPayload as Record<string, unknown>)['heat'] ??
 						[])
 					: [];
 
@@ -650,15 +653,18 @@ export function AdminDashboard() {
 						const row = item as Record<string, unknown>;
 						return {
 							label: String(
-								row.label ??
-									row.date ??
-									row.day ??
-									row.hour ??
-									row.name ??
+								row['label'] ??
+									row['date'] ??
+									row['day'] ??
+									row['hour'] ??
+									row['name'] ??
 									`Point ${index + 1}`
 							),
 							value: toCount(
-								row.value ?? row.count ?? row.total ?? row.users
+								row['value'] ??
+									row['count'] ??
+									row['total'] ??
+									row['users']
 							),
 						};
 					}
