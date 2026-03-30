@@ -298,28 +298,29 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 						alt={title || "Product image"}
 					/>
 				</div>
- 
+
 				<ProductInfo
 					product={{
-						title: title || '',
-						description,
-						rating: typeof rating === 'number' ? rating : 0,
-						ratingCount: Number(ratingCount) || 0,
-						discount: Number(product.discount) || 0,
-						...(product.vendor && { vendor: product.vendor })
+						title: title || "Product",
+						...(description !== undefined ? { description } : {}),
+						...(rating !== undefined ? { rating } : {}),
+						...(ratingCount !== undefined ? { ratingCount } : {}),
+						...(product.discount !== undefined ? { discount: product.discount } : {}),
+						...(product.vendor !== undefined ? { vendor: product.vendor } : {}),
 					}}
 					pricing={pricing}
 				/>
+
+				<AuthModal
+					isOpen={authModalOpen}
+					onClose={(e?: React.MouseEvent) => {
+						e?.stopPropagation();
+						setAuthModalOpen(false);
+					}}
+				/>
 			</div>
-			<AuthModal
-				isOpen={authModalOpen}
-				onClose={(e?: React.MouseEvent) => {
-					e?.stopPropagation();
-					setAuthModalOpen(false);
-				}}
-			/>
 		</div>
 	);
 };
- 
+
 export default ProductCard;

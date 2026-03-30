@@ -2,6 +2,7 @@
 
 import type { Chart as ChartJS } from 'chart.js';
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import axiosInstance from "@/lib/api/axiosInstance";
 import Skeleton from "@/components/Components/Skeleton/Skeleton";
@@ -164,6 +165,7 @@ export function AdminDashboard() {
 	const [userInsightsLoading, setUserInsightsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const docketHeight = useDocketHeight();
+	const router = useRouter();
 
 	const revenueChartRef = useRef<ChartJS | null>(null);
 	const vendorChartRef = useRef<ChartJS | null>(null);
@@ -315,10 +317,14 @@ export function AdminDashboard() {
 			);
 
 			const trendRaw =
+<<<<<<< Updated upstream
 				root['trendText'] ??
 				root['trendLabel'] ??
 				root['comparison'] ??
 				root['changeLabel'];
+=======
+				root['trendText'] ?? root['trendLabel'] ?? root['comparison'] ?? root['changeLabel'];
+>>>>>>> Stashed changes
 			const trendValue = toNumber(
 				root['trendPercentage'] ??
 					root['trendPercent'] ??
@@ -661,10 +667,14 @@ export function AdminDashboard() {
 									`Point ${index + 1}`
 							),
 							value: toCount(
+<<<<<<< Updated upstream
 								row['value'] ??
 									row['count'] ??
 									row['total'] ??
 									row['users']
+=======
+								row['value'] ?? row['count'] ?? row['total'] ?? row['users']
+>>>>>>> Stashed changes
 							),
 						};
 					}
@@ -1323,14 +1333,18 @@ export function AdminDashboard() {
 							<p>Loading alerts...</p>
 						) : (
 							<div className="needs-action-list">
-								<div className="needs-action-item">
-									<span className="needs-action-label">Pending Vendor Approvals</span>
-									<span className="needs-action-count">{pendingApprovals}</span>
-								</div>
-								<div className="needs-action-item">
-									<span className="needs-action-label">Delayed Orders</span>
-									<span className="needs-action-count">{delayedOrders}</span>
-								</div>
+								{pendingApprovals > 0 && (
+									<div className="needs-action-item" onClick={() => router.push('/admin/vendors')} style={{ cursor: 'pointer' }}>
+										<span className="needs-action-label">Pending Vendor Approvals</span>
+										<span className="needs-action-count">{pendingApprovals}</span>
+									</div>
+								)}
+								{delayedOrders > 0 && (
+									<div className="needs-action-item" onClick={() => router.push('/admin/vendor')} style={{ cursor: 'pointer' }}>
+										<span className="needs-action-label">Delayed Orders</span>
+										<span className="needs-action-count">{delayedOrders}</span>
+									</div>
+								)}
 							</div>
 						)}
 					</div>
@@ -1341,21 +1355,27 @@ export function AdminDashboard() {
 						) : (
 							<>
 								<div className="needs-action-list">
-									<div className="needs-action-item">
-										<span className="needs-action-label">Total Users</span>
-										<span className="needs-action-count">{userStatsSummary.totalUsers}</span>
-									</div>
-									<div className="needs-action-item">
-										<span className="needs-action-label">New Users</span>
-										<span className="needs-action-count">{userStatsSummary.newUsers}</span>
-									</div>
+									{userStatsSummary.totalUsers > 0 && (
+										<div className="needs-action-item">
+											<span className="needs-action-label">Total Users</span>
+											<span className="needs-action-count">{userStatsSummary.totalUsers}</span>
+										</div>
+									)}
+									{userStatsSummary.newUsers > 0 && (
+										<div className="needs-action-item">
+											<span className="needs-action-label">New Users</span>
+											<span className="needs-action-count">{userStatsSummary.newUsers}</span>
+										</div>
+									)}
 								</div>
-								{userHeat.length > 0 ? (
+								{userHeat.filter(point => point.value > 0).length > 0 ? (
 									<div className="needs-action-list" style={{ marginTop: '0.75rem' }}>
-										{userHeat.slice(0, 5).map((point, index) => (
+										{userHeat.filter(point => point.value > 0).slice(0, 5).map((point, index) => (
 											<div
 												className="needs-action-item"
 												key={`${point.label}-${index}`}
+												onClick={() => {}}
+												style={{ cursor: 'pointer' }}
 											>
 												<span className="needs-action-label">{point.label}</span>
 												<span className="needs-action-count">{point.value}</span>
