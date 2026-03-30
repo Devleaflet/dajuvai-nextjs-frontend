@@ -16,6 +16,7 @@ import "@/styles/AdminVendor.css";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { FiSearch } from "react-icons/fi";
+import Image from "next/image";
 
 // Use the detailed vendor type for internal operations
 type Vendor = ComponentVendor;
@@ -44,9 +45,18 @@ const SkeletonRow: React.FC = () => {
 			<td>
 				<div className="admin-vendors__skeleton"></div>
 			</td>
+			<td>
+				<div className="admin-vendors__skeleton"></div>
+			</td>
 		</tr>
 	);
 };
+
+const CACHE_KEY_VENDORS = "admin_vendors";
+const CACHE_KEY_DISTRICTS = "admin_districts";
+const CACHE_KEY_VENDOR_STATS = "admin_vendor_stats";
+const CACHE_KEY_TOP_EARNING_VENDOR = "admin_vendor_top_earning";
+const CACHE_TTL = 10 * 60 * 1000;
 
 const createVendorAPI = (token: string | null) => ({
 	async getAll(): Promise<Vendor[]> {
@@ -475,7 +485,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 };
 
 const AdminVendor: React.FC = () => {
-	const { token, isAuthenticated } = useAuth();
+	const { token, isAuthenticated, isLoading: authLoading } = useAuth();
 	const router = useRouter();
 	const [vendors, setVendors] = useState<Vendor[]>([]);
 	const [filteredVendors, setFilteredVendors] = useState<Vendor[]>([]);
@@ -492,10 +502,12 @@ const AdminVendor: React.FC = () => {
 	const [selectedVendorId, setSelectedVendorId] = useState<number | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+	const [totalVendorsCount, setTotalVendorsCount] = useState<number | null>(null);
 	const [sortConfig, setSortConfig] = useState<{
 		key: keyof Vendor;
 		direction: "asc" | "desc";
 	} | null>(null);
+	const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
 	const [unapprovedCount, setUnapprovedCount] = useState(0);
 	const [districtFilter, setDistrictFilter] = useState("all");
 	const [startDate, setStartDate] = useState("");
@@ -506,12 +518,12 @@ const AdminVendor: React.FC = () => {
 	const [approvingVendorId, setApprovingVendorId] = useState<number | null>(
 		null
 	);
+	const [topEarningVendor, setTopEarningVendor] = useState<{
+		name: string;
+		sales: number;
+	} | null>(null);
 
 	const vendorAPI = useMemo(() => createVendorAPI(token), [token]);
-
-	const CACHE_KEY_VENDORS = "admin_vendors";
-	const CACHE_KEY_DISTRICTS = "admin_districts";
-	const CACHE_TTL = 10 * 60 * 1000;
 
 	const fetchDistricts = useCallback(async () => {
 		//("Fetching districts...");
@@ -567,15 +579,177 @@ const AdminVendor: React.FC = () => {
 		}
 	}, [token]);
 
-	const loadUnapprovedCount = useCallback(async () => {
-		//("Fetching unapproved vendors...");
-		try {
-			const unapproved = await vendorAPI.getUnapproved();
-			setUnapprovedCount(unapproved.length);
-		} catch (err) {
-			console.error("Failed to load unapproved count:", err);
+	const loadVendorStats = useCallback(async () => {
+		console.log(token)
+		if (!token) return;
+
+		const toCount = (value: unknown): number => {
+			const parsed = typeof value === "number" ? value : Number(value);
+			return Number.isFinite(parsed) ? parsed : 0;
+		};
+
+		const cached = localStorage.getItem(CACHE_KEY_VENDOR_STATS);
+		if (cached) {
+			try {
+				const { data, timestamp } = JSON.parse(cached);
+				if (data && Date.now() - timestamp < CACHE_TTL) {
+					setTotalVendorsCount(toCount(data["totalVendors"]));
+					const cachedPendingApprovals = toCount(data["pendingApprovals"]);
+					setPendingApprovalsCount(cachedPendingApprovals);
+					setUnapprovedCount(
+						toCount(data["unapprovedVendors"]) || cachedPendingApprovals
+					);
+					return;
+				}
+			} catch {
+				//("Invalid vendor stats cache, fetching fresh data");
+			}
 		}
-	}, [vendorAPI]);
+
+		try {
+			const response = await fetch(`${API_BASE_URL}/api/admin/vendors/stats`, {
+				method: "GET",
+				headers: {
+					"Content-Type": "application/json",
+					Accept: "application/json",
+					Authorization: `Bearer ${token}`,
+				},
+			});
+
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
+
+			const result = await response.json();
+			if (result?.success === false) {
+				throw new Error(result?.message || "Failed to load vendor stats");
+			}
+
+			const payload = result?.data ?? result ?? {};
+			const data =
+				typeof payload === "object" && payload !== null
+					? (payload as Record<string, unknown>)
+					: {};
+
+			const totalVendors = toCount(
+				data["totalVendors"] ??
+					data["totalVendor"] ??
+					data["total"] ??
+					data["count"] ??
+					data["totalCount"]
+			);
+			const pendingApprovals = toCount(
+				data["pendingApprovals"] ??
+					data["pendingApproval"] ??
+					data["pending"] ??
+					data["pendingCount"]
+			);
+			const unapprovedVendors = toCount(
+				data["unapprovedVendors"] ??
+					data["unapprovedCount"] ??
+					data["pendingVendors"] ??
+					pendingApprovals
+			);
+
+			setTotalVendorsCount(totalVendors);
+			setPendingApprovalsCount(pendingApprovals);
+			setUnapprovedCount(unapprovedVendors);
+			localStorage.setItem(
+				CACHE_KEY_VENDOR_STATS,
+				JSON.stringify({
+					data: { totalVendors, pendingApprovals, unapprovedVendors },
+					timestamp: Date.now(),
+				})
+			);
+		} catch (err) {
+			console.error("Failed to load vendor stats:", err);
+		}
+	}, [token]);
+
+	const loadTopEarningVendor = useCallback(async () => {
+		if (!token) return;
+
+		const toCount = (value: unknown): number => {
+			const parsed = typeof value === "number" ? value : Number(value);
+			return Number.isFinite(parsed) ? parsed : 0;
+		};
+
+		const cached = localStorage.getItem(CACHE_KEY_TOP_EARNING_VENDOR);
+		if (cached) {
+			try {
+				const { data, timestamp } = JSON.parse(cached);
+				if (data && Date.now() - timestamp < CACHE_TTL) {
+					setTopEarningVendor({
+						name: String(data.name || 'N/A'),
+						sales: toCount(data.sales),
+					});
+					return;
+				}
+			} catch {
+				//("Invalid top earning cache, fetching fresh data");
+			}
+		}
+
+		try {
+			const response = await fetch(`${API_BASE_URL}/api/admin/vendors/top-earning`, {
+				method: 'GET',
+				headers: {
+					'Content-Type': 'application/json',
+					Accept: 'application/json',
+					Authorization: `Bearer ${token}`,
+				},
+			});
+
+			if (!response.ok) return;
+			const result = await response.json();
+			if (result?.success === false) {
+				setTopEarningVendor(null);
+				return;
+			}
+
+			const payload = result?.data ?? result ?? {};
+			const data =
+				typeof payload === 'object' && payload !== null
+					? (payload as Record<string, unknown>)
+					: {};
+
+			const vendorRecord =
+				typeof data["vendor"] === 'object' && data["vendor"] !== null
+					? (data["vendor"] as Record<string, unknown>)
+					: null;
+
+			const name = String(
+				data["businessName"] ??
+					data["vendorName"] ??
+					data["name"] ??
+					vendorRecord?.["businessName"] ??
+					vendorRecord?.["vendorName"] ??
+					vendorRecord?.["name"] ??
+					'N/A'
+			);
+			const sales = toCount(
+				data["totalSales"] ??
+					data["sales"] ??
+					data["totalEarning"] ??
+					data["earning"] ??
+					vendorRecord?.["totalSales"] ??
+					vendorRecord?.["sales"]
+			);
+
+			if (name === 'N/A' && sales <= 0) {
+				setTopEarningVendor(null);
+				return;
+			}
+
+			setTopEarningVendor({ name, sales });
+			localStorage.setItem(
+				CACHE_KEY_TOP_EARNING_VENDOR,
+				JSON.stringify({ data: { name, sales }, timestamp: Date.now() })
+			);
+		} catch (error) {
+			console.error('Failed to load top earning vendor:', error);
+		}
+	}, [token]);
 
 	const loadVendors = useCallback(async () => {
 		try {
@@ -626,6 +800,10 @@ const AdminVendor: React.FC = () => {
 	}, [vendorAPI]);
 
 	useEffect(() => {
+		if (authLoading) {
+			return;
+		}
+
 		if (!isAuthenticated || !token) {
 			setLoading(false);
 			setError("Please log in to access vendor management.");
@@ -637,19 +815,35 @@ const AdminVendor: React.FC = () => {
 			await Promise.all([
 				loadVendors(),
 				fetchDistricts(),
-				loadUnapprovedCount(),
+				loadVendorStats(),
+				loadTopEarningVendor(),
 			]);
 		};
 
 		loadInitialData();
 	}, [
+		authLoading,
 		isAuthenticated,
 		token,
 		fetchDistricts,
-		loadUnapprovedCount,
+		loadVendorStats,
+		loadTopEarningVendor,
 		loadVendors,
 		router,
 	]);
+
+	const getDisplayStatus = (vendor: Vendor) => {
+		if (!vendor.isApproved) return 'Pending';
+		if (String(vendor.status || '').toLowerCase() === 'inactive') {
+			return 'Suspended';
+		}
+		return 'Active';
+	};
+
+	const getStorefrontInitial = (name: string) => {
+		if (!name) return 'V';
+		return name.trim().charAt(0).toUpperCase();
+	};
 
 	// Auto-filter when approval filter changes
 	useEffect(() => {
@@ -840,10 +1034,12 @@ const AdminVendor: React.FC = () => {
 				);
 				toast.success("Vendor rejected successfully");
 			}
-			setUnapprovedCount((prev) => prev - 1);
 			localStorage.removeItem(CACHE_KEY_VENDORS);
+			localStorage.removeItem(CACHE_KEY_VENDOR_STATS);
+			localStorage.removeItem(CACHE_KEY_TOP_EARNING_VENDOR);
 			await loadVendors();
-			await loadUnapprovedCount();
+			await loadVendorStats();
+			await loadTopEarningVendor();
 		} catch (error) {
 			toast.error(
 				error instanceof Error
@@ -864,7 +1060,11 @@ const AdminVendor: React.FC = () => {
 			setVendors((prev) => prev.filter((v) => v.id !== id));
 			setFilteredVendors((prev) => prev.filter((v) => v.id !== id));
 			localStorage.removeItem(CACHE_KEY_VENDORS);
+			localStorage.removeItem(CACHE_KEY_VENDOR_STATS);
+			localStorage.removeItem(CACHE_KEY_TOP_EARNING_VENDOR);
 			await loadVendors();
+			await loadVendorStats();
+			await loadTopEarningVendor();
 			toast.success("Vendor deleted successfully");
 		} catch (error) {
 			toast.error(
@@ -884,6 +1084,28 @@ const AdminVendor: React.FC = () => {
 		<div className="admin-vendors">
 			<div style={{ display: "flex", flexDirection: "column", flex: "1" }}>
 <div className="admin-vendors__content">
+					<div className="admin-vendors__stats-grid">
+						<div className="admin-vendors__stats-card">
+							<p className="admin-vendors__stats-label">Total Vendors</p>
+							<h3 className="admin-vendors__stats-value">{totalVendorsCount ?? vendors.length}</h3>
+						</div>
+						<div className="admin-vendors__stats-card">
+							<p className="admin-vendors__stats-label">Pending Approvals</p>
+							<h3 className="admin-vendors__stats-value">{pendingApprovalsCount}</h3>
+						</div>
+						<div className="admin-vendors__stats-card">
+							<p className="admin-vendors__stats-label">Unapproved Vendors</p>
+							<h3 className="admin-vendors__stats-value">{unapprovedCount}</h3>
+						</div>
+						<div className="admin-vendors__stats-card">
+							<p className="admin-vendors__stats-label">Top Earning Vendor</p>
+							<h3 className="admin-vendors__stats-value admin-vendors__stats-value--text">
+								{topEarningVendor
+									? `${topEarningVendor.name} (Rs. ${topEarningVendor.sales.toLocaleString('en-IN')})`
+									: 'N/A'}
+							</h3>
+						</div>
+					</div>
 					<div className="admin-vendors__searchbar-row">
 						<div className="admin-vendors__searchbar">
 							<FiSearch className="admin-vendors__searchbar-icon" />
@@ -896,11 +1118,11 @@ const AdminVendor: React.FC = () => {
 							/>
 						</div>
 					</div>
-					{unapprovedCount > 0 && (
+					{/* {unapprovedCount > 0 && (
 						<div className="admin-vendors__unapproved-count">
 							<span>{unapprovedCount} unapproved vendors</span>
 						</div>
-					)}
+					)} */}
 					<div className="admin-vendors__filter-container">
 						<select
 							value={districtFilter}
@@ -960,6 +1182,7 @@ const AdminVendor: React.FC = () => {
 							<table className="admin-vendors__table">
 								<thead className="admin-vendors__table-head">
 									<tr>
+										<th className="admin-vendors__storefront-column">Storefront</th>
 										<th
 											onClick={() => handleSort("businessName")}
 											className="admin-vendors__name-column"
@@ -1007,7 +1230,7 @@ const AdminVendor: React.FC = () => {
 									) : currentVendors.length === 0 ? (
 										<tr>
 											<td
-												colSpan={7}
+												colSpan={8}
 												className="admin-vendors__table-row"
 											>
 												No vendors found
@@ -1019,6 +1242,22 @@ const AdminVendor: React.FC = () => {
 												key={vendor.id}
 												className="admin-vendors__table-row"
 											>
+												<td className="admin-vendors__storefront-column">
+													<div className="admin-vendors__storefront">
+														{vendor.profilePicture && vendor.profilePicture !== 'N/A' ? (
+															<Image
+																src={vendor.profilePicture}
+																alt={vendor.businessName}
+																width={38}
+																height={38}
+																unoptimized
+																loader={({ src }) => src}
+															/>
+														) : (
+															<span>{getStorefrontInitial(vendor.businessName)}</span>
+														)}
+													</div>
+												</td>
 												<td className="admin-vendors__name-column">
 													{vendor.businessName}
 												</td>
@@ -1035,7 +1274,11 @@ const AdminVendor: React.FC = () => {
 														: vendor.district || "N/A"}
 												</td>
 												<td className="admin-vendors__status-column">
-													{vendor.status}
+													<span
+														className={`vendor-status-badge vendor-status-badge--${getDisplayStatus(vendor).toLowerCase()}`}
+													>
+														{getDisplayStatus(vendor)}
+													</span>
 												</td>
 												<td className="admin-vendors__approval-column">
 													<span

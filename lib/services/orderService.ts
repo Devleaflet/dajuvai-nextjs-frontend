@@ -91,6 +91,28 @@ export interface Order {
   shippingAddress?: ShippingAddress | null;
 }
 
+export interface AdminOrderStats {
+  returnRefundRate?:
+    | number
+    | string
+    | {
+      rate?: number | string;
+      returnedCancelled?: number;
+      totalOrders?: number;
+    };
+  processingOrders?: number;
+  processingOrdersCount?: number;
+  pendingOrders?: number;
+  inProgressOrders?: number;
+  completedLast30Days?: number;
+  completed30Days?: number;
+  deliveredLast30Days?: number;
+  returnedCancelled?: number;
+  totalOrders?: number;
+  returnRate?: number | string;
+  refundRate?: number | string;
+}
+
 interface ApiResponse {
   success: boolean;
   data: Order[];
@@ -163,6 +185,36 @@ export const OrderService = {
           throw new Error('Order not found');
         }
         throw new Error(error.response?.data.message || 'Network error');
+      }
+      throw new Error('An unexpected error occurred');
+    }
+  },
+
+  getAdminOrderStats: async (token: string): Promise<AdminOrderStats> => {
+    if (!token) {
+      throw new Error('No authentication token provided');
+    }
+
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/orders/stats`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        timeout: 10000,
+      });
+
+      if (response.data?.success === false) {
+        throw new Error(response.data?.message || 'Failed to fetch order stats');
+      }
+
+      return (response.data?.data || response.data || {}) as AdminOrderStats;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          throw new Error('Unauthorized: Invalid or expired token');
+        }
+        throw new Error(error.response?.data?.message || 'Network error');
       }
       throw new Error('An unexpected error occurred');
     }

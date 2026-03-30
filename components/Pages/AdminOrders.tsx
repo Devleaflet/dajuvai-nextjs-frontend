@@ -6,7 +6,7 @@ import OrderEditModal from "@/components/Components/Modal/OrderEditModal";
 import OrderDetailModal from "@/components/Components/Modal/OrderDetailModal";
 import AdminOrdersSkeleton from "@/components/skeleton/AdminOrdersSkeleton";
 import "@/styles/AdminOrders.css";
-import { OrderService } from "@/lib/services/orderService";
+import { OrderService, type Order, type AdminOrderStats } from "@/lib/services/orderService";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-hot-toast";
@@ -51,12 +51,20 @@ interface ModalOrder {
   profileImage?: string;
 }
 
+interface AdminOrderOverviewStats {
+  processingOrdersCount: number;
+  completedLast30Days: number;
+  returnRefundRate: string;
+  returnedCancelled: number;
+  totalOrders: number;
+}
+
 const AdminOrders: React.FC = () => {
   const { logout, token, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [orders, setOrders] = useState<DisplayOrder[]>([]);
-  const [rawOrders, setRawOrders] = useState<any[]>([]);
+  const [rawOrders, setRawOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<DisplayOrder[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [ordersPerPage] = useState(7);
@@ -66,6 +74,7 @@ const AdminOrders: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [orderStats, setOrderStats] = useState<AdminOrderOverviewStats | null>(null);
   const [sortOption, setSortOption] = useState<string>("newest");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>("all");
@@ -87,10 +96,72 @@ const AdminOrders: React.FC = () => {
 
       try {
         setIsLoading(true);
-        const response = await OrderService.getAllOrders(token);
+        const [response, statsResponse] = await Promise.all([
+          OrderService.getAllOrders(token),
+          OrderService.getAdminOrderStats(token).catch(() => null),
+        ]) as [Order[], AdminOrderStats | null];
         setRawOrders(response);
 
-        const transformedOrders: DisplayOrder[] = response.map((order: any) => ({
+        const toCount = (value: unknown): number => {
+          const parsed = typeof value === "number" ? value : Number(value);
+          return Number.isFinite(parsed) ? parsed : 0;
+        };
+
+        const toRate = (value: unknown): string => {
+          if (typeof value === "string" && value.trim().length > 0) {
+            return value;
+          }
+          const parsed = typeof value === "number" ? value : Number(value);
+          return Number.isFinite(parsed) ? parsed.toFixed(2) : "0.00";
+        };
+
+        if (statsResponse) {
+          const processingOrdersCount = toCount(
+            statsResponse.processingOrders ??
+            statsResponse.processingOrdersCount ??
+            statsResponse.pendingOrders ??
+            statsResponse.inProgressOrders
+          );
+          const completedLast30Days = toCount(
+            statsResponse.completedLast30Days ??
+            statsResponse.completed30Days ??
+            statsResponse.deliveredLast30Days
+          );
+          const returnRefundRateRaw = statsResponse.returnRefundRate;
+          const returnRefundRateRecord =
+            typeof returnRefundRateRaw === "object" && returnRefundRateRaw !== null
+              ? returnRefundRateRaw
+              : null;
+
+          // API format: { returnRefundRate: { rate, returnedCancelled, totalOrders } }
+          const rateFromResponse =
+            returnRefundRateRecord?.rate ??
+            statsResponse.returnRate ??
+            statsResponse.refundRate ??
+            returnRefundRateRaw;
+
+          const returnRefundRateValue = toRate(rateFromResponse);
+
+          const returnedCancelled = toCount(
+            returnRefundRateRecord?.returnedCancelled ??
+            statsResponse.returnedCancelled
+          );
+
+          const totalOrders = toCount(
+            returnRefundRateRecord?.totalOrders ??
+            statsResponse.totalOrders
+          );
+
+          setOrderStats({
+            processingOrdersCount,
+            completedLast30Days,
+            returnRefundRate: returnRefundRateValue,
+            returnedCancelled,
+            totalOrders,
+          });
+        }
+
+        const transformedOrders: DisplayOrder[] = response.map((order: Order) => ({
           id: order.id.toString(),
           customer: order.orderedBy?.username || "Unknown",
           email: order.orderedBy?.email || "N/A",
@@ -226,16 +297,54 @@ const AdminOrders: React.FC = () => {
     indexOfLastOrder
   );
 
+  const processingOrdersCount = rawOrders.filter((order) => {
+    const normalizedStatus = String(order?.status || '').toUpperCase();
+    return ['PROCESSING', 'PENDING', 'CONFIRMED', 'ACCEPTED'].includes(normalizedStatus);
+  }).length;
+
+  const completedLast30Days = rawOrders.filter((order) => {
+    const normalizedStatus = String(order?.status || '').toUpperCase();
+    if (normalizedStatus !== 'DELIVERED') return false;
+    const createdAt = new Date(order?.createdAt || '');
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    return createdAt >= thirtyDaysAgo;
+  }).length;
+
+  const returnRefundRate = rawOrders.length
+    ? (((rawOrders.filter((order) => {
+      const normalizedStatus = String(order?.status || '').toUpperCase();
+      return normalizedStatus === 'RETURNED' || normalizedStatus === 'CANCELLED';
+    }).length) / rawOrders.length) * 100).toFixed(2)
+    : '0.00';
+
+  const returnedCancelledCount = rawOrders.filter((order) => {
+    const normalizedStatus = String(order?.status || '').toUpperCase();
+    return normalizedStatus === 'RETURNED' || normalizedStatus === 'CANCELLED';
+  }).length;
+
+  const totalOrdersCount = rawOrders.length;
+
+  const displayProcessingOrdersCount = orderStats?.processingOrdersCount ?? processingOrdersCount;
+  const displayCompletedLast30Days = orderStats?.completedLast30Days ?? completedLast30Days;
+  const displayReturnRefundRate = orderStats?.returnRefundRate ?? returnRefundRate;
+  const displayReturnedCancelled = orderStats?.returnedCancelled ?? returnedCancelledCount;
+  const displayTotalOrders = orderStats?.totalOrders ?? totalOrdersCount;
+
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   const toModalOrder = useCallback((displayOrder: DisplayOrder): ModalOrder => {
-    const rawOrder =
-      rawOrders.find((o) => o.id.toString() === displayOrder.id) || {};
-    const orderedBy = rawOrder.orderedBy || {};
-    const shippingAddress = rawOrder.shippingAddress || {};
+    const rawOrder = rawOrders.find((o) => o.id.toString() === displayOrder.id);
+    const orderedBy = rawOrder?.orderedBy;
+    const shippingAddress = rawOrder?.shippingAddress;
+    const orderedByRecord = (orderedBy ?? {}) as Record<string, unknown>;
+    const shippingAddressRecord = (shippingAddress ?? {}) as Record<string, unknown>;
+    const rawOrderRecord = (rawOrder ?? {}) as Record<string, unknown>;
+    const asText = (value: unknown, fallback = "N/A") =>
+      typeof value === "string" && value.trim().length > 0 ? value : fallback;
 
     const username =
-      orderedBy.username || displayOrder.customer || "Unknown User";
+      orderedBy?.username || displayOrder.customer || "Unknown User";
     const nameParts = username.split(" ");
     const firstName = nameParts[0] || "Unknown";
     const lastName =
@@ -247,19 +356,26 @@ const AdminOrders: React.FC = () => {
       lastName,
       date: displayOrder.orderDate,
       quantity:
-        rawOrder.orderItems?.reduce(
-          (total: number, item: any) => total + item.quantity,
+        rawOrder?.orderItems?.reduce(
+          (total: number, item: { quantity: number }) => total + item.quantity,
           0
         ) || 1,
-      address: shippingAddress.address || shippingAddress.localAddress || "N/A",
-      phoneNumber: orderedBy.phoneNumber || "N/A",
+      address: asText(
+        shippingAddressRecord["address"] ?? shippingAddressRecord["localAddress"]
+      ),
+      phoneNumber: asText(orderedByRecord["phoneNumber"]),
       email: displayOrder.email,
-      country: shippingAddress.country || "N/A",
+      country: asText(shippingAddressRecord["country"]),
       streetAddress:
-        shippingAddress.streetAddress || shippingAddress.localAddress || "N/A",
-      town: shippingAddress.town || shippingAddress.city || "N/A",
-      state: shippingAddress.state || shippingAddress.province || "N/A",
-      vendorName: rawOrder.vendorName || "N/A",
+        asText(
+          shippingAddressRecord["streetAddress"] ??
+            shippingAddressRecord["localAddress"]
+        ),
+      town: asText(shippingAddressRecord["town"] ?? shippingAddressRecord["city"]),
+      state: asText(
+        shippingAddressRecord["state"] ?? shippingAddressRecord["province"]
+      ),
+      vendorName: asText(rawOrderRecord["vendorName"]),
     };
 
     return modalOrder;
@@ -350,6 +466,28 @@ const AdminOrders: React.FC = () => {
   return (
     <div className="admin-orders">
       <div className="admin-orders__content">
+        <div className="admin-overview-stats">
+          <div className="admin-overview-card">
+            <p className="admin-overview-card__label">Processing Orders</p>
+            <h3 className="admin-overview-card__value">{displayProcessingOrdersCount}</h3>
+          </div>
+          <div className="admin-overview-card">
+            <p className="admin-overview-card__label">Completed (30d)</p>
+            <h3 className="admin-overview-card__value">{displayCompletedLast30Days}</h3>
+          </div>
+          <div className="admin-overview-card">
+            <p className="admin-overview-card__label">Return/Refund Rate</p>
+            <h3 className="admin-overview-card__value">{displayReturnRefundRate}%</h3>
+          </div>
+          <div className="admin-overview-card">
+            <p className="admin-overview-card__label">Returned/Cancelled</p>
+            <h3 className="admin-overview-card__value">{displayReturnedCancelled}</h3>
+          </div>
+          <div className="admin-overview-card">
+            <p className="admin-overview-card__label">Total Orders</p>
+            <h3 className="admin-overview-card__value">{displayTotalOrders}</h3>
+          </div>
+        </div>
         <div className="admin-orders__searchbar-row">
           <div className="admin-orders__searchbar">
             <FiSearch className="admin-orders__searchbar-icon" />
@@ -358,7 +496,7 @@ const AdminOrders: React.FC = () => {
               placeholder="Search"
               value={searchQuery}
               onChange={(e) => {
-                setSearchQuery(e.target.value);
+                handleSearch(e.target.value);
                 setCurrentPage(1);
               }}
               aria-label="Search orders"

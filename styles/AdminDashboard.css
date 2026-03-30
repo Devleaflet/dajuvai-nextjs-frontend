@@ -27,6 +27,11 @@
 	margin-bottom: 2rem;
 }
 
+.dashboard__stats--overview {
+	margin-bottom: 1.25rem;
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
 .stat-card {
 	background-color: white;
 	border-radius: 0.75rem;
@@ -82,6 +87,45 @@
 .stat-value {
 	font-size: 1.5rem;
 	font-weight: 600;
+	color: #111827;
+}
+
+.stat-subtext {
+	margin-top: 0.25rem;
+	font-size: 0.78rem;
+	color: #6b7280;
+}
+
+.dashboard-needs-action {
+	margin-top: -0.5rem;
+	margin-bottom: 1.5rem;
+}
+
+.needs-action-list {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 0.8rem;
+}
+
+.needs-action-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0.85rem 1rem;
+	border: 1px solid #e5e7eb;
+	border-radius: 0.6rem;
+	background: #f9fafb;
+}
+
+.needs-action-label {
+	font-size: 0.9rem;
+	color: #374151;
+	font-weight: 500;
+}
+
+.needs-action-count {
+	font-size: 1rem;
+	font-weight: 700;
 	color: #111827;
 }
 
@@ -273,11 +317,19 @@
 		flex-direction: column;
 		align-items: start;
 	}
+
+	.dashboard__stats--overview {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
 }
 
 @media (max-width: 768px) {
 	.dashboard__stats {
 		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.dashboard__stats--overview {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 
 	.stat-value {

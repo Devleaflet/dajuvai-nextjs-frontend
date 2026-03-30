@@ -102,23 +102,26 @@ const Home = () => {
 	}
 
 	return (
-		<div style={{ zIndex: "0", backgroundColor: '#F4F5F7' }}>
+		<>
 			<Navbar />
-
-			<Suspense fallback={<HeroSliderSkeleton />}>
-				<HeroSlider />
-			</Suspense>
-			<Suspense fallback={<CategorySliderSkeleton />}>
-				<CategorySlider />
-			</Suspense>
-			<Suspense fallback={<HomepageSectionsSkeleton />}>
-				<HomepageSections />
-			</Suspense>
-			<SpecialOffers />
-			{/* <CategorySection maxItemsToShow={8} /> */}
-			<CategoryCatalogSection />
-			<Footer />
-		</div>
+			<div style={{ zIndex: '0', backgroundColor: '#ECEEF1' }}>
+				<div style={{ paddingTop: '12px' }}>
+					<Suspense fallback={<HeroSliderSkeleton />}>
+						<HeroSlider />
+					</Suspense>
+				</div>
+				<Suspense fallback={<CategorySliderSkeleton />}>
+					<CategorySlider />
+				</Suspense>
+				<Suspense fallback={<HomepageSectionsSkeleton />}>
+					<HomepageSections />
+				</Suspense>
+				<SpecialOffers />
+				{/* <CategorySection maxItemsToShow={8} /> */}
+				<CategoryCatalogSection />
+				<Footer />
+			</div>
+		</>
 	);
 };
 

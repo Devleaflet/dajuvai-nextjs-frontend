@@ -15,6 +15,131 @@
 	margin-bottom: 20px;
 }
 
+.vendor-product__stats-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 12px;
+	margin-bottom: 14px;
+}
+
+.vendor-product__stats-card {
+	background: #ffffff;
+	border: 1px solid #e5e7eb;
+	border-radius: 10px;
+	padding: 14px 16px;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.vendor-product__stats-label {
+	margin: 0;
+	font-size: 13px;
+	font-weight: 500;
+	color: #6b7280;
+}
+
+.vendor-product__stats-value {
+	margin: 6px 0 0;
+	font-size: 24px;
+	font-weight: 700;
+	color: #111827;
+	line-height: 1.2;
+}
+
+.vendor-product__stats-value--text {
+	font-size: 16px;
+}
+
+.vendor-product__stats-meta {
+	margin: 8px 0 0;
+	font-size: 12px;
+	color: #6b7280;
+}
+
+.vendor-product__reviews-card {
+	background: #ffffff;
+	border: 1px solid #e5e7eb;
+	border-radius: 10px;
+	padding: 14px 16px;
+	margin-bottom: 16px;
+}
+
+.vendor-product__reviews-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 12px;
+	gap: 8px;
+}
+
+.vendor-product__reviews-title {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 600;
+	color: #111827;
+}
+
+.vendor-product__reviews-subtitle {
+	font-size: 12px;
+	font-weight: 600;
+	color: #6b7280;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+}
+
+.vendor-product__reviews-list {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+	gap: 10px;
+}
+
+.vendor-product__reviews-item {
+	border: 1px solid #e5e7eb;
+	border-radius: 8px;
+	padding: 10px 12px;
+	background: #fafafa;
+}
+
+.vendor-product__reviews-item-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	margin-bottom: 6px;
+}
+
+.vendor-product__reviews-product {
+	margin: 0;
+	font-size: 13px;
+	font-weight: 600;
+	color: #111827;
+}
+
+.vendor-product__reviews-rating {
+	font-size: 12px;
+	font-weight: 600;
+	color: #ff6b35;
+	white-space: nowrap;
+}
+
+.vendor-product__reviews-comment {
+	margin: 0;
+	font-size: 13px;
+	color: #374151;
+	line-height: 1.35;
+}
+
+.vendor-product__reviews-meta {
+	margin: 8px 0 0;
+	font-size: 12px;
+	color: #6b7280;
+}
+
+.vendor-product__reviews-empty {
+	margin: 0;
+	font-size: 13px;
+	color: #6b7280;
+}
+
 .vendor-product__search-row .dashboard__search {
 	position: relative;
 	flex: 1;
@@ -108,6 +233,10 @@
 
 	.vendor-product__sort-select {
 		width: 100%; /* Full width on mobile */
+	}
+
+	.vendor-product__reviews-list {
+		grid-template-columns: 1fr;
 	}
 }
 

@@ -752,17 +752,23 @@ const Navbar: React.FC = () => {
 				<div className="nav_bar_right">
 					{!isLoading && !isAuthenticated && (
 						<a
-							className="navbar__top-link"
+							className="navbar__top-link text-[14px]   text-[#0a0a0a] cursor-pointer "
 							onClick={toggleVendorAuthModal}
 						>
-							Vendor Login
+							<span className='text-[14px] font-semibold text-[#333]'>
+								Vendor Login
+							</span>
+							
 						</a>
 					)}
 					<a
 						href="/become-vendor"
-						className="navbar__top-link"
+						className="navbar__top-link text-[14px] text-[#0a0a0a] font-semibold cursor-pointer"
 					>
-						Become a Vendor
+						<span className='text-[14px] font-[500]  text-[#4d4c4c] font-bold text-[#333]'>
+							Become a Vendor
+						</span>
+						
 					</a>
 				</div>
 				<div className="navbar__top">
@@ -776,7 +782,7 @@ const Navbar: React.FC = () => {
 									height={100}
 									priority
 									className="navbar__logo-img"
-									style={{ width: 'auto', height: '100px' }}
+									style={{ width: 'auto', height: '102px' }}
 								/>
 							</Link>
 						</div>
@@ -959,7 +965,7 @@ const Navbar: React.FC = () => {
 						>
 							<form
 			onSubmit={handleSearch}
-			className="relative w-full max-w-3xl group"
+			className="relative w-full max-w-[720px] lg:ml-8 group"
 		>
 			{/* Input field */}
 			<input
@@ -970,10 +976,10 @@ const Navbar: React.FC = () => {
 				onKeyDown={handleKeyDown}
 				onClick={() => setIsLifted(true)}
 				onBlur={() => setIsLifted(false)}
-				className={`w-full py-3 px-6 pr-16 rounded-[25px] border-2 border-[#e0e0e0] 
-					focus:border-orange-500 focus:outline-none outline-none
-					hover:border-orange-500
-					transition-all duration-300 ease-in-out bg-[#f8f9fa] text-[1rem]
+				className={`w-full h-[48px] px-8 pr-16 rounded-[24px] border border-[#d1d5db] shadow-[0_2px_7px_rgba(15,23,42,0.08)]
+					focus:border-[#c7ccd4] focus:outline-none outline-none
+					hover:border-[#c7ccd4]
+					transition-all duration-300 ease-in-out bg-[#f5f6f8] text-[1rem]
 					text-gray-700 placeholder-gray-400 ${isLifted ? '-translate-y-0.5' : ''}`}
 				autoComplete="off"
 			/>
@@ -981,13 +987,13 @@ const Navbar: React.FC = () => {
 			{/* Search button */}
 			<button
 				type="submit"
-				className={`absolute right-2 top-1/2 -translate-y-1/2 
+				className={`absolute right-[6px] top-1/2 -translate-y-1/2 
 					bg-orange-500 hover:bg-orange-600 
-					text-white rounded-full p-3
+					text-white rounded-full w-[38px] h-[38px]
 					transition-all duration-300
-					flex items-center justify-center ${isLifted ? '-translate-y-1.5' : ''}`}
+					flex items-center justify-center`}
 			>
-				<FaSearch className="w-5 h-5" />
+				<FaSearch className="w-[18px] h-[18px]" />
 			</button>
 		</form>
 							{showSearchDropdown && searchResults.length > 0 && (

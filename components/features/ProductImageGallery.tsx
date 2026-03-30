@@ -102,7 +102,7 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
       role="region"
       aria-label="Product image gallery"
     >
-      <div style={{ position: 'relative', width: '100%', height: 'auto' }}>
+	  <div style={{ position: 'relative', width: '100%', height: '100%' }}>
         <Image
           src={displayImage}
           alt={`${alt} - Image ${currentIndex + 1} of ${validImages.length}`}
@@ -111,7 +111,7 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           onError={handleImageError}
           onLoad={handleImageLoad}
-          style={{ objectFit: 'cover', width: '100%', height: 'auto' }}
+		  style={{ objectFit: 'contain', width: '100%', height: '100%' }}
           priority={currentIndex === 0}
         />
 
@@ -126,7 +126,7 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: '#f3f4f6'
+			  backgroundColor: 'transparent'
             }}
             aria-label="Loading image"
           >

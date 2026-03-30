@@ -26,6 +26,10 @@ const RevenueByVendor = dynamic(() => import("@/components/Components/AdminDashb
 
 const STATS_CACHE_KEY = 'admin_dashboard_stats';
 const REVENUE_CACHE_KEY = 'admin_dashboard_revenue';
+const GROSS_REVENUE_TREND_CACHE_KEY = 'admin_dashboard_gross_revenue_trend';
+const ACTION_METRICS_CACHE_KEY = 'admin_dashboard_action_metrics';
+const USER_STATS_CACHE_KEY = 'admin_dashboard_user_stats';
+const USER_HEAT_CACHE_KEY = 'admin_dashboard_user_heat';
 const VENDORS_CACHE_KEY = 'admin_dashboard_vendors_sales';
 const TOP_PRODUCTS_CACHE_KEY = 'admin_dashboard_top_products';
 const CACHE_TTL = 5 * 60 * 1000;
@@ -54,6 +58,17 @@ interface RevenueData {
 	revenue: string;
 }
 
+interface UserStatsSummary {
+	totalUsers: number;
+	activeUsers: number;
+	newUsers: number;
+}
+
+interface UserHeatPoint {
+	label: string;
+	value: number;
+}
+
 interface VendorSales {
 	vendorId: number;
 	businessName: string;
@@ -64,6 +79,11 @@ interface TopProduct {
 	productId: number;
 	productName: string;
 	totalSales: number;
+}
+
+interface ActionOrder {
+	createdAt?: string;
+	status?: string;
 }
 
 interface PaginatedData<T> {
@@ -116,7 +136,7 @@ export function AdminDashboard() {
 	const [todaysSalesData, setTodaysSalesData] = useState<
 		{ label: string; value: number }[]
 	>([]);
-	const [days, setDays] = useState<number>(10);
+	const [days, setDays] = useState<number>(15);
 	const [vendorsStartDate, setVendorsStartDate] = useState<string>('');
 	const [vendorsEndDate, setVendorsEndDate] = useState<string>('');
 	const [topProductsStartDate, setTopProductsStartDate] = useState<string>('');
@@ -125,17 +145,29 @@ export function AdminDashboard() {
 	const [topProductsPage, setTopProductsPage] = useState<number>(1);
 	const [statsLoading, setStatsLoading] = useState(true);
 	const [revenueLoading, setRevenueLoading] = useState(true);
+	const [grossRevenueLoading, setGrossRevenueLoading] = useState(true);
 	const [vendorsLoading, setVendorsLoading] = useState(true);
 	const [topProductsLoading, setTopProductsLoading] = useState(true);
 	const [todaysLoading, setTodaysLoading] = useState(true);
+	const [grossRevenue, setGrossRevenue] = useState(0);
+	const [grossRevenueTrendText, setGrossRevenueTrendText] = useState('+0% vs last month');
+	const [ordersToday, setOrdersToday] = useState(0);
+	const [pendingApprovals, setPendingApprovals] = useState(0);
+	const [delayedOrders, setDelayedOrders] = useState(0);
+	const [userStatsSummary, setUserStatsSummary] = useState<UserStatsSummary>({
+		totalUsers: 0,
+		activeUsers: 0,
+		newUsers: 0,
+	});
+	const [userHeat, setUserHeat] = useState<UserHeatPoint[]>([]);
+	const [actionLoading, setActionLoading] = useState(true);
+	const [userInsightsLoading, setUserInsightsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const docketHeight = useDocketHeight();
 
 	const revenueChartRef = useRef<ChartJS | null>(null);
 	const vendorChartRef = useRef<ChartJS | null>(null);
 	const topProductsChartRef = useRef<ChartJS | null>(null);
-
-
 
 	useEffect(() => {
 		// Set initial mobile state
@@ -203,26 +235,113 @@ export function AdminDashboard() {
 		}
 
 		try {
-			const response = await axiosInstance.get(
-				`/api/admin/dashboard/revenue?days=${days}`,
-				{
-					headers: { Authorization: `Bearer ${token}` },
-				}
-			);
-			if (response.data) {
-				setRevenue(response.data);
+			const response = await axiosInstance.get('/api/admin/dashboard/revenue', {
+				params: { days },
+				headers: { Authorization: `Bearer ${token}` },
+			});
+
+			const revenueData = Array.isArray(response.data?.data)
+				? response.data.data
+				: Array.isArray(response.data)
+					? response.data
+					: [];
+
+			if (response.data?.success === false) {
+				setError(response.data?.message || 'Failed to fetch revenue data');
+			}
+
+			if (Array.isArray(revenueData)) {
+				setRevenue(revenueData);
 				localStorage.setItem(
 					`${REVENUE_CACHE_KEY}_${days}`,
-					JSON.stringify({ data: response.data, timestamp: Date.now() })
+					JSON.stringify({ data: revenueData, timestamp: Date.now() })
 				);
-			} else {
-				setError('Failed to fetch revenue data');
 			}
 		} catch (err) {
 			const error = err as any;
 			setError(error.response?.data?.message || 'Error fetching revenue data');
 		} finally {
 			setRevenueLoading(false);
+		}
+	};
+
+	const fetchGrossRevenueTrend = async () => {
+		setGrossRevenueLoading(true);
+		const cacheKey = `${GROSS_REVENUE_TREND_CACHE_KEY}_${days}`;
+		const cached = localStorage.getItem(cacheKey);
+		if (cached) {
+			try {
+				const { data, timestamp } = JSON.parse(cached);
+				if (data && Date.now() - timestamp < CACHE_TTL) {
+					setGrossRevenue(Number(data.grossRevenue || 0));
+					setGrossRevenueTrendText(String(data.trendText || '+0% vs last month'));
+					setGrossRevenueLoading(false);
+					return;
+				}
+			} catch (error) {
+				//(error);
+			}
+		}
+
+		try {
+			const response = await axiosInstance.get('/api/admin/dashboard/gross-revenue-trend', {
+				params: { days },
+				headers: { Authorization: `Bearer ${token}` },
+			});
+
+			if (response.data?.success === false) {
+				setError(response.data?.message || 'Failed to fetch gross revenue trend');
+				return;
+			}
+
+			const payload = response.data?.data ?? response.data ?? {};
+			const root =
+				typeof payload === 'object' && payload !== null
+					? (payload as Record<string, unknown>)
+					: {};
+
+			const toNumber = (value: unknown) => {
+				const parsed = typeof value === 'number' ? value : Number(value);
+				return Number.isFinite(parsed) ? parsed : 0;
+			};
+
+			const grossRevenueValue = toNumber(
+				root.grossRevenue ??
+					root.totalGrossRevenue ??
+					root.totalRevenue ??
+					root.revenue ??
+					root.amount ??
+					root.value
+			);
+
+			const trendRaw =
+				root.trendText ?? root.trendLabel ?? root.comparison ?? root.changeLabel;
+			const trendValue = toNumber(
+				root.trendPercentage ??
+					root.trendPercent ??
+					root.percentageChange ??
+					root.changePercent ??
+					root.trend
+			);
+			const trendText =
+				typeof trendRaw === 'string' && trendRaw.trim().length > 0
+					? trendRaw
+					: `${trendValue >= 0 ? '+' : ''}${trendValue.toFixed(1)}% vs last month`;
+
+			setGrossRevenue(grossRevenueValue);
+			setGrossRevenueTrendText(trendText);
+			localStorage.setItem(
+				cacheKey,
+				JSON.stringify({
+					data: { grossRevenue: grossRevenueValue, trendText },
+					timestamp: Date.now(),
+				})
+			);
+		} catch (err) {
+			const error = err as any;
+			setError(error.response?.data?.message || 'Error fetching gross revenue trend');
+		} finally {
+			setGrossRevenueLoading(false);
 		}
 	};
 
@@ -336,6 +455,239 @@ export function AdminDashboard() {
 		}
 	};
 
+	const fetchActionMetrics = async () => {
+		if (!token) return;
+		setActionLoading(true);
+		const cached = localStorage.getItem(ACTION_METRICS_CACHE_KEY);
+		if (cached) {
+			try {
+				const { data, timestamp } = JSON.parse(cached);
+				if (data && Date.now() - timestamp < CACHE_TTL) {
+					setOrdersToday(Number(data.ordersToday || 0));
+					setPendingApprovals(Number(data.pendingApprovals || 0));
+					setDelayedOrders(Number(data.delayedOrders || 0));
+					setActionLoading(false);
+					return;
+				}
+			} catch (error) {
+				//(error);
+			}
+		}
+
+		try {
+			const [ordersTodayResponse, needsActionResponse] = await Promise.all([
+				axiosInstance.get('/api/admin/dashboard/orders-today-count', {
+					headers: { Authorization: `Bearer ${token}` },
+				}),
+				axiosInstance.get('/api/admin/dashboard/needs-action', {
+					headers: { Authorization: `Bearer ${token}` },
+				}),
+			]);
+
+			const toCount = (value: unknown): number => {
+				const parsed = typeof value === 'number' ? value : Number(value);
+				return Number.isFinite(parsed) ? parsed : 0;
+			};
+
+			const ordersTodayPayload =
+				ordersTodayResponse?.data?.data ?? ordersTodayResponse?.data;
+			const parsedOrdersToday =
+				typeof ordersTodayPayload === 'object' && ordersTodayPayload !== null
+					? toCount(
+							(ordersTodayPayload as Record<string, unknown>).ordersTodayCount ??
+								(ordersTodayPayload as Record<string, unknown>).ordersToday ??
+								(ordersTodayPayload as Record<string, unknown>).count ??
+								(ordersTodayPayload as Record<string, unknown>).total
+						)
+					: toCount(ordersTodayPayload);
+
+			const needsActionPayload =
+				needsActionResponse?.data?.data ?? needsActionResponse?.data ?? {};
+			const needsActionData =
+				typeof needsActionPayload === 'object' && needsActionPayload !== null
+					? (needsActionPayload as Record<string, unknown>)
+					: {};
+
+			const parsedPendingApprovals = toCount(
+				needsActionData.pendingApprovals ??
+					needsActionData.pendingVendorApprovals ??
+					needsActionData.pendingVendors ??
+					needsActionData.unapprovedVendors
+			);
+
+			const parsedDelayedOrders = toCount(
+				needsActionData.delayedOrders ??
+					needsActionData.delayed ??
+					needsActionData.ordersDelayed
+			);
+
+			setOrdersToday(parsedOrdersToday);
+			setPendingApprovals(parsedPendingApprovals);
+			setDelayedOrders(parsedDelayedOrders);
+
+			localStorage.setItem(
+				ACTION_METRICS_CACHE_KEY,
+				JSON.stringify({
+					data: {
+						ordersToday: parsedOrdersToday,
+						pendingApprovals: parsedPendingApprovals,
+						delayedOrders: parsedDelayedOrders,
+					},
+					timestamp: Date.now(),
+				})
+			);
+		} catch (err) {
+			console.error('Error fetching action metrics:', err);
+		} finally {
+			setActionLoading(false);
+		}
+	};
+
+	const fetchUserInsights = async () => {
+		if (!token) return;
+		setUserInsightsLoading(true);
+
+		const usersHeatCacheKey = `${USER_HEAT_CACHE_KEY}_20`;
+		const cachedStats = localStorage.getItem(USER_STATS_CACHE_KEY);
+		const cachedHeat = localStorage.getItem(usersHeatCacheKey);
+
+		if (cachedStats && cachedHeat) {
+			try {
+				const parsedStats = JSON.parse(cachedStats);
+				const parsedHeat = JSON.parse(cachedHeat);
+
+				if (
+					parsedStats?.data &&
+					parsedHeat?.data &&
+					Date.now() - Number(parsedStats.timestamp || 0) < CACHE_TTL &&
+					Date.now() - Number(parsedHeat.timestamp || 0) < CACHE_TTL
+				) {
+					console.log(
+						'[AdminDashboard] /api/admin/users/stats response (cached):',
+						parsedStats.data
+					);
+					console.log(
+						'[AdminDashboard] /api/admin/users/heat?limit=20 response (cached):',
+						parsedHeat.data
+					);
+					setUserStatsSummary(parsedStats.data as UserStatsSummary);
+					setUserHeat(parsedHeat.data as UserHeatPoint[]);
+					setUserInsightsLoading(false);
+					return;
+				}
+			} catch (error) {
+				// Ignore malformed cache and fetch fresh data.
+			}
+		}
+
+		try {
+			const [usersStatsResponse, usersHeatResponse] = await Promise.all([
+				axiosInstance.get('/api/admin/users/stats', {
+					headers: { Authorization: `Bearer ${token}` },
+				}),
+				axiosInstance.get('/api/admin/users/heat', {
+					params: { limit: 20 },
+					headers: { Authorization: `Bearer ${token}` },
+				}),
+			]);
+
+			console.log(
+				'[AdminDashboard] /api/admin/users/stats response:',
+				usersStatsResponse.data
+			);
+			console.log(
+				'[AdminDashboard] /api/admin/users/heat?limit=20 response:',
+				usersHeatResponse.data
+			);
+
+			const toCount = (value: unknown): number => {
+				const parsed = typeof value === 'number' ? value : Number(value);
+				return Number.isFinite(parsed) ? parsed : 0;
+			};
+
+			const usersStatsPayload =
+				usersStatsResponse?.data?.data ?? usersStatsResponse?.data ?? {};
+			const usersStatsRecord =
+				typeof usersStatsPayload === 'object' && usersStatsPayload !== null
+					? (usersStatsPayload as Record<string, unknown>)
+					: {};
+
+			const normalizedStats: UserStatsSummary = {
+				totalUsers: toCount(
+					usersStatsRecord.totalUsers ??
+						usersStatsRecord.users ??
+						usersStatsRecord.total ??
+						usersStatsRecord.totalCustomers
+				),
+				activeUsers: toCount(
+					usersStatsRecord.activeUsers ??
+						usersStatsRecord.onlineUsers ??
+						usersStatsRecord.active
+				),
+				newUsers: toCount(
+					usersStatsRecord.newUsers ??
+						usersStatsRecord.newUsersToday ??
+						usersStatsRecord.new
+				),
+			};
+
+			const usersHeatPayload =
+				usersHeatResponse?.data?.data ?? usersHeatResponse?.data ?? [];
+			const usersHeatCandidate = Array.isArray(usersHeatPayload)
+				? usersHeatPayload
+				: typeof usersHeatPayload === 'object' && usersHeatPayload !== null
+					? ((usersHeatPayload as Record<string, unknown>).items ??
+						(usersHeatPayload as Record<string, unknown>).rows ??
+						(usersHeatPayload as Record<string, unknown>).heat ??
+						[])
+					: [];
+
+			const normalizedHeat: UserHeatPoint[] = (Array.isArray(usersHeatCandidate)
+				? usersHeatCandidate
+				: [])
+				.map((item, index) => {
+					if (typeof item === 'object' && item !== null) {
+						const row = item as Record<string, unknown>;
+						return {
+							label: String(
+								row.label ??
+									row.date ??
+									row.day ??
+									row.hour ??
+									row.name ??
+									`Point ${index + 1}`
+							),
+							value: toCount(
+								row.value ?? row.count ?? row.total ?? row.users
+							),
+						};
+					}
+
+					return {
+						label: `Point ${index + 1}`,
+						value: toCount(item),
+					};
+				})
+				.slice(0, 20);
+
+			setUserStatsSummary(normalizedStats);
+			setUserHeat(normalizedHeat);
+
+			localStorage.setItem(
+				USER_STATS_CACHE_KEY,
+				JSON.stringify({ data: normalizedStats, timestamp: Date.now() })
+			);
+			localStorage.setItem(
+				usersHeatCacheKey,
+				JSON.stringify({ data: normalizedHeat, timestamp: Date.now() })
+			);
+		} catch (error) {
+			console.error('Error fetching user insights:', error);
+		} finally {
+			setUserInsightsLoading(false);
+		}
+	};
+
 	useEffect(() => {
 		if (todaysSales > 0) {
 			const hours = Array.from(
@@ -363,14 +715,22 @@ export function AdminDashboard() {
 		Promise.all([
 			fetchStats(),
 			fetchRevenue(),
+			fetchGrossRevenueTrend(),
 			fetchVendorsSales(),
 			fetchTopProducts(),
 			fetchTodaysSales(),
+			fetchActionMetrics(),
+			fetchUserInsights(),
 		]).catch(() => setError('Error during initial load'));
 	}, [token]);
 
+	
 	useEffect(() => {
 		if (token) fetchRevenue();
+	}, [days, token]);
+
+	useEffect(() => {
+		if (token) fetchGrossRevenueTrend();
 	}, [days, token]);
 
 	useEffect(() => {
@@ -809,10 +1169,69 @@ export function AdminDashboard() {
 						paddingBottom: isMobile ? `${docketHeight + 24}px` : '24px',
 					}}
 				>
+					<div className="dashboard__stats dashboard__stats--overview">
+						<div className="stat-card">
+							<div className="stat-icon">💸</div>
+							<div className="stat-content">
+								<h3 className="stat-title">Gross Revenue</h3>
+								<p className="stat-value">
+									{grossRevenueLoading
+										? 'Loading...'
+										: `Rs. ${Number(grossRevenue || 0).toLocaleString('en-IN')}`}
+								</p>
+								<p className="stat-subtext">
+									{grossRevenueLoading ? 'Loading trend...' : grossRevenueTrendText}
+								</p>
+							</div>
+						</div>
+						<div className="stat-card">
+							<div className="stat-icon">🏪</div>
+							<div className="stat-content">
+								<h3 className="stat-title">Active Vendors</h3>
+								<p className="stat-value">{stats?.totalVendors || 0}</p>
+								<p className="stat-subtext">Approved vendor partners</p>
+							</div>
+						</div>
+						<div className="stat-card">
+							<div className="stat-icon">🧾</div>
+							<div className="stat-content">
+								<h3 className="stat-title">Platform Commissions</h3>
+								<p className="stat-value">
+									Rs.{' '}
+									{Number(
+										Math.max(
+											Number(stats?.totalSales || 0) -
+												Number(stats?.totalDeliveredRevenue || 0),
+											0
+										)
+									).toLocaleString('en-IN')}
+								</p>
+								<p className="stat-subtext">Earnings from vendor sales</p>
+							</div>
+						</div>
+						<div className="stat-card">
+							<div className="stat-icon">📦</div>
+							<div className="stat-content">
+								<h3 className="stat-title">Orders Today</h3>
+								<p className="stat-value">{ordersToday}</p>
+								<p className="stat-subtext">Live order count</p>
+							</div>
+						</div>
+						<div className="stat-card">
+							<div className="stat-icon">👤</div>
+							<div className="stat-content">
+								<h3 className="stat-title">Active Users</h3>
+								<p className="stat-value">
+									{userInsightsLoading ? 'Loading...' : userStatsSummary.activeUsers}
+								</p>
+								<p className="stat-subtext">From admin users stats</p>
+							</div>
+						</div>
+					</div>
 					<div className="dashboard__stats">
 						{statsLoading ? (
 							<>
-								{Array.from({ length: 6 }).map((_, i) => (
+								{Array.from({ length: 8 }).map((_, i) => (
 									<div key={i}>{renderSkeletonStatCard()}</div>
 								))}
 							</>
@@ -839,6 +1258,14 @@ export function AdminDashboard() {
 								<StatsCard
 									title="Total Customers"
 									value={stats.totalCustomers}
+									iconType="customers"
+									change={0}
+									trend="up"
+									timeframe=""
+								/>
+								<StatsCard
+									title="Total Users"
+									value={userInsightsLoading ? 'Loading...' : userStatsSummary.totalUsers}
 									iconType="customers"
 									change={0}
 									trend="up"
@@ -883,6 +1310,58 @@ export function AdminDashboard() {
 							</>
 						) : null}
 					</div>
+
+					<div className="section-card dashboard-needs-action">
+						<h2>Needs Action</h2>
+						{actionLoading ? (
+							<p>Loading alerts...</p>
+						) : (
+							<div className="needs-action-list">
+								<div className="needs-action-item">
+									<span className="needs-action-label">Pending Vendor Approvals</span>
+									<span className="needs-action-count">{pendingApprovals}</span>
+								</div>
+								<div className="needs-action-item">
+									<span className="needs-action-label">Delayed Orders</span>
+									<span className="needs-action-count">{delayedOrders}</span>
+								</div>
+							</div>
+						)}
+					</div>
+					<div className="section-card dashboard-needs-action">
+						<h2>User Insights</h2>
+						{userInsightsLoading ? (
+							<p>Loading user analytics...</p>
+						) : (
+							<>
+								<div className="needs-action-list">
+									<div className="needs-action-item">
+										<span className="needs-action-label">Total Users</span>
+										<span className="needs-action-count">{userStatsSummary.totalUsers}</span>
+									</div>
+									<div className="needs-action-item">
+										<span className="needs-action-label">New Users</span>
+										<span className="needs-action-count">{userStatsSummary.newUsers}</span>
+									</div>
+								</div>
+								{userHeat.length > 0 ? (
+									<div className="needs-action-list" style={{ marginTop: '0.75rem' }}>
+										{userHeat.slice(0, 5).map((point, index) => (
+											<div
+												className="needs-action-item"
+												key={`${point.label}-${index}`}
+											>
+												<span className="needs-action-label">{point.label}</span>
+												<span className="needs-action-count">{point.value}</span>
+											</div>
+										))}
+									</div>
+								) : (
+									<p style={{ marginTop: '0.75rem' }}>No user heat data available.</p>
+								)}
+							</>
+						)}
+					</div>
 					<div className="dashboard__two-columns">
 						<div className="dashboard__column">
 							<div className="section-card revenue-analytics">
@@ -914,7 +1393,7 @@ export function AdminDashboard() {
 										onChange={handleDaysChange}
 									>
 										<option value="7">Last 7 Days</option>
-										<option value="10">Last 10 Days</option>
+										<option value="15">Last 15 Days</option>
 										<option value="30">Last 30 Days</option>
 									</select>
 								</div>

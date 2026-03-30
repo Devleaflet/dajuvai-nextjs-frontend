@@ -14,6 +14,25 @@ import { useVendorAuth } from "@/lib/context/VendorAuthContext";
 import "@/styles/VendorProduct.css";
 import { Product as ApiProduct, ProductFormData } from "@/lib/types/product";
 import * as XLSX from "xlsx";
+import axiosInstance from "@/lib/api/axiosInstance";
+
+interface VendorProductsStats {
+	totalProducts: number;
+	activeProducts: number;
+	outOfStockProducts: number;
+	averageRating: number;
+	totalReviews: number;
+	topSellingProductName: string;
+}
+
+interface VendorRecentReview {
+	id: string | number;
+	productName: string;
+	rating: number;
+	comment: string;
+	reviewerName: string;
+	createdAt: string;
+}
 
 const ProductListSkeleton: React.FC = () => {
 	return (
@@ -84,6 +103,11 @@ const VendorProduct: React.FC = () => {
 	const [sortOption, setSortOption] = useState<string>("newest");
 	const [showDeleteDialog, setShowDeleteDialog] = useState<boolean>(false);
 	const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+	const [vendorProductsStats, setVendorProductsStats] =
+		useState<VendorProductsStats | null>(null);
+	const [vendorStatsLoading, setVendorStatsLoading] = useState<boolean>(true);
+	const [recentReviews, setRecentReviews] = useState<VendorRecentReview[]>([]);
+	const [recentReviewsLoading, setRecentReviewsLoading] = useState<boolean>(true);
 
 	React.useEffect(() => {
 		setCurrentPage(1);
@@ -309,6 +333,167 @@ const VendorProduct: React.FC = () => {
 		},
 		enabled: !!authState.vendor?.id && !!authState.token,
 	});
+
+	const fetchVendorProductsStats = React.useCallback(async () => {
+		if (!authState.token) return;
+		setVendorStatsLoading(true);
+		try {
+			const response = await axiosInstance.get("/api/vendor/products/stats", {
+				headers: {
+					Authorization: `Bearer ${authState.token}`,
+				},
+			});
+
+			const payload = response.data?.data ?? response.data ?? {};
+			const row =
+				typeof payload === "object" && payload !== null
+					? (payload as Record<string, unknown>)
+					: {};
+
+			const toNumber = (value: unknown, fallback = 0): number => {
+				const parsed = typeof value === "number" ? value : Number(value);
+				return Number.isFinite(parsed) ? parsed : fallback;
+			};
+
+			const topSelling =
+				typeof row["topSellingProduct"] === "object" && row["topSellingProduct"] !== null
+					? (row["topSellingProduct"] as Record<string, unknown>)
+					: {};
+
+			const topSellingItemRaw = row["topSellingItem"];
+			const topSellingItemName =
+				typeof topSellingItemRaw === "string"
+					? topSellingItemRaw
+					: typeof topSellingItemRaw === "object" && topSellingItemRaw !== null
+						? String(
+							(topSellingItemRaw as Record<string, unknown>)["productName"] ??
+								(topSellingItemRaw as Record<string, unknown>)["name"] ??
+								(topSellingItemRaw as Record<string, unknown>)["title"] ??
+								"N/A"
+						)
+						: "N/A";
+
+			setVendorProductsStats({
+				totalProducts: toNumber(
+					row["totalProducts"] ?? row["productsCount"] ?? row["total"] ?? row["totalProduct"]
+				),
+				activeProducts: toNumber(
+					row["totalActiveProducts"] ??
+						row["activeProducts"] ??
+						row["availableProducts"] ??
+						row["inStockProducts"]
+				),
+				outOfStockProducts: toNumber(
+					row["outOfStockCount"] ??
+						row["outOfStockProducts"] ??
+						row["outOfStock"] ??
+						row["outStockProducts"]
+				),
+				averageRating: toNumber(row["averageRating"] ?? row["avgRating"], 0),
+				totalReviews: toNumber(row["totalReviews"] ?? row["reviewCount"], 0),
+				topSellingProductName: String(
+					row["topSellingProductName"] ??
+						topSellingItemName ??
+						topSelling["productName"] ??
+						topSelling["name"] ??
+						"N/A"
+				),
+			});
+		} catch (error) {
+			console.error("Error fetching vendor product stats:", error);
+			setVendorProductsStats(null);
+		} finally {
+			setVendorStatsLoading(false);
+		}
+	}, [authState.token]);
+
+	const fetchRecentReviews = React.useCallback(async () => {
+		if (!authState.token) return;
+		setRecentReviewsLoading(true);
+		try {
+			const response = await axiosInstance.get(
+				"/api/vendor/products/recent-reviews",
+				{
+					params: { limit: 10 },
+					headers: {
+						Authorization: `Bearer ${authState.token}`,
+					},
+				}
+			);
+
+			const payload = response.data?.data ?? response.data ?? [];
+			const rows = Array.isArray(payload)
+				? payload
+				: typeof payload === "object" && payload !== null
+					? ((payload as Record<string, unknown>)["reviews"] ??
+						(payload as Record<string, unknown>)["items"] ??
+						[])
+					: [];
+
+			const toNumber = (value: unknown, fallback = 0): number => {
+				const parsed = typeof value === "number" ? value : Number(value);
+				return Number.isFinite(parsed) ? parsed : fallback;
+			};
+
+			const normalizedReviews = (Array.isArray(rows) ? rows : []).map((item, index) => {
+				const review =
+					typeof item === "object" && item !== null
+						? (item as Record<string, unknown>)
+						: {};
+
+				const product =
+					typeof review["product"] === "object" && review["product"] !== null
+						? (review["product"] as Record<string, unknown>)
+						: {};
+
+				const user =
+					typeof review["user"] === "object" && review["user"] !== null
+						? (review["user"] as Record<string, unknown>)
+						: {};
+
+				return {
+					id: String(review["id"] ?? review["reviewId"] ?? `review-${index}`),
+					productName: String(
+						review["productName"] ??
+							product["name"] ??
+							review["title"] ??
+							"Unknown Product"
+					),
+					rating: toNumber(review["rating"] ?? review["stars"] ?? 0),
+					comment: String(review["comment"] ?? review["message"] ?? "No comment"),
+					reviewerName: String(
+						review["reviewerName"] ??
+							user["name"] ??
+							user["fullName"] ??
+							"Anonymous"
+					),
+					createdAt: String(
+						review["createdAt"] ?? review["created_at"] ?? new Date().toISOString()
+					),
+				} as VendorRecentReview;
+			});
+
+			setRecentReviews(normalizedReviews);
+		} catch (error) {
+			console.error("Error fetching recent reviews:", error);
+			setRecentReviews([]);
+		} finally {
+			setRecentReviewsLoading(false);
+		}
+	}, [authState.token]);
+
+	React.useEffect(() => {
+		if (!authState.token) {
+			setVendorProductsStats(null);
+			setRecentReviews([]);
+			setVendorStatsLoading(false);
+			setRecentReviewsLoading(false);
+			return;
+		}
+
+		fetchVendorProductsStats();
+		fetchRecentReviews();
+	}, [authState.token, fetchRecentReviews, fetchVendorProductsStats]);
 
 	const sortProducts = (products: Product[]) => {
 		const sorted = [...products];
@@ -762,6 +947,21 @@ const VendorProduct: React.FC = () => {
 		? sortedProducts
 		: sortProducts(displayProducts);
 	const finalTotal = isSearching ? sortedProducts.length : totalProducts;
+	const outOfStockCount = finalProducts.filter(
+		(product) =>
+			String(product.status || "").toUpperCase() === "OUT_OF_STOCK" ||
+			Number(product.stock || 0) <= 0
+	).length;
+	const totalActiveProducts = Math.max(finalTotal - outOfStockCount, 0);
+	const displayTotalProducts = vendorProductsStats?.totalProducts ?? finalTotal;
+	const displayActiveProducts =
+		vendorProductsStats?.activeProducts ?? totalActiveProducts;
+	const displayOutOfStockProducts =
+		vendorProductsStats?.outOfStockProducts ?? outOfStockCount;
+	const displayTopSellingItemName =
+		vendorProductsStats?.topSellingProductName || "N/A";
+	const displayAverageRating = (vendorProductsStats?.averageRating ?? 0).toFixed(1);
+	const displayTotalReviews = vendorProductsStats?.totalReviews ?? recentReviews.length;
 
 	const handlePageChange = (pageNumber: number) => {
 		setCurrentPage(pageNumber);
@@ -787,6 +987,68 @@ const VendorProduct: React.FC = () => {
 
 	return (
 		<>
+			<div className="vendor-product__stats-grid">
+				<div className="vendor-product__stats-card">
+					<p className="vendor-product__stats-label">Total Products</p>
+					<h3 className="vendor-product__stats-value">
+						{vendorStatsLoading ? "..." : displayTotalProducts}
+					</h3>
+				</div>
+				<div className="vendor-product__stats-card">
+					<p className="vendor-product__stats-label">Active Products</p>
+					<h3 className="vendor-product__stats-value">
+						{vendorStatsLoading ? "..." : displayActiveProducts}
+					</h3>
+				</div>
+				<div className="vendor-product__stats-card">
+					<p className="vendor-product__stats-label">Out of Stock</p>
+					<h3 className="vendor-product__stats-value">
+						{vendorStatsLoading ? "..." : displayOutOfStockProducts}
+					</h3>
+				</div>
+				<div className="vendor-product__stats-card">
+					<p className="vendor-product__stats-label">Top Selling Item</p>
+					<h3 className="vendor-product__stats-value vendor-product__stats-value--text">
+						{vendorStatsLoading ? "Loading..." : displayTopSellingItemName}
+					</h3>
+				</div>
+				<div className="vendor-product__stats-card">
+					<p className="vendor-product__stats-label">Average Rating</p>
+					<h3 className="vendor-product__stats-value">
+						{vendorStatsLoading ? "..." : displayAverageRating}
+					</h3>
+					<p className="vendor-product__stats-meta">Based on {displayTotalReviews} reviews</p>
+				</div>
+			</div>
+
+			<div className="vendor-product__reviews-card">
+				<div className="vendor-product__reviews-header">
+					<h3 className="vendor-product__reviews-title">Recent Reviews</h3>
+					<span className="vendor-product__reviews-subtitle">Latest 10</span>
+				</div>
+				{recentReviewsLoading ? (
+					<p className="vendor-product__reviews-empty">Loading reviews...</p>
+				) : recentReviews.length > 0 ? (
+					<div className="vendor-product__reviews-list">
+						{recentReviews.map((review) => (
+							<div className="vendor-product__reviews-item" key={String(review.id)}>
+								<div className="vendor-product__reviews-item-head">
+									<p className="vendor-product__reviews-product">{review.productName}</p>
+									<span className="vendor-product__reviews-rating">
+										{Number(review.rating || 0).toFixed(1)} / 5
+									</span>
+								</div>
+								<p className="vendor-product__reviews-comment">{review.comment}</p>
+								<p className="vendor-product__reviews-meta">
+									By {review.reviewerName} • {new Date(review.createdAt).toLocaleDateString()}
+								</p>
+							</div>
+						))}
+					</div>
+				) : (
+					<p className="vendor-product__reviews-empty">No recent reviews found.</p>
+				)}
+			</div>
 			<div className="vendor-product__search-row dashboard__search-container">
 				<div
 					className="dashboard__search"

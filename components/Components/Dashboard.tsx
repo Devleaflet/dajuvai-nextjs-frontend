@@ -295,9 +295,35 @@ export function Dashboard() {
   }
 
   const displayedData = getDisplayedLowStockData();
+  const totalSales = Number(statsData?.totalSales || 0);
+  const netEarnings = Math.max(totalSales * 0.9, 0);
+  const storeRating = statsData?.averageRating ?? statsData?.storeRating ?? "N/A";
+  const profileViews = statsData?.profileViews ?? statsData?.storeViews ?? statsData?.clicks ?? 0;
 
   return (
     <main className="dashboard__main" style={{ paddingBottom: isMobile ? `${docketHeight + 24}px` : "24px" }}>
+          <div className="dashboard__stats dashboard__stats--overview">
+            <StatsCard
+              title="Net Earnings"
+              value={`Rs ${netEarnings.toFixed(2)}`}
+              iconType="earnings"
+            />
+            <StatsCard
+              title="Pending Orders"
+              value={statsData?.totalPendingOrders?.toString() || "0"}
+              iconType="pending"
+            />
+            <StatsCard
+              title="Store Rating"
+              value={String(storeRating)}
+              iconType="rating"
+            />
+            <StatsCard
+              title="Profile Views / Clicks"
+              value={String(profileViews)}
+              iconType="views"
+            />
+          </div>
           {/* Stats Section */}
           <div className="dashboard__stats">
             <StatsCard
@@ -436,6 +462,7 @@ interface StatsCardProps {
 }
 
 function StatsCard({ title, value, iconType, change, trend, timeframe }: StatsCardProps) {
+  const showTrend = typeof change === "number" || Boolean(timeframe);
   return (
     <div className="stats-card">
       <div className="stats-card__header">
@@ -444,13 +471,15 @@ function StatsCard({ title, value, iconType, change, trend, timeframe }: StatsCa
       </div>
       <div className="stats-card__content">
         <div className="stats-card__value">{value}</div>
-        <div className="stats-card__trend">
-          <span className={`stats-card__trend-value stats-card__trend-value--${trend}`}>
-            <span className={`stats-card__trend-icon stats-card__trend-icon--${trend}`}></span>
-            {change}
-          </span>
-          <span className="stats-card__timeframe">{timeframe}</span>
-        </div>
+        {showTrend ? (
+          <div className="stats-card__trend">
+            <span className={`stats-card__trend-value stats-card__trend-value--${trend}`}>
+              <span className={`stats-card__trend-icon stats-card__trend-icon--${trend}`}></span>
+              {change}
+            </span>
+            <span className="stats-card__timeframe">{timeframe}</span>
+          </div>
+        ) : null}
       </div>
     </div>
   );

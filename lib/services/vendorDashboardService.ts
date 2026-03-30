@@ -53,6 +53,19 @@ class VendorDashboardService {
     return response.json();
   }
 
+  async getVendorOrdersStats(token: string): Promise<any> {
+    const realToken = token || localStorage.getItem('vendorToken');
+    const response = await fetch(`${this.baseUrl}/vendor/orders/stats`, {
+      headers: {
+        Authorization: `Bearer ${realToken}`,
+        "Content-Type": "application/json",
+        accept: "application/json",
+      },
+    });
+    if (!response.ok) throw new Error("Failed to fetch order stats");
+    return response.json();
+  }
+
   async getVendorStats(token: string): Promise<any> {
     const realToken = token || localStorage.getItem('vendorToken');
     const response = await fetch(`${this.baseUrl}/vendor/dashboard/stats`, {

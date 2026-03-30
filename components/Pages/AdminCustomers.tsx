@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/context/AuthContext";
 import "@/styles/AdminOrders.css";
 import "@/styles/AdminCustomers.css";
 import { FiSearch } from "react-icons/fi";
+import { OrderService } from "@/lib/services/orderService";
 
 // User interface based on API schema
 interface User {
@@ -97,6 +98,7 @@ const AdminCustomers: React.FC = () => {
 	const [startDate, setStartDate] = useState("");
 	const [endDate, setEndDate] = useState("");
 	const [searchQuery, setSearchQuery] = useState("");
+	const [aov, setAov] = useState<number>(0);
 
 	const userAPI = createUserAPI(token);
 
@@ -168,6 +170,40 @@ const AdminCustomers: React.FC = () => {
 			setLoading(false);
 		}
 	}, [userAPI]);
+
+	const loadAov = useCallback(async () => {
+		if (!token) return;
+		try {
+			const orders = await OrderService.getAllOrders(token);
+			if (!orders.length) {
+				setAov(0);
+				return;
+			}
+
+			const totalRevenue = orders.reduce((sum, order) => {
+				const price = Number.parseFloat(String(order.totalPrice || 0));
+				return sum + (Number.isFinite(price) ? price : 0);
+			}, 0);
+
+			setAov(totalRevenue / orders.length);
+		} catch (err) {
+			console.error("Error loading AOV:", err);
+			setAov(0);
+		}
+	}, [token]);
+
+	useEffect(() => {
+		if (isAuthenticated && token) {
+			loadAov();
+		}
+	}, [isAuthenticated, token, loadAov]);
+
+	const newUsersThisWeek = users.filter((user) => {
+		const createdAt = new Date(user.createdAt);
+		const oneWeekAgo = new Date();
+		oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+		return createdAt >= oneWeekAgo;
+	}).length;
 
 	const handleSearch = useCallback((query: string) => {
 		setSearchQuery(query);
@@ -241,6 +277,20 @@ const AdminCustomers: React.FC = () => {
 	return (
 		<div className="admin-orders">
 			<div className="admin-orders__content">
+				<div className="admin-overview-stats">
+					<div className="admin-overview-card">
+						<p className="admin-overview-card__label">Total Users</p>
+						<h3 className="admin-overview-card__value">{users.length}</h3>
+					</div>
+					<div className="admin-overview-card">
+						<p className="admin-overview-card__label">New Users (This Week)</p>
+						<h3 className="admin-overview-card__value">{newUsersThisWeek}</h3>
+					</div>
+					<div className="admin-overview-card">
+						<p className="admin-overview-card__label">Average Order Value (AOV)</p>
+						<h3 className="admin-overview-card__value">Rs. {aov.toFixed(2)}</h3>
+					</div>
+				</div>
 				{error && (
 					<div className="admin-orders__error">
 						{error}

@@ -44,6 +44,7 @@
 	justify-content: flex-end;
 	align-items: center;
 	padding-top: 15px;
+	
 }
 
 .navbar__top {
@@ -95,16 +96,23 @@
 	background-color: #ffffff;
 }
 
-.navbar__top-link {
+/* .navbar__top-link {
 	margin-left: 14px;
-	font-weight: bolder;
 	font-size: 14px;
 	text-decoration: none;
-	color: #000;
 	font-weight: 500;
+    color: #010000; 
 	transition: color 0.2s ease;
-}
+	
+} */
+.navbar__top-link {
+    margin-left: 14px;
+    text-decoration: none;
+    color: #0a0a0a;
+		font-weight: 500 !important;
 
+    transition: color 0.2s ease;
+}
 .navbar__top-link:hover {
 	color: #ff6b00;
 	cursor: pointer;

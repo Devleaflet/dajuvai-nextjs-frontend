@@ -1,67 +1,7 @@
+/* Shop-specific ProductCard adjustments */
 
-
-/* Custom overrides to match the exact design */
-.shop-products .product-card__wishlist-button {
-    position: absolute !important;
-    top: 15px !important;
-    left: 15px !important;
-    width: 32px !important;
-    height: 32px !important;
-    background: #ffffff !important;
-    border: none !important;
-    border-radius: 50% !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08) !important;
+.shop-products .product-card__cart-button {
+    bottom: 10px !important;
+    right: 10px !important;
     z-index: 10 !important;
-}
-.shop-products .product-card__wishlist-button svg {
-    width: 17px !important;
-    height: 17px !important;
-    stroke: #ef4444 !important;
-}
-
-.shop-products .product-card {
-    padding: 12px !important;
-    border-radius: 12px !important;
-    border: none !important;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.05) !important;
-    transition: box-shadow 0.2s ease !important;
-}
-.shop-products .product-card:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
-}
-
-/* Custom overrides to match the exact design */
-.shop-products .product-card__wishlist-button {
-    position: absolute !important;
-    top: 15px !important;
-    left: 15px !important;
-    width: 32px !important;
-    height: 32px !important;
-    background: #ffffff !important;
-    border: none !important;
-    border-radius: 50% !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08) !important;
-    z-index: 10 !important;
-}
-.shop-products .product-card__wishlist-button svg {
-    width: 17px !important;
-    height: 17px !important;
-    stroke: #ef4444 !important;
-}
-
-.shop-products .product-card {
-    padding: 12px !important;
-    border-radius: 12px !important;
-    border: none !important;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.05) !important;
-    transition: box-shadow 0.2s ease !important;
-}
-.shop-products .product-card:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
 }

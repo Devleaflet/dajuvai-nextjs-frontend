@@ -17,6 +17,7 @@ import { useAuth } from "@/lib/context/AuthContext";
 import CategoryService from "@/lib/services/categoryService";
 import ProductCardSkeleton from "@/components/skeleton/ProductCardSkeleton";
 import ProductBannerSlider from '@/components/Components/ProductBannerSlider';
+import '@/styles/Shop.css';
 
 // Interfaces
 interface Category {
@@ -1084,8 +1085,12 @@ const Shop: React.FC = () => {
 	return (
 		<>
 			<Navbar />
-			<ProductBannerSlider />
-			<CategorySlider />
+
+			<div style={{ zIndex: '0', backgroundColor: '#ECEEF1' }}>
+				<div style={{ paddingTop: '12px' }}>
+					<ProductBannerSlider />
+				</div>
+				<CategorySlider />
 
 			{/* ── MOBILE FILTER DRAWER ── */}
 			{/* Backdrop */}
@@ -1106,8 +1111,8 @@ const Shop: React.FC = () => {
 			</div>
 
 			{/* ── MAIN SHOP CONTAINER ── */}
-			<div className="w-full bg-[#f0f0f0] min-h-screen">
-				<div className="w-full max-w-[1300px] mx-auto px-3 sm:px-5 py-4 sm:py-6">
+			<div className="shop-products w-[90%] max-w-[1800px] bg-[#ECEEF1] min-h-screen mx-auto">
+				<div className="w-full   sm:px-5 py-4 sm:py-6 " >
 
 					{/* Page Title */}
 					<h2 className="text-lg sm:text-2xl font-semibold text-gray-800 mb-3 sm:mb-4 truncate">
@@ -1169,7 +1174,7 @@ const Shop: React.FC = () => {
 
 					{/* Product Count Badge */}
 					<div className="mb-4 sm:mb-6">
-						<div className="inline-flex items-center gap-2 py-1.5 sm:py-2 px-4 sm:px-5 bg-orange-50 border border-orange-200 rounded-full text-sm">
+						<div className="inline-flex items-center gap-2 py-1.5 sm:py-2 px-4 sm:px-5 bg-orange-50 border border-orange-200 rounded-full text-sm ">
 							{isLoadingProducts ? (
 								<>
 									<div className="w-3 h-3 border-2 border-gray-200 border-t-[#ff6b00] rounded-full animate-spin" />
@@ -1187,10 +1192,10 @@ const Shop: React.FC = () => {
 					</div>
 
 					{/* Two-column layout: desktop sidebar + product grid */}
-					<div className="flex gap-4 sm:gap-5">
+					<div className="flex gap-1 sm:gap-5  ">
 
 						{/* ── DESKTOP SIDEBAR (hidden on mobile/tablet) ── */}
-						<div className="hidden lg:block w-[280px] flex-shrink-0">
+						<div className="hidden lg:block w-[280px]  ">
 							<div className="sticky top-10">
 								<FilterPanel {...filterPanelProps} />
 							</div>
@@ -1198,10 +1203,12 @@ const Shop: React.FC = () => {
 
 						{/* ── PRODUCT GRID ── */}
 						<div className="flex-1 min-w-0">
-							<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-4 sm:gap-x-5 sm:gap-y-5 md:gap-x-6 md:gap-y-6 w-full">
+							<div className="products-grid">
 								{isLoadingProducts ? (
 									Array(10).fill(null).map((_, index) => (
-										<ProductCardSkeleton key={index} count={1} />
+										<div key={index} className="product-card-wrapper">
+											<ProductCardSkeleton count={1} />
+										</div>
 									))
 								) : pagination.total_items > 0 ? (
 									productsData.map((product) => (
@@ -1259,6 +1266,7 @@ const Shop: React.FC = () => {
 						</div>
 					</div>
 				</div>
+			</div>
 			</div>
 
 			<Footer />

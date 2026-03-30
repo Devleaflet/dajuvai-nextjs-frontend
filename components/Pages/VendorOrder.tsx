@@ -60,6 +60,12 @@ interface VendorOrdersApiResponse {
   data: VendorOrderApiOrder[];
 }
 
+interface VendorOrderStats {
+  needingFulfillment: number;
+  inDelivery: number;
+  completedToday: number;
+}
+
 const toNumber = (value: number | string | undefined): number => {
   if (typeof value === "number") return value;
   if (typeof value === "string") {
@@ -163,6 +169,8 @@ const VendorOrder: React.FC = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState<boolean>(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedOrderDetail, setSelectedOrderDetail] = useState<OrderDetail | null>(null);
+  const [orderStats, setOrderStats] = useState<VendorOrderStats | null>(null);
+  const [orderStatsLoading, setOrderStatsLoading] = useState<boolean>(true);
 
   // TanStack Query for orders
   const {
@@ -182,6 +190,54 @@ const VendorOrder: React.FC = () => {
   });
 
   const orderIdFromParams = searchParams.get('orderId');
+
+  const fetchOrderStats = useCallback(async () => {
+    if (!authState.token) return;
+    setOrderStatsLoading(true);
+
+    try {
+      const dashboardService = VendorDashboardService.getInstance();
+      const response = await dashboardService.getVendorOrdersStats(authState.token);
+      const payload = response?.data ?? response ?? {};
+      const row =
+        typeof payload === "object" && payload !== null
+          ? (payload as Record<string, unknown>)
+          : {};
+
+      const toCount = (value: unknown): number => {
+        const parsed = typeof value === "number" ? value : Number(value);
+        return Number.isFinite(parsed) ? parsed : 0;
+      };
+
+      setOrderStats({
+        needingFulfillment: toCount(
+          row["needingFulfillment"] ??
+            row["toShip"] ??
+            row["toShipCount"] ??
+            row["pendingToShip"] ??
+            row["pendingOrders"]
+        ),
+        inDelivery: toCount(
+          row["inDelivery"] ??
+            row["inTransit"] ??
+            row["inTransitCount"] ??
+            row["ordersInTransit"] ??
+            row["shipped"]
+        ),
+        completedToday: toCount(
+          row["completedToday"] ??
+            row["completedTodayCount"] ??
+            row["todayCompleted"] ??
+            row["deliveredToday"]
+        ),
+      });
+    } catch (err) {
+      console.error("Error fetching vendor order stats:", err);
+      setOrderStats(null);
+    } finally {
+      setOrderStatsLoading(false);
+    }
+  }, [authState.token]);
 
   // Fetch order details for viewing
   const fetchOrderDetails = useCallback(async (orderId: number) => {
@@ -210,6 +266,16 @@ const VendorOrder: React.FC = () => {
       }
     }
   }, [orderIdFromParams, allOrders, fetchOrderDetails]);
+
+  useEffect(() => {
+    if (!authState.token) {
+      setOrderStats(null);
+      setOrderStatsLoading(false);
+      return;
+    }
+
+    fetchOrderStats();
+  }, [authState.token, fetchOrderStats]);
 
   // Filtering
   let filteredOrders = [...allOrders];
@@ -285,6 +351,29 @@ const VendorOrder: React.FC = () => {
   ];
 
   const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
+  const toShipCount = allOrders.filter((order) => {
+    const status = String(order.status || '').toLowerCase();
+    return ['pending', 'confirmed', 'accepted', 'processing'].includes(status);
+  }).length;
+  const inTransitCount = allOrders.filter((order) => {
+    const status = String(order.status || '').toLowerCase();
+    return ['shipped', 'in_transit', 'in transit'].includes(status);
+  }).length;
+  const completedTodayCount = allOrders.filter((order) => {
+    const status = String(order.status || '').toLowerCase();
+    if (status !== 'delivered') return false;
+    const date = new Date(order.createdAt);
+    const now = new Date();
+    return (
+      date.getFullYear() === now.getFullYear() &&
+      date.getMonth() === now.getMonth() &&
+      date.getDate() === now.getDate()
+    );
+  }).length;
+
+  const displayToShipCount = orderStats?.needingFulfillment ?? toShipCount;
+  const displayInTransitCount = orderStats?.inDelivery ?? inTransitCount;
+  const displayCompletedTodayCount = orderStats?.completedToday ?? completedTodayCount;
 
   // Export to CSV
   const handleExportCSV = () => {
@@ -396,6 +485,26 @@ const VendorOrder: React.FC = () => {
         className="dashboard__main"
         style={{ paddingBottom: isMobile ? `${docketHeight + 24}px` : "24px" }}
       >
+            <div className="vendor-order__stats-grid">
+              <div className="vendor-order__stats-card">
+                <p className="vendor-order__stats-label">To Ship</p>
+                <h3 className="vendor-order__stats-value">
+                  {orderStatsLoading ? "..." : displayToShipCount}
+                </h3>
+              </div>
+              <div className="vendor-order__stats-card">
+                <p className="vendor-order__stats-label">In Transit</p>
+                <h3 className="vendor-order__stats-value">
+                  {orderStatsLoading ? "..." : displayInTransitCount}
+                </h3>
+              </div>
+              <div className="vendor-order__stats-card">
+                <p className="vendor-order__stats-label">Completed Today</p>
+                <h3 className="vendor-order__stats-value">
+                  {orderStatsLoading ? "..." : displayCompletedTodayCount}
+                </h3>
+              </div>
+            </div>
             <div className="vendor-order__tabs">
               {tabs.map((tab) => (
                 <button
