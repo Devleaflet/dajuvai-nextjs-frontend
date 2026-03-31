@@ -1111,7 +1111,7 @@ const Shop: React.FC = () => {
 			</div>
 
 			{/* ── MAIN SHOP CONTAINER ── */}
-			<div className="shop-products w-[90%] max-w-[1800px] bg-[#ECEEF1] min-h-screen mx-auto">
+			<div className="shop-products w-[90%] max-w-[1800px] bg-[#ECEEF1] min-h-screen mx-auto overflow-x-hidden">
 				<div className="w-full   sm:px-5 py-4 sm:py-6 " >
 
 					{/* Page Title */}
