@@ -1196,23 +1196,7 @@ export function AdminDashboard() {
 								<p className="stat-subtext">Approved vendor partners</p>
 							</div>
 						</div>
-						<div className="stat-card">
-							<div className="stat-icon">🧾</div>
-							<div className="stat-content">
-								<h3 className="stat-title">Platform Commissions</h3>
-								<p className="stat-value">
-									Rs.{' '}
-									{Number(
-										Math.max(
-											Number(stats?.totalSales || 0) -
-												Number(stats?.totalDeliveredRevenue || 0),
-											0
-										)
-									).toLocaleString('en-IN')}
-								</p>
-								<p className="stat-subtext">Earnings from vendor sales</p>
-							</div>
-						</div>
+						
 						<div className="stat-card">
 							<div className="stat-icon">📦</div>
 							<div className="stat-content">
