@@ -13,6 +13,25 @@
 	z-index: 0;
 }
 
+@media (max-width: 768px) {
+	.top-category {
+		width: 100% !important;
+		margin-top: 1rem;
+	}
+	.top-category__card {
+		width: 90px;
+	}
+	.top-category__image-container {
+		width: 70px;
+		height: 70px;
+	}
+	.top-category__slider-container {
+		justify-content: flex-start;
+		padding: 0 10px;
+		gap: 0.5rem !important;
+	}
+}
+
 /* Slider Container */
 .top-category__slider-container {
 	display: flex;

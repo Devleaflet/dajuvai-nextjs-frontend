@@ -12,6 +12,12 @@
 	padding-bottom: 0;
 }
 
+@media (max-width: 768px) {
+	.product-carousel {
+		width: 95%;
+	}
+}
+
 .product-carousel__title-container {
 	display: flex;
 	justify-content: space-between;
@@ -162,6 +168,7 @@
 .product-card__wrapper {
 	flex: 0 0 auto;
 	pointer-events: auto;
+	display: flex;
 }
 
 .product-card {
@@ -174,7 +181,7 @@
 	padding: 10px;
 	position: relative;
 	transition: box-shadow 0.25s ease;
-	height: fit-content;
+	height: 100%;
 	pointer-events: auto;
 }
 
@@ -307,6 +314,9 @@
 	display: flex;
 	align-items: center;
 	margin-bottom: 5px;
+	min-height: 22px; /* ensures same vertical space for all cards */
+	display: flex;
+	align-items: center;
 }
 
 .product-card__rating-info {
@@ -602,7 +612,7 @@
 
 @media (max-width: 768px) {
 	.product-card {
-		width: 220px;
+		width: 225px;
 		min-height: 340px;
 	}
 
@@ -615,7 +625,8 @@
 	}
 
 	.product-carousel__title {
-		font-size: large;
+		font-size: small;
+		
 	}
 
 	.product-carousel__view-all {
@@ -660,6 +671,7 @@
 	}
 
 	.product-card__title {
+		margin-top: 2px;
 		font-size: 13px;
 	}
 
@@ -711,19 +723,68 @@
 
 @media (max-width: 480px) {
 	.product-card {
-		width: 180px;
-		min-height: 220px;
+		width: 170px;
+		min-height: auto;
+		padding: 8px;
+
 	}
 	.product-card__wrapper {
-		height: 220px;
+		height: auto;
 	}
 
 	.product-card__image {
-		height: 160px;
+		height: 150px;
+		aspect-ratio: 1;
+		padding: 6px;
+	}
+
+	.product-card__info {
+		padding-top: 8px;
+	}
+
+	.product-card__wishlist-button {
+		width: 28px;
+		height: 28px;
+		top: 8px;
+		left: 8px;
+	}
+
+	.product-card__wishlist-button svg {
+		width: 14px;
+		height: 14px;
+	}
+
+	.product-card__cart-button {
+		top: 118px;
+		padding: 6px;
+	}
+
+	.product-card__dot {
+		width: 6px;
+		height: 6px;
 	}
 
 	.product-carousel__products {
-		min-height: 320px;
+		min-height: auto;
+		gap: 8px;
+	}
+
+	.product-card__rating-score,
+	.product-card__rating-count {
+		font-size: 11px;
+	}
+
+	.product-card__title {
+		font-size: 13px;
+		min-height: 18px;
+		font-weight: 400;
+		margin-top: 2px;
+		font-weight: 400 !important; 
+	}
+
+	.product-card__description {
+		font-size: 11px;
+		min-height: 16px;
 	}
 	.product-card__current-price {
 		font-size: 12px;
@@ -735,6 +796,15 @@
 
 	.product-card__discount {
 		font-size: 10px;
+	}
+	
+	.product-carousel__title {
+		font-size: 18px;
+	}
+	
+	.product-carousel__view-all {
+		padding: 0.3rem 1rem;
+		font-size: 0.75rem;
 	}
 }
 
