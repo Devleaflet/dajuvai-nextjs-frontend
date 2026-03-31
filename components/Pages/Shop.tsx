@@ -1149,7 +1149,7 @@ const Shop: React.FC = () => {
 									value={searchInputValue}
 									onChange={handleSearchInputChange}
 									placeholder="Search products, brands..."
-									className="w-150 py-2.5 sm:py-3 px-3 sm:px-4 pr-8 sm:pr-10 border border-gray-300 rounded-lg text-sm outline-none bg-white transition-colors focus:border-[#ff6b00] shadow-sm"
+									className="w-full py-2.5 sm:py-3 px-3 sm:px-4 pr-8 sm:pr-10 border border-gray-300 rounded-lg text-sm outline-none bg-white transition-colors focus:border-[#ff6b00] shadow-sm"
 								/>
 								{searchInputValue && (
 									<button

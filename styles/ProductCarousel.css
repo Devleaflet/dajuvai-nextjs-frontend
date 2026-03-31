@@ -723,7 +723,7 @@
 
 @media (max-width: 480px) {
 	.product-card {
-		width: 170px;
+		width: 165px;
 		min-height: auto;
 		padding: 8px;
 
@@ -788,6 +788,7 @@
 	}
 	.product-card__current-price {
 		font-size: 12px;
+		font-weight: 400 !important; 
 	}
 
 	.product-card__original-price {
