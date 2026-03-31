@@ -317,14 +317,7 @@ export function AdminDashboard() {
 			);
 
 			const trendRaw =
-<<<<<<< Updated upstream
-				root['trendText'] ??
-				root['trendLabel'] ??
-				root['comparison'] ??
-				root['changeLabel'];
-=======
 				root['trendText'] ?? root['trendLabel'] ?? root['comparison'] ?? root['changeLabel'];
->>>>>>> Stashed changes
 			const trendValue = toNumber(
 				root['trendPercentage'] ??
 					root['trendPercent'] ??
@@ -339,7 +332,7 @@ export function AdminDashboard() {
 
 			setGrossRevenue(grossRevenueValue);
 			setGrossRevenueTrendText(trendText);
-			localStorage.setItem(
+			localStorage.setItem( 
 				cacheKey,
 				JSON.stringify({
 					data: { grossRevenue: grossRevenueValue, trendText },
@@ -667,14 +660,9 @@ export function AdminDashboard() {
 									`Point ${index + 1}`
 							),
 							value: toCount(
-<<<<<<< Updated upstream
-								row['value'] ??
-									row['count'] ??
-									row['total'] ??
-									row['users']
-=======
+
 								row['value'] ?? row['count'] ?? row['total'] ?? row['users']
->>>>>>> Stashed changes
+
 							),
 						};
 					}
