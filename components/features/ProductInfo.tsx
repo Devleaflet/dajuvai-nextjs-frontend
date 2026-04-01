@@ -29,7 +29,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ product, pricing }) => {
   const safeOriginalPrice = Number.isFinite(Number(originalPrice)) ? Number(originalPrice) : 0;
 
   const formatPrice = (value: number) =>
-    value.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+    Math.round(value).toLocaleString('en-IN');
 
   return (
     <div className="product__info pt-2">

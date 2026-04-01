@@ -1112,82 +1112,140 @@ const Shop: React.FC = () => {
 
 			{/* ── MAIN SHOP CONTAINER ── */}
 			<div className="shop-products w-[90%] max-w-[1800px] bg-[#ECEEF1] min-h-screen mx-auto overflow-x-hidden">
-				<div className="w-full   sm:px-5 py-4 sm:py-6 " >
+				<div className="w-full sm:px-5 py-4 sm:py-6" >
 
-					{/* Page Title */}
-					<h2 className="text-lg sm:text-2xl font-semibold text-gray-800 mb-3 sm:mb-4 truncate">
-						{getDisplayTitle()}
-						{getCurrentSubcategoryName() && (
-							<span className="text-gray-500 font-normal">
-								{' > '}{getCurrentSubcategoryName()}
-							</span>
-						)}
-					</h2>
-
-					{/* Search Bar + Mobile Filter Button Row */}
-					<div className="mb-3 sm:mb-4 flex gap-2 sm:gap-3 items-stretch">
-						{/* Mobile Filter Toggle Button */}
-						<button
-							onClick={() => setIsMobileFilterOpen(true)}
-							className="lg:hidden flex items-center gap-1.5 py-2.5 px-3 sm:px-4 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:border-[#ff6b00] hover:text-[#ff6b00] transition-colors shadow-sm flex-shrink-0 relative"
-							aria-label="Open filters"
-						>
-							<SlidersHorizontal size={16} />
-							<span className="hidden xs:inline">Filter</span>
-							{hasActiveFilters && (
-								<span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#ff6b00] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-									!
-								</span>
-							)}
-						</button>
-
-						{/* Search Form */}
-						<form onSubmit={handleSearchSubmit} className="flex gap-2 sm:gap-3 items-center  min-w-0">
-							<div className="flex-1 relative min-w-0">
-								<input
-									type="text"
-									value={searchInputValue}
-									onChange={handleSearchInputChange}
-									placeholder="Search products, brands..."
-									className="w-full py-2.5 sm:py-3 px-3 sm:px-4 pr-8 sm:pr-10 border border-gray-300 rounded-lg text-sm outline-none bg-white transition-colors focus:border-[#ff6b00] shadow-sm"
-								/>
-								{searchInputValue && (
-									<button
-										type="button"
-										onClick={handleClearSearch}
-										className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 flex items-center justify-center"
-									>
-										<X size={15} />
-									</button>
+					{/* Mobile header: count -> search -> heading */}
+					<div className="sm:hidden">
+						<div className="mb-3 flex justify-center">
+							<div className="inline-flex items-center gap-2 py-1.5 px-4 bg-orange-50 border border-orange-200 rounded-full text-sm">
+								{isLoadingProducts ? (
+									<>
+										<div className="w-3 h-3 border-2 border-gray-200 border-t-[#ff6b00] rounded-full animate-spin" />
+										<span className="text-orange-800 text-xs">Loading products...</span>
+									</>
+								) : (
+									<>
+										<span className="font-bold text-[#ff6b00] text-sm">{pagination.total_items}</span>
+										<span className="text-orange-900 text-xs">
+											{pagination.total_items === 1 ? 'product' : 'products'} found
+										</span>
+									</>
 								)}
 							</div>
-							<button
-								type="submit"
-								className="py-2.5 sm:py-3 px-3 sm:px-6 bg-[#ff6b00] text-white rounded-lg text-sm font-semibold cursor-pointer flex items-center gap-1.5 sm:gap-2 hover:bg-[#e05a00] transition-colors shadow-sm whitespace-nowrap flex-shrink-0"
-							>
-								<Search size={15} className="sm:hidden" />
-								<span className="hidden sm:inline">Search</span>
-								<span className="sm:hidden sr-only">Search</span>
-							</button>
-						</form>
+						</div>
+
+						<div className="mb-3 flex items-stretch gap-2">
+							<form onSubmit={handleSearchSubmit} className="flex w-full items-center gap-2">
+								<div className="relative flex-1 min-w-0">
+									<input
+										type="text"
+										value={searchInputValue}
+										onChange={handleSearchInputChange}
+										placeholder="Search for products, brands, or categories"
+										className="w-full py-2.5 px-3 pr-9 border border-gray-300 rounded-lg text-sm outline-none bg-white transition-colors focus:border-[#ff6b00] shadow-sm"
+									/>
+									{searchInputValue && (
+										<button
+											type="button"
+											onClick={handleClearSearch}
+											className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 flex items-center justify-center"
+										>
+											<X size={15} />
+										</button>
+									)}
+								</div>
+								<button
+									type="submit"
+									className="py-2.5 px-3 bg-[#ff6b00] text-white rounded-lg text-sm font-semibold cursor-pointer flex items-center justify-center hover:bg-[#e05a00] transition-colors shadow-sm flex-shrink-0"
+									aria-label="Search"
+								>
+									<Search size={16} />
+								</button>
+							</form>
+						</div>
+
+						<h2 className="text-lg font-semibold text-gray-800 mb-4 truncate">
+							{getDisplayTitle()}
+							{getCurrentSubcategoryName() && (
+								<span className="text-gray-500 font-normal">
+									{' > '}{getCurrentSubcategoryName()}
+								</span>
+							)}
+						</h2>
 					</div>
 
-					{/* Product Count Badge */}
-					<div className="mb-4 sm:mb-6">
-						<div className="inline-flex items-center gap-2 py-1.5 sm:py-2 px-4 sm:px-5 bg-orange-50 border border-orange-200 rounded-full text-sm ">
-							{isLoadingProducts ? (
-								<>
-									<div className="w-3 h-3 border-2 border-gray-200 border-t-[#ff6b00] rounded-full animate-spin" />
-									<span className="text-orange-800 text-xs sm:text-sm">Loading products...</span>
-								</>
-							) : (
-								<>
-									<span className="font-bold text-[#ff6b00] text-sm sm:text-base">{pagination.total_items}</span>
-									<span className="text-orange-900 text-xs sm:text-sm">
-										{pagination.total_items === 1 ? 'product' : 'products'} found
-									</span>
-								</>
+					{/* Desktop/tablet header: original order */}
+					<div className="hidden sm:block">
+						<h2 className="text-lg sm:text-2xl font-semibold text-gray-800 mb-3 sm:mb-4 truncate">
+							{getDisplayTitle()}
+							{getCurrentSubcategoryName() && (
+								<span className="text-gray-500 font-normal">
+									{' > '}{getCurrentSubcategoryName()}
+								</span>
 							)}
+						</h2>
+
+						<div className="mb-3 sm:mb-4 flex gap-2 sm:gap-3 items-stretch">
+							<button
+								onClick={() => setIsMobileFilterOpen(true)}
+								className="lg:hidden flex items-center gap-1.5 py-2.5 px-3 sm:px-4 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:border-[#ff6b00] hover:text-[#ff6b00] transition-colors shadow-sm flex-shrink-0 relative"
+								aria-label="Open filters"
+							>
+								<SlidersHorizontal size={16} />
+								<span className="hidden xs:inline">Filter</span>
+								{hasActiveFilters && (
+									<span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#ff6b00] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+										!
+									</span>
+								)}
+							</button>
+
+							<form onSubmit={handleSearchSubmit} className="flex gap-2 sm:gap-3 items-center min-w-0 w-[63%]">
+								<div className="flex-1 relative min-w-0">
+									<input
+										type="text"
+										value={searchInputValue}
+										onChange={handleSearchInputChange}
+										placeholder="Search products, brands..."
+										className="w-full py-2.5 sm:py-3 px-3 sm:px-4 pr-8 sm:pr-10 border border-gray-300 rounded-lg text-sm outline-none bg-white transition-colors focus:border-[#ff6b00] shadow-sm"
+									/>
+									{searchInputValue && (
+										<button
+											type="button"
+											onClick={handleClearSearch}
+											className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 flex items-center justify-center"
+										>
+											<X size={15} />
+										</button>
+									)}
+								</div>
+								<button
+									type="submit"
+									className="py-2.5 sm:py-3 px-3 sm:px-6 bg-[#ff6b00] text-white rounded-lg text-sm font-semibold cursor-pointer flex items-center gap-1.5 sm:gap-2 hover:bg-[#e05a00] transition-colors shadow-sm whitespace-nowrap flex-shrink-0"
+								>
+									<Search size={15} className="sm:hidden" />
+									<span className="hidden sm:inline">Search</span>
+									<span className="sm:hidden sr-only">Search</span>
+								</button>
+							</form>
+						</div>
+
+						<div className="mb-4 sm:mb-6">
+							<div className="inline-flex items-center gap-2 py-1.5 sm:py-2 px-4 sm:px-5 bg-orange-50 border border-orange-200 rounded-full text-sm">
+								{isLoadingProducts ? (
+									<>
+										<div className="w-3 h-3 border-2 border-gray-200 border-t-[#ff6b00] rounded-full animate-spin" />
+										<span className="text-orange-800 text-xs sm:text-sm">Loading products...</span>
+									</>
+								) : (
+									<>
+										<span className="font-bold text-[#ff6b00] text-sm sm:text-base">{pagination.total_items}</span>
+										<span className="text-orange-900 text-xs sm:text-sm">
+											{pagination.total_items === 1 ? 'product' : 'products'} found
+										</span>
+									</>
+								)}
+							</div>
 						</div>
 					</div>
 
