@@ -1070,3 +1070,68 @@ body.auth-modal--open {
 	scrollbar-color: #919090 #f1f1f1;
 	/* thumb | track */
 }
+
+@media (max-width: 480px) {
+	.auth-modal__content {
+		max-width: 96%;
+		margin: 0 8px;
+		border-radius: 12px;
+	}
+
+	.auth-modal__social-login {
+		padding: 0 22px;
+		margin-bottom: 16px;
+	}
+
+	.auth-modal__google-button,
+	.auth-modal__facebook-button {
+		min-height: 54px;
+		padding: 12px 14px;
+		border: 1px solid #d5d9df;
+		border-radius: 8px;
+		box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+		font-size: 16px;
+		font-weight: 500;
+	}
+
+	.auth-modal__divider {
+		margin: 14px 0 18px;
+		font-size: 14px;
+		color: #6b7280;
+	}
+
+	.auth-modal__form {
+		padding: 0 22px 14px;
+	}
+
+	.auth-modal__form-group {
+		margin-bottom: 14px;
+	}
+
+	.auth-modal__input {
+		min-height: 52px;
+		padding: 14px 16px;
+		border: 1px solid #d4d8de;
+		border-radius: 8px;
+		font-size: 16px;
+		line-height: 1.2;
+		background: #ffffff;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+	}
+
+	.auth-modal__input::placeholder {
+		color: #9aa1ab;
+	}
+
+	/* Gives filled fields the light blue box feel from the reference design. */
+	.auth-modal__input:not(:placeholder-shown) {
+		background: #e7edf8;
+		border-color: #cfd6e4;
+		color: #111827;
+	}
+
+	.auth-modal__input:focus {
+		border-color: #cdd5e3;
+		box-shadow: 0 1px 5px rgba(0, 0, 0, 0.08);
+	}
+}

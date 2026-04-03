@@ -1056,7 +1056,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 				{!showVerification && isLoginMode && (
 					<div className="auth-modal__footer">
 						<p className="auth-modal__footer-text">
-							Don't have an account?{" "}
+							Don&aps;t have an account?{" "}
 							<button
 								type="button"
 								className="auth-modal__link-button"

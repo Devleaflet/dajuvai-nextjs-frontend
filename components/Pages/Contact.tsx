@@ -71,66 +71,66 @@ const Contact: React.FC = () => {
       </Suspense>
 
       {/* ── Page wrapper ── */}
-      <div className="w-full min-h-screen bg-[#e8eaed] flex items-center justify-center px-4 sm:px-6 lg:px-10 py-10 sm:py-14 box-border">
-        <div className="w-full max-w-[1100px] flex flex-col lg:flex-row lg:items-stretch gap-8 lg:gap-12">
+      <div className="w-full min-h-screen bg-[#e8eaed] flex items-start sm:items-center justify-center px-2 sm:px-6 lg:px-10 py-4 sm:py-14 box-border">
+        <div className="w-full max-w-[1100px] flex flex-col lg:flex-row lg:items-stretch gap-5 sm:gap-8 lg:gap-12">
 
           {/* ══════════ LEFT COLUMN ══════════ */}
-          <div className="w-full lg:w-[340px] lg:flex-shrink-0 flex flex-col">
+          <div className="w-full lg:w-[340px] lg:flex-shrink-0 flex flex-col px-2 sm:px-0">
 
             {/* Heading */}
-            <h1 className="text-4xl sm:text-5xl font-extrabold text-orange-500 leading-tight mb-4">
+            <h1 className="text-4xl sm:text-5xl font-extrabold text-orange-500 leading-tight mb-3 sm:mb-4">
               Contact Us
             </h1>
 
             {/* Description */}
-            <p className="text-sm sm:text-[0.95rem] text-gray-500 leading-relaxed mb-8">
+            <p className="text-[0.95rem] sm:text-[0.95rem] text-gray-500 leading-relaxed mb-8 sm:mb-8">
               We're here to help! Have questions, feedback, or need assistance?
               Reach out via email, phone, or the form and we'll respond promptly.
             </p>
 
             {/* Contact info */}
-            <div className="flex flex-col gap-4 mb-8">
+            <div className="flex flex-col gap-7 sm:gap-4 mb-8">
 
-              <div className="flex items-center gap-3">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-orange-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="flex items-center gap-4 sm:gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 sm:w-5 sm:h-5 text-orange-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h2.28a1 1 0 01.95.68l1.1 3.3a1 1 0 01-.23 1.05L7.5 9.6a16.016 16.016 0 006.9 6.9l1.57-1.62a1 1 0 011.05-.23l3.3 1.1a1 1 0 01.68.95V19a2 2 0 01-2 2C9.16 21 3 14.84 3 7V5z" />
                 </svg>
-                <span className="text-gray-700 text-sm sm:text-[0.95rem]">+977-9700620004</span>
+                <span className="text-gray-700 text-[0.96rem] sm:text-[0.95rem]">+977-9700620004</span>
               </div>
 
-              <div className="flex items-center gap-3">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-orange-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="flex items-center gap-4 sm:gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 sm:w-5 sm:h-5 text-orange-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h2.28a1 1 0 01.95.68l1.1 3.3a1 1 0 01-.23 1.05L7.5 9.6a16.016 16.016 0 006.9 6.9l1.57-1.62a1 1 0 011.05-.23l3.3 1.1a1 1 0 01.68.95V19a2 2 0 01-2 2C9.16 21 3 14.84 3 7V5z" />
                 </svg>
-                <span className="text-gray-700 text-sm sm:text-[0.95rem]">01-4720234</span>
+                <span className="text-gray-700 text-[0.96rem] sm:text-[0.95rem]">01-4720234</span>
               </div>
 
-              <div className="flex items-center gap-3">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-orange-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="flex items-center gap-4 sm:gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 sm:w-5 sm:h-5 text-orange-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
-                <span className="text-gray-700 text-sm sm:text-[0.95rem]">Dajuvai106@gmail.com</span>
+                <span className="text-gray-700 text-[0.96rem] sm:text-[0.95rem]">Dajuvai106@gmail.com</span>
               </div>
 
-              <div className="flex items-center gap-3">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-orange-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="flex items-center gap-4 sm:gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 sm:w-5 sm:h-5 text-orange-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0L6.343 16.657A8 8 0 1117.657 16.657z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                <span className="text-gray-700 text-sm sm:text-[0.95rem]">Kathmandu, Nepal</span>
+                <span className="text-gray-700 text-[0.96rem] sm:text-[0.95rem]">Kathmandu, Nepal</span>
               </div>
             </div>
 
             {/* Vendor card */}
-            <div className="bg-white rounded-2xl border-l-[5px] border-orange-500 shadow-md px-5 py-5">
-              <h2 className="text-orange-500 font-bold text-[1.05rem] sm:text-[1.15rem] mb-2">
+            <div className="bg-white rounded-2xl border-l-[4px] border-orange-500 shadow-[0_8px_24px_rgba(0,0,0,0.08)] px-5 py-5">
+              <h2 className="text-orange-500 font-bold text-[1.15rem] sm:text-[1.15rem] mb-2">
                 Want to Become a Vendor?
               </h2>
-              <p className="text-gray-500 text-sm leading-relaxed mb-5">
+              <p className="text-gray-500 text-[0.95rem] sm:text-sm leading-relaxed mb-5">
                 Join our platform and reach thousands of customers across Nepal.
               </p>
               <button
-                className="bg-orange-500 hover:bg-orange-600 active:bg-orange-700 transition-colors text-white font-bold text-sm sm:text-[0.9rem] px-6 py-2.5 rounded-xl"
+                className="w-full sm:w-auto bg-orange-500 hover:bg-orange-600 active:bg-orange-700 transition-colors text-white font-bold text-[0.98rem] sm:text-[0.9rem] px-6 py-3 sm:py-2.5 rounded-xl"
               >
                 Become a Vendor
               </button>

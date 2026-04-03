@@ -19,7 +19,7 @@
  
  .recommended-products__title { 
    font-size: 2.2rem; 
-   font-weight: 800; 
+   font-weight: 700; 
    margin-bottom: 0rem !important; 
    color: #1a202c; 
    letter-spacing: -0.02em; 
@@ -233,64 +233,52 @@
    font-weight: 500; 
  } 
  
- /* Mobile responsive */ 
- @media (max-width: 768px) { 
-   .recommended-products { 
-     width: 100%; 
-     margin: 0.5rem 0; 
-     padding: 2rem;
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .recommended-products {
+    width: 100%;
+    margin: 0.25rem 0 0;
+    padding: 0;
+  }
 
-   } 
-   .recommended-product-card__wrapper{
-    width: 220px;
-   }
-   .recommended-products::after { 
-     width: 200px; 
-     height: 200px; 
-     top: -30%; 
-     right: -15%; 
-   } 
- 
-   .recommended-products__header { 
-     margin-bottom: 1rem; 
-   } 
- 
-   .recommended-products__title { 
-     font-size: 1.8rem; 
-   } 
- 
-   .recommended-products__subtitle { 
-     font-size: 0.9rem; 
-   } 
- 
-   .recommended-products__scroll-button { 
-     display: none; 
-   } 
- }
+  .recommended-products__header {
+    margin-bottom: 0.9rem;
+  }
 
- @media (max-width:576px){
-     .recommended-product-card__wrapper{
-    width: 220px;
-   }
-   .recommended-products{
-    padding:2rem;
-    margin:0px;
-   }
- }
- @media (max-width:498px){
-     .recommended-product-card__wrapper{
-    width: 180px;
-   }
- }
- @media (max-width:410px){
-     .recommended-product-card__wrapper{
-    width: 160px;
-   }
- }
+  .recommended-products__title {
+    font-size: 2rem;
+    line-height: 1.08;
+    font-weight: 800;
+  }
 
-@media (max-width: 498px) { 
-    .recommended-products { 
-        padding: 2rem !important; 
-        border-radius: 1rem; 
-    } 
+  .recommended-products__subtitle {
+    font-size: 0.86rem;
+    line-height: 1.25;
+    font-weight: 600;
+  }
+
+  .recommended-products__slider {
+    gap: 0.75rem;
+  }
+
+  .recommended-product-card__wrapper {
+    width: calc((100% - 0.75rem) / 2);
+    min-width: calc((100% - 0.75rem) / 2);
+  }
+
+  .recommended-products__scroll-button {
+    display: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .recommended-products__title {
+    font-size: 1.50rem;
+            font-weight: 600 !important;
+  }
+
+  .recommended-products__subtitle {
+    font-size: 0.84rem;
+    font-weight: 500 !important;
+  }
 }
