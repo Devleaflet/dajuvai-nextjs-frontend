@@ -105,7 +105,7 @@ const GoogleAuthCallback: React.FC = () => {
 
         // Redirect based on role
         const redirectPath = userData.role === 'admin' || userData.role === 'staff'
-          ? '/admin-dashboard'
+          ? '/admin/dashboard'
           : '/';
 
         setTimeout(() => router.push(redirectPath), 2000);
@@ -156,7 +156,7 @@ const GoogleAuthCallback: React.FC = () => {
         setMessage('Successfully authenticated with Google!');
 
         const redirectPath = userData.role === 'admin' || userData.role === 'staff'
-          ? '/admin-dashboard'
+          ? '/admin/dashboard'
           : '/';
 
         setTimeout(() => router.push(redirectPath), 2000);

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Pagination from "@/components/Components/Pagination";
 import DeleteModal from "@/components/Components/Modal/DeleteModal";
 import EditProductModal from "@/components/Components/Modal/EditProductModalRedesigned";
@@ -12,6 +12,20 @@ import { ApiProduct } from "@/components/Components/Types/ApiProduct";
 import { ProductFormData } from "@/lib/types/product";
 import { API_BASE_URL } from "@/lib/config";
 
+const SORT_QUERY_MAP: Record<string, string> = {
+  newest: "newest",
+  oldest: "oldest",
+  "price-asc": "price_low_high",
+  "price-desc": "price_high_low",
+};
+
+type AdminProductRecord = ApiProduct & {
+  createdAt?: string;
+  discountPercent?: number | string | null;
+  vendorName?: string;
+  vendor?: ApiProduct["vendor"] & { name?: string };
+};
+
 const SkeletonRow: React.FC = () => (
   <tr>
     {[...Array(10)].map((_, i) => (
@@ -21,6 +35,31 @@ const SkeletonRow: React.FC = () => (
     ))}
   </tr>
 );
+
+const formatRelativeDate = (value?: string) => {
+  if (!value) return "-";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+
+  const diffInSeconds = Math.round((date.getTime() - Date.now()) / 1000);
+  const formatter = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+  const units: Array<{ unit: Intl.RelativeTimeFormatUnit; seconds: number }> = [
+    { unit: "year", seconds: 60 * 60 * 24 * 365 },
+    { unit: "month", seconds: 60 * 60 * 24 * 30 },
+    { unit: "day", seconds: 60 * 60 * 24 },
+    { unit: "hour", seconds: 60 * 60 },
+    { unit: "minute", seconds: 60 },
+  ];
+
+  for (const { unit, seconds } of units) {
+    if (Math.abs(diffInSeconds) >= seconds) {
+      return formatter.format(Math.round(diffInSeconds / seconds), unit);
+    }
+  }
+
+  return formatter.format(diffInSeconds, "second");
+};
 
 const AdminProduct: React.FC = () => {
   const { token, isAuthenticated } = useAuth();
@@ -42,26 +81,26 @@ const AdminProduct: React.FC = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Debounced search
   useEffect(() => {
     const timer = setTimeout(() => {
       setSearchQuery(searchInput);
       setCurrentPage(1);
     }, 400);
+
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  // Fetch products from backend with pagination, sorting, filtering, and search
   const fetchProducts = useCallback(async () => {
     if (!token || !isAuthenticated) return;
 
     setLoading(true);
     setError(null);
+
     try {
       const queryParams = new URLSearchParams({
         page: currentPage.toString(),
         limit: productsPerPage.toString(),
-        sort: sortOption,
+        sort: SORT_QUERY_MAP[sortOption] || "newest",
         ...(filterOption !== "all" && { filter: filterOption }),
         ...(vendorFilter !== "all" && { vendor: vendorFilter }),
         ...(searchQuery && { search: searchQuery }),
@@ -87,7 +126,7 @@ const AdminProduct: React.FC = () => {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to load products";
-      console.error('Fetch products error:', err);
+      console.error("Fetch products error:", err);
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -100,12 +139,8 @@ const AdminProduct: React.FC = () => {
   }, [fetchProducts]);
 
   const handleSaveProduct = useCallback(
-    async (
-      _productId: number,
-      _product: ProductFormData,
-      _categoryId: number,
-      _subcategoryId: number
-    ) => {
+    async (...args: [number, ProductFormData, number, number]) => {
+      void args;
       try {
         setIsUpdating(true);
         await fetchProducts();
@@ -145,13 +180,7 @@ const AdminProduct: React.FC = () => {
   }, [token, fetchProducts]);
 
   const handleSort = useCallback((newSortOption: string) => {
-    const backendSortMap: { [key: string]: string } = {
-      "newest": "newest",
-      "oldest": "oldest",
-      "price-asc": "price_low_high",
-      "price-desc": "price_high_low",
-    };
-    setSortOption(backendSortMap[newSortOption] || "newest");
+    setSortOption(newSortOption);
     setCurrentPage(1);
   }, []);
 
@@ -172,6 +201,7 @@ const AdminProduct: React.FC = () => {
 
   const handleDeleteProduct = useCallback(async () => {
     if (!productToDelete) return;
+
     try {
       await deleteProduct(productToDelete);
     } catch (err: unknown) {
@@ -201,73 +231,66 @@ const AdminProduct: React.FC = () => {
           </div>
         )}
 
+        <div className="admin-products__controls">
+          <div className="admin-products__search-wrapper">
+            <svg
+              className="admin-products__search-icon"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle cx="11" cy="11" r="8" stroke="#9CA3AF" strokeWidth="2" />
+              <path d="M21 21L16.65 16.65" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            <input
+              type="text"
+              className="admin-products__search-input"
+              placeholder="Search"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+            />
+          </div>
+
+          <select
+            className="admin-products__select admin-products__select--sort"
+            value={sortOption}
+            onChange={(e) => handleSort(e.target.value)}
+          >
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+          </select>
+
+          <select
+            className="admin-products__select admin-products__select--product"
+            value={filterOption}
+            onChange={(e) => handleFilter(e.target.value)}
+          >
+            <option value="all">All Products</option>
+            <option value="in_stock">In Stock</option>
+            <option value="out_of_stock">Out of Stock</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+
+          <select
+            className="admin-products__select admin-products__select--vendor"
+            value={vendorFilter}
+            onChange={(e) => handleVendorFilter(e.target.value)}
+          >
+            <option value="all">All vendors</option>
+          </select>
+        </div>
+
         <div className="admin-products__list-container">
           <div className="admin-products__header">
             <h2>Product Management</h2>
             <div className="admin-products__stats">
               <span>Total: {totalProducts} products</span>
-              {filterOption !== "all" && (
-                <span className="filter-indicator">
-                  Filtered by: {filterOption.replace('_', ' ').toUpperCase()}
-                </span>
-              )}
             </div>
-          </div>
-
-          {/* ── Controls below heading ── */}
-          <div className="admin-products__controls">
-            <div className="admin-products__search-wrapper">
-              <svg
-                className="admin-products__search-icon"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <circle cx="11" cy="11" r="8" stroke="#9CA3AF" strokeWidth="2" />
-                <path d="M21 21L16.65 16.65" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-              <input
-                type="text"
-                className="admin-products__search-input"
-                placeholder="Search"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-              />
-            </div>
-
-            <select
-              className="admin-products__select"
-              value={sortOption}
-              onChange={(e) => handleSort(e.target.value)}
-            >
-              <option value="newest">Newest</option>
-              <option value="oldest">Oldest</option>
-              <option value="price-asc">Price: Low to High</option>
-              <option value="price-desc">Price: High to Low</option>
-            </select>
-
-            <select
-              className="admin-products__select"
-              value={filterOption}
-              onChange={(e) => handleFilter(e.target.value)}
-            >
-              <option value="all">All Products</option>
-              <option value="in_stock">In Stock</option>
-              <option value="out_of_stock">Out of Stock</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-
-            <select
-              className="admin-products__select"
-              value={vendorFilter}
-              onChange={(e) => handleVendorFilter(e.target.value)}
-            >
-              <option value="all">All vendors</option>
-              {/* Populate dynamically if you have vendor list */}
-            </select>
           </div>
 
           <div className="admin-products__table-container">
@@ -293,47 +316,52 @@ const AdminProduct: React.FC = () => {
                   ))
                 ) : products.length > 0 ? (
                   products.map((product) => {
-                    // ── Price ──
+                    const productRecord = product as AdminProductRecord;
+
                     const getDisplayPrice = (): number => {
                       if (product.basePrice) {
-                        const p = typeof product.basePrice === 'number'
+                        const price = typeof product.basePrice === "number"
                           ? product.basePrice
                           : parseFloat(product.basePrice as string);
-                        if (!isNaN(p) && p > 0) return p;
+                        if (!Number.isNaN(price) && price > 0) return price;
                       }
+
                       if (product.price) {
-                        const p = typeof product.price === 'number'
+                        const price = typeof product.price === "number"
                           ? product.price
                           : parseFloat(product.price as string);
-                        if (!isNaN(p) && p > 0) return p;
+                        if (!Number.isNaN(price) && price > 0) return price;
                       }
+
                       if (product.variants && product.variants.length > 0) {
                         for (const variant of product.variants) {
-                          const p = typeof variant.price === 'number'
+                          const price = typeof variant.price === "number"
                             ? variant.price
                             : parseFloat(variant.price as string);
-                          if (!isNaN(p) && p > 0) return p;
+                          if (!Number.isNaN(price) && price > 0) return price;
                         }
                       }
+
                       return 0;
                     };
 
-                    // ── Stock ──
                     const getDisplayStock = (): number => {
                       if (product.stock !== undefined) {
-                        const s = typeof product.stock === 'number'
+                        const stock = typeof product.stock === "number"
                           ? product.stock
                           : parseInt(product.stock as string, 10);
-                        if (!isNaN(s) && s >= 0) return s;
+                        if (!Number.isNaN(stock) && stock >= 0) return stock;
                       }
+
                       if (product.variants && product.variants.length > 0) {
                         for (const variant of product.variants) {
-                          const s = typeof variant.stock === 'number'
+                          const stock = typeof variant.stock === "number"
                             ? variant.stock
                             : parseInt(variant.stock as string, 10);
-                          if (!isNaN(s) && s >= 0) return s;
+                          if (!Number.isNaN(stock) && stock >= 0) return stock;
                         }
                       }
+
                       return 0;
                     };
 
@@ -341,50 +369,53 @@ const AdminProduct: React.FC = () => {
                     const displayStock = getDisplayStock();
                     const variantCount = product.variants?.length ?? 0;
 
-                    // ── Image ──
                     const firstVariant =
                       product.hasVariants && product.variants?.length
                         ? product.variants[0]
                         : null;
-                    const variantImgStr = firstVariant
+
+                    const variantImage = firstVariant
                       ? (
-                        (Array.isArray(firstVariant.variantImages) && typeof firstVariant.variantImages[0] === 'string'
+                        (Array.isArray(firstVariant.variantImages) && typeof firstVariant.variantImages[0] === "string"
                           ? (firstVariant.variantImages[0] as string)
                           : undefined) ||
-                        (Array.isArray(firstVariant.images) && typeof firstVariant.images[0] === 'string'
+                        (Array.isArray(firstVariant.images) && typeof firstVariant.images[0] === "string"
                           ? (firstVariant.images[0] as string)
                           : undefined)
                       )
                       : undefined;
-                    const displayImage: string =
-                      product.productImages?.[0] || variantImgStr || "/assets/logo.webp";
 
-                    // ── Status ──
-                    const isActive = displayStock > 0;
-                    const statusLabel = isActive ? "Active" : "Inactive";
+                    const displayImage =
+                      product.productImages?.[0] || variantImage || "/assets/logo.webp";
 
-                    // ── Discount ──
-                    const discount = (product as any).discount ?? (product as any).discountPercent ?? null;
+                    const statusLabel = (
+                      product.status ||
+                      (displayStock > 0 ? "AVAILABLE" : "OUT_OF_STOCK")
+                    ).replace(/\s+/g, "_").toUpperCase();
 
-                    // ── Created date ──
-                    const createdAt = (product as any).createdAt
-                      ? new Date((product as any).createdAt).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        })
-                      : "—";
+                    const discount = product.discount ?? productRecord.discountPercent ?? null;
+                    const numericDiscount = discount == null ? NaN : Number(discount);
+                    const discountLabel =
+                      Number.isFinite(numericDiscount) && numericDiscount > 0
+                        ? product.discountType === "FLAT"
+                          ? `Rs ${numericDiscount.toFixed(2)}`
+                          : `${numericDiscount.toFixed(2)}%`
+                        : null;
 
-                    // ── Vendor ──
+                    const createdAt = formatRelativeDate(
+                      productRecord.createdAt || product.created_at
+                    );
+
                     const vendorName =
-                      (product as any).vendor?.name ||
-                      (product as any).vendorName ||
-                      "—";
+                      product.vendor?.businessName ||
+                      productRecord.vendor?.name ||
+                      productRecord.vendorName ||
+                      "-";
 
                     return (
                       <tr
                         key={product.id}
-                        className={`admin-products__table-row ${displayStock === 0 ? 'out-of-stock' : ''}`}
+                        className={`admin-products__table-row ${displayStock === 0 ? "out-of-stock" : ""}`}
                       >
                         <td className="admin-products__image-cell">
                           <img
@@ -393,27 +424,31 @@ const AdminProduct: React.FC = () => {
                             className="admin-products__product-image"
                           />
                         </td>
-                        <td>{product.id}</td>
-                        <td>{product.name}</td>
-                        <td>{vendorName}</td>
-                        <td>Rs. {(typeof displayPrice === 'number' ? displayPrice : Number(displayPrice)).toFixed(2)}</td>
-                        <td>
+                        <td className="admin-products__id-cell">{product.id}</td>
+                        <td className="admin-products__name-cell">{product.name}</td>
+                        <td className="admin-products__vendor-cell">{vendorName}</td>
+                        <td className="admin-products__price-cell">
+                          Rs. {(typeof displayPrice === "number" ? displayPrice : Number(displayPrice)).toFixed(2)}
+                        </td>
+                        <td className="admin-products__variant-cell">
                           <span className="admin-products__variant-badge">
-                            {variantCount > 0 ? `${variantCount} variant${variantCount > 1 ? 's' : ''}` : '—'}
+                            {variantCount > 0 ? `${variantCount} variant${variantCount > 1 ? "s" : ""}` : "-"}
                           </span>
                         </td>
-                        <td>
-                          {discount != null && discount > 0
-                            ? <span className="admin-products__discount-badge">{discount}%</span>
-                            : '—'}
+                        <td className="admin-products__discount-cell">
+                          {discountLabel ? (
+                            <span className="admin-products__discount-badge">{discountLabel}</span>
+                          ) : (
+                            "-"
+                          )}
                         </td>
-                        <td>
-                          <span className={`admin-products__status-badge ${isActive ? 'status-active' : 'status-inactive'}`}>
+                        <td className="admin-products__status-cell">
+                          <span className={`admin-products__status-badge status-${statusLabel.toLowerCase()}`}>
                             {statusLabel}
                           </span>
                         </td>
-                        <td>{createdAt}</td>
-                        <td>
+                        <td className="admin-products__created-cell">{createdAt}</td>
+                        <td className="admin-products__actions-cell">
                           <div className="admin-products__actions">
                             <button
                               className="admin-products__action-btn admin-products__edit-btn"

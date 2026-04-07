@@ -168,6 +168,7 @@ export function AdminDashboard() {
 	const router = useRouter();
 
 	const revenueChartRef = useRef<ChartJS | null>(null);
+	const todaysSalesChartRef = useRef<ChartJS | null>(null);
 	const vendorChartRef = useRef<ChartJS | null>(null);
 	const topProductsChartRef = useRef<ChartJS | null>(null);
 
@@ -708,6 +709,8 @@ export function AdminDashboard() {
 			}
 			values.push(remaining);
 			setTodaysSalesData(hours.map((h, i) => ({ label: h, value: values[i] || 0 })));
+		} else {
+			setTodaysSalesData([]);
 		}
 	}, [todaysSales]);
 
@@ -846,6 +849,92 @@ export function AdminDashboard() {
 			}
 		};
 	}, [revenue]);
+
+	useEffect(() => {
+		let disposed = false;
+
+		const renderTodaysSalesChart = async () => {
+			const ctx = document.getElementById('todays-sales-chart') as HTMLCanvasElement | null;
+			if (!ctx || todaysSalesData.length === 0) return;
+
+			const { Chart } = await loadChartModule();
+			if (disposed) return;
+
+			if (todaysSalesChartRef.current) {
+				todaysSalesChartRef.current.destroy();
+			}
+
+			const chart = new Chart(ctx, {
+				type: 'bar',
+				data: {
+					labels: todaysSalesData.map((item) => item.label),
+					datasets: [
+						{
+							label: "Today's Sales",
+							data: todaysSalesData.map((item) => item.value),
+							backgroundColor: 'rgba(249, 115, 22, 0.85)',
+							borderRadius: 6,
+							maxBarThickness: 18,
+						},
+					],
+				},
+				options: {
+					responsive: true,
+					maintainAspectRatio: false,
+					plugins: {
+						legend: {
+							display: false,
+						},
+						tooltip: {
+							callbacks: {
+								label: (context) =>
+									`Rs. ${(context.parsed.y || 0).toLocaleString('en-IN')}`,
+							},
+						},
+					},
+					scales: {
+						x: {
+							grid: {
+								display: false,
+							},
+							ticks: {
+								maxRotation: 45,
+								minRotation: 45,
+								autoSkip: true,
+								maxTicksLimit: 8,
+							},
+						},
+						y: {
+							beginAtZero: true,
+							grid: {
+								color: '#e5e7eb',
+							},
+							ticks: {
+								callback: (value) => `Rs. ${Number(value).toLocaleString('en-IN')}`,
+							},
+						},
+					},
+				},
+			});
+
+			if (disposed) {
+				chart.destroy();
+				return;
+			}
+
+			todaysSalesChartRef.current = chart;
+		};
+
+		renderTodaysSalesChart();
+
+		return () => {
+			disposed = true;
+			if (todaysSalesChartRef.current) {
+				todaysSalesChartRef.current.destroy();
+				todaysSalesChartRef.current = null;
+			}
+		};
+	}, [todaysSalesData]);
 
 	useEffect(() => {
 		let disposed = false;

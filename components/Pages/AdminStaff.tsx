@@ -257,12 +257,24 @@ const AdminStaff: React.FC = () => {
   };
 
   return (
-    <div className="">
-
+    <div className="admin-staff">
       <div className="admin-content" style={{ display: 'flex', height: '100vh' }}>
         <main className="admin-main" style={{ minHeight: docketHeight, overflow: 'auto', width: '100vw' }}>
-          <div className="admin-categories__content">
-<div className="admin-staff__header">
+          <div className="admin-staff__content">
+            <div className="admin-staff__searchbar-row">
+              <div className="admin-staff__searchbar">
+                <FiSearch className="admin-staff__searchbar-icon" />
+                <input
+                  type="text"
+                  placeholder="Search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  aria-label="Search staff users"
+                />
+              </div>
+            </div>
+
+            <div className="admin-staff__header">
               <div className="admin-staff__title-section">
                 <h1 className="admin-staff__title">Staff Management</h1>
                 <p className="admin-staff__subtitle">
@@ -278,19 +290,6 @@ const AdminStaff: React.FC = () => {
                 </svg>
                 Add New Staff
               </button>
-            </div>
-
-            <div className="admin-staff__searchbar-row">
-              <div className="admin-staff__searchbar">
-                <FiSearch className="admin-staff__searchbar-icon" />
-                <input
-                  type="text"
-                  placeholder="Search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  aria-label="Search staff users"
-                />
-              </div>
             </div>
 
             {showAddForm && (

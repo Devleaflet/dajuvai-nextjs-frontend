@@ -10,7 +10,7 @@ import { OrderService, type Order, type AdminOrderStats } from "@/lib/services/o
 import { useAuth } from "@/lib/context/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-hot-toast";
-import { FiSearch } from "react-icons/fi";
+import { FiEdit2, FiEye, FiSearch } from "react-icons/fi";
 
 const ORDER_STATUS_OPTIONS = [
   { value: "all", label: "All Statuses" },
@@ -596,7 +596,7 @@ const AdminOrders: React.FC = () => {
         {!showOrderDetails ? (
           <div className="admin-orders__list-container">
             <div className="admin-orders__header">
-              <h2>Order Management</h2>
+              <h2 className="admin-orders__section-title">Order Management</h2>
             </div>
             <div className="admin-orders__table-container">
               <table className="admin-orders__table">
@@ -626,18 +626,22 @@ const AdminOrders: React.FC = () => {
                       <td>{order.paymentStatus}</td>
                       <td className="admin-orders__actions">
                         <button
+                          type="button"
                           className="admin-orders__action-btn admin-orders__view-btn"
                           onClick={() => viewOrderDetails(order)}
                           aria-label="View order details"
+                          title="View order details"
                         >
-                          View
+                          <FiEye aria-hidden="true" />
                         </button>
                         <button
+                          type="button"
                           className="admin-orders__action-btn admin-orders__edit-btn"
                           onClick={() => editOrder(order)}
                           aria-label="Edit order"
+                          title="Edit order"
                         >
-                          Edit
+                          <FiEdit2 aria-hidden="true" />
                         </button>
                       </td>
                     </tr>

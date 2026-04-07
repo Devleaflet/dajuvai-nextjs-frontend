@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/lib/context/AuthContext";
-import { FiEdit2, FiTrash2, FiPlus, FiSearch } from "react-icons/fi";
+import { FiTrash2, FiSearch } from "react-icons/fi";
 import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+// import "react-toastify/dist/ReactToastify.css";
 import "@/styles/AdminPromo.css";
 import PromoService, {
   PromoCode,
@@ -39,6 +39,30 @@ const AdminPromo: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [submitting, setSubmitting] = useState(false);
 
+  const fetchPromoCodes = useCallback(async () => {
+    if (!token) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await PromoService.getInstance().getAllPromoCodes(token);
+      if (response.success && response.data) {
+        setPromoCodes(response.data);
+        localStorage.setItem(
+          CACHE_KEY,
+          JSON.stringify({ data: response.data, timestamp: Date.now() })
+        );
+      } else {
+        throw new Error(response.message || "Failed to fetch promo codes");
+      }
+    } catch (err) {
+      console.error("Fetch promo codes error:", err);
+      setError("Failed to load promo codes");
+      toast.error("Failed to load promo codes");
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
   useEffect(() => {
     if (!isAuthenticated || !token) {
       setError("Please log in to access promo code management.");
@@ -60,31 +84,9 @@ const AdminPromo: React.FC = () => {
         console.error("Error parsing cached promo codes");
       }
     }
-    fetchPromoCodes();
-  }, [isAuthenticated, token]);
 
-  const fetchPromoCodes = async () => {
-    if (!token) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await PromoService.getInstance().getAllPromoCodes(token);
-      if (response.success && response.data) {
-        setPromoCodes(response.data);
-        localStorage.setItem(
-          CACHE_KEY,
-          JSON.stringify({ data: response.data, timestamp: Date.now() })
-        );
-      } else {
-        throw new Error(response.message || "Failed to fetch promo codes");
-      }
-    } catch (err) {
-      setError("Failed to load promo codes");
-      toast.error("Failed to load promo codes");
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchPromoCodes();
+  }, [isAuthenticated, token, fetchPromoCodes]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -191,19 +193,61 @@ const AdminPromo: React.FC = () => {
     currentPage * PAGE_SIZE
   );
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
+  const renderPageIntro = (showActionButton = false) => (
+    <>
+      <div className="admin-promo__searchbar-row">
+        <div className="admin-promo__searchbar">
+          <FiSearch className="admin-promo__searchbar-icon" />
+          <input
+            type="text"
+            placeholder="Search"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
+            aria-label="Search promo codes"
+          />
+        </div>
+      </div>
+
+      <div className="admin-promo__header">
+        <div className="admin-promo__title-container">
+          <h1 className="admin-promo__title">Promo Code Management</h1>
+          <p className="admin-promo__description">
+            Create and manage promotional codes
+          </p>
+        </div>
+
+        {showActionButton && (
+          <button
+            className="admin-promo__add-button"
+            onClick={() => setShowAddModal(true)}
+          >
+           <span
+  aria-hidden="true"
+  style={{
+    fontSize: "24px",
+    lineHeight: 1,
+    fontWeight: 400,
+    position: "relative",
+    top: "-2px"   // adjust: -1px, -3px as needed
+  }}
+>
+  +
+</span>
+            Add Promo Code
+          </button>
+        )}
+      </div>
+    </>
+  );
 
   if (!isAuthenticated) {
     return (
       <div className="admin-promo">
         <div className="admin-promo__content">
-<div className="admin-promo__error">
+          <div className="admin-promo__error">
             <h2>Access Denied</h2>
             <p>Please log in to access promo code management.</p>
           </div>
@@ -216,29 +260,8 @@ const AdminPromo: React.FC = () => {
     return (
       <div className="admin-promo">
         <div className="admin-promo__content">
-          <div className="admin-promo__searchbar-row">
-            <div className="admin-promo__searchbar">
-              <FiSearch className="admin-promo__searchbar-icon" />
-              <input
-                type="text"
-                placeholder="Search"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setCurrentPage(1);
-                }}
-                aria-label="Search promo codes"
-              />
-            </div>
-          </div>
-<div className="admin-promo__header">
-            <div className="admin-promo__title-container">
-              <h1 className="admin-promo__title">Promo Code Management</h1>
-              <p className="admin-promo__description">
-                Create and manage promotional codes
-              </p>
-            </div>
-          </div>
+          {renderPageIntro()}
+
           <div className="admin-promo__table-container">
             <table className="admin-promo__table">
               <thead>
@@ -285,38 +308,7 @@ const AdminPromo: React.FC = () => {
   return (
     <div className="admin-promo">
       <div className="admin-promo__content">
-        <div className="admin-promo__searchbar-row">
-          <div className="admin-promo__searchbar">
-            <FiSearch className="admin-promo__searchbar-icon" />
-            <input
-              type="text"
-              placeholder="Search"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-              aria-label="Search promo codes"
-            />
-          </div>
-        </div>
-<div className="admin-promo__header">
-          <div className="admin-promo__title-container">
-            <h1 className="admin-promo__title">Promo Code Management</h1>
-            <p className="admin-promo__description">
-              Create and manage promotional codes
-            </p>
-          </div>
-          <button
-            className="admin-promo__add-button"
-            onClick={() => setShowAddModal(true)}
-          >
-            <FiPlus />
-            Add Promo Code
-          </button>
-        </div>
-
-
+        {renderPageIntro(true)}
 
         {error && (
           <div className="admin-promo__error">

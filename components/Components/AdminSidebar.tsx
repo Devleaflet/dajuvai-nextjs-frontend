@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { FiTruck } from "react-icons/fi";
 import "@/styles/Sidebar.css";
 import { useAuth } from "@/lib/context/AuthContext";
 
@@ -146,6 +147,15 @@ export function AdminSidebar({ ...props }: React.HTMLAttributes<HTMLDivElement>)
           }
         >
           Orders
+        </NavItem>
+        <NavItem
+          to="/admin/delivery"
+          active={pathname === "/admin/delivery"}
+          icon={
+            <FiTruck size={18} />
+          }
+        >
+          Delivery
         </NavItem>
         <NavItem
           to="/admin/notifications"

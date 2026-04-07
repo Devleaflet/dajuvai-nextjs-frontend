@@ -7,7 +7,7 @@ export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   // Admin routes protection
-  if (pathname.startsWith('/admin')) {
+  if (pathname.startsWith('/admin') || pathname.startsWith('/admin-dashboard')) {
     if (!authToken) {
       return NextResponse.redirect(new URL('/', request.url));
     }
@@ -26,5 +26,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/vendor/:path*'],
+  matcher: ['/admin/:path*', '/admin-dashboard', '/vendor/:path*'],
 };

@@ -15,8 +15,7 @@ import {
 import "@/styles/AdminVendor.css";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { FiSearch } from "react-icons/fi";
-import Image from "next/image";
+import { FiAlertTriangle, FiCheckCircle, FiSearch, FiUsers } from "react-icons/fi";
 
 // Use the detailed vendor type for internal operations
 type Vendor = ComponentVendor;
@@ -24,9 +23,6 @@ type Vendor = ComponentVendor;
 const SkeletonRow: React.FC = () => {
 	return (
 		<tr className="admin-vendors__table-row">
-			<td>
-				<div className="admin-vendors__skeleton"></div>
-			</td>
 			<td>
 				<div className="admin-vendors__skeleton"></div>
 			</td>
@@ -364,7 +360,10 @@ const createVendorAPI = (token: string | null) => ({
 					resendBlockUntil: null,
 					createdAt: new Date().toISOString(),
 					updatedAt: new Date().toISOString(),
-					district: normalizedVendorData.district as any || { id: 0, name: 'N/A' },
+					district: {
+						id: 0,
+						name: normalizedVendorData.district || 'N/A',
+					},
 					status: "Inactive",
 				} as Vendor;
 			}
@@ -840,24 +839,6 @@ const AdminVendor: React.FC = () => {
 		return 'Active';
 	};
 
-	const getStorefrontInitial = (name: string) => {
-		if (!name) return 'V';
-		return name.trim().charAt(0).toUpperCase();
-	};
-
-	// Auto-filter when approval filter changes
-	useEffect(() => {
-		handleFilter();
-	}, [
-		approvalFilter,
-		districtFilter,
-		statusFilter,
-		startDate,
-		endDate,
-		searchQuery,
-		vendors,
-	]);
-
 	const handleSearch = useCallback(
 		(query: string) => {
 			setSearchQuery(query);
@@ -888,7 +869,7 @@ const AdminVendor: React.FC = () => {
 		setFilteredVendors(sorted);
 	};
 
-	const handleFilter = () => {
+	const handleFilter = useCallback(() => {
 		let filtered = [...vendors];
 
 		if (searchQuery.trim()) {
@@ -946,7 +927,20 @@ const AdminVendor: React.FC = () => {
 
 		setFilteredVendors(filtered);
 		setCurrentPage(1);
-	};
+	}, [
+		approvalFilter,
+		districtFilter,
+		endDate,
+		searchQuery,
+		startDate,
+		statusFilter,
+		vendors,
+	]);
+
+	// Auto-filter when approval filter changes
+	useEffect(() => {
+		handleFilter();
+	}, [handleFilter]);
 
 	const handleEditVendor = (vendor: Vendor) => {
 		setSelectedVendor(vendor);
@@ -995,12 +989,6 @@ const AdminVendor: React.FC = () => {
 	const handleApproveClick = (id: number) => {
 		setSelectedVendorId(id);
 		setConfirmAction("approve");
-		setShowConfirmModal(true);
-	};
-
-	const handleRejectClick = (id: number) => {
-		setSelectedVendorId(id);
-		setConfirmAction("reject");
 		setShowConfirmModal(true);
 	};
 
@@ -1073,39 +1061,24 @@ const AdminVendor: React.FC = () => {
 		}
 	};
 
+	const handleChangePassword = useCallback((vendor: Vendor) => {
+		toast(`Change password for ${vendor.businessName} is not available yet.`);
+	}, []);
+
 	const indexOfLastVendor = currentPage * vendorsPerPage;
 	const indexOfFirstVendor = indexOfLastVendor - vendorsPerPage;
 	const currentVendors = filteredVendors.slice(
 		indexOfFirstVendor,
 		indexOfLastVendor
 	);
+	const pendingVendorsTotal = pendingApprovalsCount || unapprovedCount;
+	const activeVendorsCount = vendors.filter(
+		(vendor) => getDisplayStatus(vendor) === "Active"
+	).length;
 
 	return (
 		<div className="admin-vendors">
-			<div style={{ display: "flex", flexDirection: "column", flex: "1" }}>
-<div className="admin-vendors__content">
-					<div className="admin-vendors__stats-grid">
-						<div className="admin-vendors__stats-card">
-							<p className="admin-vendors__stats-label">Total Vendors</p>
-							<h3 className="admin-vendors__stats-value">{totalVendorsCount ?? vendors.length}</h3>
-						</div>
-						<div className="admin-vendors__stats-card">
-							<p className="admin-vendors__stats-label">Pending Approvals</p>
-							<h3 className="admin-vendors__stats-value">{pendingApprovalsCount}</h3>
-						</div>
-						<div className="admin-vendors__stats-card">
-							<p className="admin-vendors__stats-label">Unapproved Vendors</p>
-							<h3 className="admin-vendors__stats-value">{unapprovedCount}</h3>
-						</div>
-						<div className="admin-vendors__stats-card">
-							<p className="admin-vendors__stats-label">Top Earning Vendor</p>
-							<h3 className="admin-vendors__stats-value admin-vendors__stats-value--text">
-								{topEarningVendor
-									? `${topEarningVendor.name} (Rs. ${topEarningVendor.sales.toLocaleString('en-IN')})`
-									: 'N/A'}
-							</h3>
-						</div>
-					</div>
+			<div className="admin-vendors__content">
 					<div className="admin-vendors__searchbar-row">
 						<div className="admin-vendors__searchbar">
 							<FiSearch className="admin-vendors__searchbar-icon" />
@@ -1118,71 +1091,105 @@ const AdminVendor: React.FC = () => {
 							/>
 						</div>
 					</div>
+					<div className="admin-vendors__stats-grid">
+						<div className="admin-vendors__stats-card">
+							<div className="admin-vendors__stats-icon admin-vendors__stats-icon--blue">
+								<FiUsers />
+							</div>
+							<div className="admin-vendors__stats-content">
+								<p className="admin-vendors__stats-label">Total Vendors</p>
+								<h3 className="admin-vendors__stats-value">{totalVendorsCount ?? vendors.length}</h3>
+							</div>
+						</div>
+						<div className="admin-vendors__stats-card">
+							<div className="admin-vendors__stats-icon admin-vendors__stats-icon--orange">
+								<FiAlertTriangle />
+							</div>
+							<div className="admin-vendors__stats-content">
+								<p className="admin-vendors__stats-label">Pending Approval</p>
+								<h3 className="admin-vendors__stats-value">{pendingVendorsTotal}</h3>
+							</div>
+						</div>
+						<div className="admin-vendors__stats-card">
+							<div className="admin-vendors__stats-icon admin-vendors__stats-icon--green">
+								<FiCheckCircle />
+							</div>
+							<div className="admin-vendors__stats-content">
+								<p className="admin-vendors__stats-label">Active Vendors</p>
+								<h3 className="admin-vendors__stats-value">{activeVendorsCount}</h3>
+							</div>
+						</div>
+					</div>
 					{/* {unapprovedCount > 0 && (
 						<div className="admin-vendors__unapproved-count">
 							<span>{unapprovedCount} unapproved vendors</span>
 						</div>
 					)} */}
-					<div className="admin-vendors__filter-container">
-						<select
-							value={districtFilter}
-							onChange={(e) => setDistrictFilter(e.target.value)}
-							className="admin-vendors__filter-select"
-						>
-							<option value="all">All Districts</option>
-							{districts.map((district) => (
-								<option
-									key={district.id}
-									value={district.name}
-								>
-									{district.name}
-								</option>
-							))}
-						</select>
-						<select
-							value={statusFilter}
-							onChange={(e) => setStatusFilter(e.target.value)}
-							className="admin-vendors__filter-select"
-						>
-							<option value="all">All Statuses</option>
-							<option value="Active">Active</option>
-							<option value="Inactive">Inactive</option>
-						</select>
-						<select
-							value={approvalFilter}
-							onChange={(e) => setApprovalFilter(e.target.value)}
-							className="admin-vendors__filter-select"
-						>
-							<option value="all">All Approvals</option>
-							<option value="approved">Approved</option>
-							<option value="pending">Pending Approval</option>
-						</select>
-						<input
-							type="date"
-							value={startDate}
-							onChange={(e) => setStartDate(e.target.value)}
-							className="admin-vendors__filter-date"
-						/>
-						<input
-							type="date"
-							value={endDate}
-							onChange={(e) => setEndDate(e.target.value)}
-							className="admin-vendors__filter-date"
-						/>
-						<button
-							onClick={handleFilter}
-							className="admin-vendors__filter-button"
-						>
-							Apply Filters
-						</button>
-					</div>
 					{error && <p className="admin-vendors__error">{error}</p>}
-					<div className="admin-vendors__list-container">
+					<div
+						className="admin-vendors__list-container"
+						data-top-earning-vendor={topEarningVendor?.name || ""}
+					>
+						<div className="admin-vendors__list-header">
+							<h2 className="admin-vendors__list-title">All Vendors</h2>
+						</div>
+						<div className="admin-vendors__filter-container">
+							<select
+								value={districtFilter}
+								onChange={(e) => setDistrictFilter(e.target.value)}
+								className="admin-vendors__filter-select"
+							>
+								<option value="all">All Districts</option>
+								{districts.map((district) => (
+									<option
+										key={district.id}
+										value={district.name}
+									>
+										{district.name}
+									</option>
+								))}
+							</select>
+							<select
+								value={statusFilter}
+								onChange={(e) => setStatusFilter(e.target.value)}
+								className="admin-vendors__filter-select"
+							>
+								<option value="all">All Statuses</option>
+								<option value="Active">Active</option>
+								<option value="Inactive">Inactive</option>
+							</select>
+							<select
+								value={approvalFilter}
+								onChange={(e) => setApprovalFilter(e.target.value)}
+								className="admin-vendors__filter-select"
+							>
+								<option value="all">All Approvals</option>
+								<option value="approved">Approved</option>
+								<option value="pending">Pending Approval</option>
+							</select>
+							<input
+								type="date"
+								value={startDate}
+								onChange={(e) => setStartDate(e.target.value)}
+								className="admin-vendors__filter-date"
+							/>
+							<input
+								type="date"
+								value={endDate}
+								onChange={(e) => setEndDate(e.target.value)}
+								className="admin-vendors__filter-date"
+							/>
+							<button
+								onClick={handleFilter}
+								className="admin-vendors__filter-button"
+							>
+								Apply Filters
+							</button>
+						</div>
 						<div className="admin-vendors__table-container">
 							<table className="admin-vendors__table">
 								<thead className="admin-vendors__table-head">
 									<tr>
-										<th className="admin-vendors__storefront-column">Storefront</th>
 										<th
 											onClick={() => handleSort("businessName")}
 											className="admin-vendors__name-column"
@@ -1230,7 +1237,7 @@ const AdminVendor: React.FC = () => {
 									) : currentVendors.length === 0 ? (
 										<tr>
 											<td
-												colSpan={8}
+												colSpan={7}
 												className="admin-vendors__table-row"
 											>
 												No vendors found
@@ -1242,22 +1249,6 @@ const AdminVendor: React.FC = () => {
 												key={vendor.id}
 												className="admin-vendors__table-row"
 											>
-												<td className="admin-vendors__storefront-column">
-													<div className="admin-vendors__storefront">
-														{vendor.profilePicture && vendor.profilePicture !== 'N/A' ? (
-															<Image
-																src={vendor.profilePicture}
-																alt={vendor.businessName}
-																width={38}
-																height={38}
-																unoptimized
-																loader={({ src }) => src}
-															/>
-														) : (
-															<span>{getStorefrontInitial(vendor.businessName)}</span>
-														)}
-													</div>
-												</td>
 												<td className="admin-vendors__name-column">
 													{vendor.businessName}
 												</td>
@@ -1274,9 +1265,7 @@ const AdminVendor: React.FC = () => {
 														: vendor.district || "N/A"}
 												</td>
 												<td className="admin-vendors__status-column">
-													<span
-														className={`vendor-status-badge vendor-status-badge--${getDisplayStatus(vendor).toLowerCase()}`}
-													>
+													<span className={`admin-vendors__status-text admin-vendors__status-text--${getDisplayStatus(vendor).toLowerCase()}`}>
 														{getDisplayStatus(vendor)}
 													</span>
 												</td>
@@ -1314,6 +1303,14 @@ const AdminVendor: React.FC = () => {
 																{approvingVendorId === vendor.id
 																	? "Approving..."
 																	: "Approve"}
+															</button>
+														)}
+														{vendor.isApproved && (
+															<button
+																onClick={() => handleChangePassword(vendor)}
+																className="admin-vendors__action-btn admin-vendors__action-btn--password"
+															>
+																Change Password
 															</button>
 														)}
 														<button
@@ -1384,7 +1381,6 @@ const AdminVendor: React.FC = () => {
 						action={confirmAction || "approve"}
 					/>
 				</div>
-			</div>
 		</div>
 	);
 };

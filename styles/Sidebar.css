@@ -25,8 +25,11 @@
 }
 
 .sidebar__logo-text {
+  font-size: 16px;
+  line-height: 1.1;
   font-weight: 600;
   color: #1f2937;
+  letter-spacing: -0.16px;
 }
 
 .sidebar__nav {

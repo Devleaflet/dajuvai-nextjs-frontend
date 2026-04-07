@@ -46,8 +46,8 @@ export const processGoogleAuthResponse = async (
 
       // Redirect based on role
       if (role === 'admin') {
-        //('[GoogleAuthUtils] Navigating to /admin-dashboard');
-        navigate('/admin-dashboard', { replace: true });
+        //('[GoogleAuthUtils] Navigating to /admin/dashboard');
+        navigate('/admin/dashboard', { replace: true });
       } else if (role === 'vendor') {
         //('[GoogleAuthUtils] Navigating to /dashboard');
         navigate('/dashboard', { replace: true });

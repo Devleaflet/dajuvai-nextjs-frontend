@@ -589,6 +589,9 @@ const AdminCategories: React.FC = () => {
   const indexOfLastCategory = currentPage * categoriesPerPage;
   const indexOfFirstCategory = indexOfLastCategory - categoriesPerPage;
   const currentCategories = filteredCategories.slice(indexOfFirstCategory, indexOfLastCategory);
+  const paginationSummary = filteredCategories.length > 0
+    ? `Showing ${indexOfFirstCategory + 1}-${Math.min(indexOfLastCategory, filteredCategories.length)} out of ${filteredCategories.length}`
+    : "Showing 0-0 out of 0";
 
   return (
     <div className="admin-categories">
@@ -754,6 +757,7 @@ const AdminCategories: React.FC = () => {
           {/* ── Pagination ── */}
           <div className="admin-categories__pagination-container">
             <div className="admin-categories__pagination-info">
+              <span className="admin-categories__pagination-info-text">{paginationSummary}</span>
               Showing {indexOfFirstCategory + 1}–{Math.min(indexOfLastCategory, filteredCategories.length)} out of {filteredCategories.length}
             </div>
             <Pagination

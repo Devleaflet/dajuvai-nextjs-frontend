@@ -39,11 +39,21 @@
 
 .admin-topbar__title {
   margin: 0;
-  font-size: 22px;
-  font-weight: 700;
-  line-height: 1;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.10;
   color: #111827;
-  letter-spacing: -0.2px;
+  letter-spacing: -0.24px;
+  font-size: 20px;
+}
+
+.admin-shell--delivery .admin-topbar__title {
+  font-weight: 500;
+  letter-spacing: -0.1px;
+}
+
+.admin-shell--staff .admin-topbar__title {
+  font-size: 22px;
 }
 
 .admin-topbar__profile {
@@ -69,8 +79,8 @@
 }
 
 .admin-topbar__avatar {
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
@@ -78,7 +88,7 @@
   background: #7c4ddb;
   color: #ffffff;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .admin-topbar__meta {
@@ -88,9 +98,9 @@
 }
 
 .admin-topbar__name {
-  font-size: 17px;
+  font-size: 14px;
   color: #111827;
-  font-weight: 600;
+  font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -204,11 +214,11 @@
   }
 
   .admin-topbar__title {
-    font-size: 20px;
+    font-size: 18px;
   }
 
   .admin-topbar__name {
-    font-size: 14px;
+    font-size: 13px;
     max-width: 120px;
   }
 

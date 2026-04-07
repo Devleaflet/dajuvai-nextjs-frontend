@@ -13,15 +13,16 @@ interface AdminRouteLayoutProps {
 const getAdminTitle = (pathname: string): string => {
   if (pathname.includes('/dashboard')) return 'Dashboard';
   if (pathname.includes('/catalog')) return 'Catalog';
-  if (pathname.includes('/products')) return 'Products';
-  if (pathname.includes('/categories')) return 'Categories';
+  if (pathname.includes('/products')) return 'Product Management';
+  if (pathname.includes('/categories')) return 'Category Management';
   if (pathname.includes('/deals')) return 'Deals';
-  if (pathname.includes('/promo')) return 'Promo Codes';
+  if (pathname.includes('/promo')) return 'Promo Code Management';
   if (pathname.includes('/banner')) return 'Banner Management';
-  if (pathname.includes('/orders')) return 'Orders';
+  if (pathname.includes('/orders')) return 'Order Management';
+  if (pathname.includes('/delivery')) return 'Delivery Management';
   if (pathname.includes('/notifications')) return 'Notifications';
   if (pathname.includes('/customers')) return 'Customers';
-  if (pathname.includes('/vendors')) return 'Vendors';
+  if (pathname.includes('/vendors')) return 'Vendor Management';
   if (pathname.includes('/district')) return 'Districts';
   if (pathname.includes('/staff')) return 'Staff Management';
   if (pathname.includes('/profile')) return 'Profile';
@@ -42,8 +43,8 @@ export default function AdminRouteLayout({ children }: AdminRouteLayoutProps) {
         .map((part) => part[0])
         .join('')
         .slice(0, 2)
-        .toUpperCase()
-    : (user?.email?.[0] || 'A').toUpperCase();
+        .toLowerCase()
+    : (user?.email?.[0] || 'a').toLowerCase();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -61,8 +62,13 @@ export default function AdminRouteLayout({ children }: AdminRouteLayoutProps) {
     };
   }, [isMenuOpen]);
 
+  const isDeliveryPage = pathname.includes('/delivery');
+  const isStaffPage = pathname.includes('/staff');
+
   return (
-    <div className="admin-shell">
+    <div
+      className={`admin-shell${isDeliveryPage ? ' admin-shell--delivery' : ''}${isStaffPage ? ' admin-shell--staff' : ''}`}
+    >
       <AdminSidebar />
       <div className="admin-shell__main">
         <header className="admin-topbar">
