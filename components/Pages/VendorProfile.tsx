@@ -250,7 +250,7 @@ const VendorProfile: React.FC = () => {
   );
 
   return (
-    <main className="dashboard__main">
+    <main className="dashboard__main vendor-profile-page__main">
       <div className="vendor-profile-page">
         <section className="vendor-profile-page__card">
           <aside className="vendor-profile-page__sidebar">

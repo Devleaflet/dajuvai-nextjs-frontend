@@ -32,7 +32,6 @@ interface LowStockItem {
 export function Dashboard() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [days, setDays] = useState<number>(10); // State for days selector
-  const [showAllLowStock, setShowAllLowStock] = useState<boolean>(false); // State for showing more data
   const docketHeight = useDocketHeight();
   const chartRef = useRef<Chart | null>(null);
   const { authState } = useVendorAuth();
@@ -229,16 +228,6 @@ export function Dashboard() {
     setDays(parseInt(event.target.value));
   };
 
-  const handleViewMore = () => {
-    setShowAllLowStock(!showAllLowStock);
-  };
-
-  // Get displayed data based on showAllLowStock state
-  const getDisplayedLowStockData = () => {
-    if (!lowStockData?.data) return [];
-    return showAllLowStock ? lowStockData.data : lowStockData.data.slice(0, 10);
-  };
-
   if (statsLoading || salesLoading || lowStockLoading) {
     return (
       <main className="dashboard__main" style={{ paddingBottom: isMobile ? `${docketHeight + 24}px` : "24px" }}>
@@ -294,38 +283,18 @@ export function Dashboard() {
     return <div>Error: {statsErrorObj?.message || salesErrorObj?.message || lowStockErrorObj?.message}</div>;
   }
 
-  const displayedData = getDisplayedLowStockData();
+  const displayedData = lowStockData?.data ?? [];
   const totalSales = Number(statsData?.totalSales || 0);
   const netEarnings = Math.max(totalSales * 0.9, 0);
-  const storeRating = statsData?.averageRating ?? statsData?.storeRating ?? "N/A";
-  const profileViews = statsData?.profileViews ?? statsData?.storeViews ?? statsData?.clicks ?? 0;
 
   return (
     <main className="dashboard__main" style={{ paddingBottom: isMobile ? `${docketHeight + 24}px` : "24px" }}>
-          <div className="dashboard__stats dashboard__stats--overview">
+          <div className="dashboard__stats dashboard__stats--summary">
             <StatsCard
               title="Net Earnings"
               value={`Rs ${netEarnings.toFixed(2)}`}
               iconType="earnings"
             />
-            <StatsCard
-              title="Pending Orders"
-              value={statsData?.totalPendingOrders?.toString() || "0"}
-              iconType="pending"
-            />
-            <StatsCard
-              title="Store Rating"
-              value={String(storeRating)}
-              iconType="rating"
-            />
-            <StatsCard
-              title="Profile Views / Clicks"
-              value={String(profileViews)}
-              iconType="views"
-            />
-          </div>
-          {/* Stats Section */}
-          <div className="dashboard__stats">
             <StatsCard
               title="Total Products"
               value={statsData?.totalProducts?.toString() || "0"}
@@ -406,45 +375,35 @@ export function Dashboard() {
           </div>
           {/* Low Stock Table Section */}
           <div className="dashboard__table-section">
-            <div className="section-card">
+            <div className="section-card low-stock-panel">
               <div className="table-header-with-button">
                 <h3>Low Stock Products</h3>
-                {lowStockData && lowStockData.data.length > 10 && (
-                  <button
-                    className="view-more-button"
-                    onClick={handleViewMore}
-                  >
-                    {showAllLowStock ? 'Show Less' : `View More (${lowStockData.data.length - 10} more)`}
-                  </button>
-                )}
               </div>
               {displayedData.length > 0 ? (
-                <>
-                  <div className="table-container">
-                    <table className="low-stock-table">
-                      <thead>
-                        <tr>
-                          <th>Product ID</th>
-                          <th>Product Name</th>
-                          <th>Stock</th>
-                          <th>Variant Status</th>
+                <div className="table-container">
+                  <table className="low-stock-table">
+                    <thead>
+                      <tr>
+                        <th>Product ID</th>
+                        <th>Product Name</th>
+                        <th>Stock</th>
+                        <th>Variant Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {displayedData.map((item) => (
+                        <tr key={item.productid}>
+                          <td>{item.productid}</td>
+                          <td>{item.productname}</td>
+                          <td>{item.stock}</td>
+                          <td>{item.variantStatus || item.status}</td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {displayedData.map((item) => (
-                          <tr key={item.productid}>
-                            <td>{item.productid}</td>
-                            <td>{item.productname}</td>
-                            <td>{item.stock}</td>
-                            <td>{item.variantStatus || item.status}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               ) : (
-                <p>No low stock data available.</p>
+                <p className="low-stock-panel__empty">No low stock data available.</p>
               )}
             </div>
           </div>

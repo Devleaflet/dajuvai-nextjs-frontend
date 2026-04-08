@@ -39,7 +39,9 @@ export default function VendorLayout({ children }: VendorLayoutProps) {
     <div className="vendor-dash-container">
       <Sidebar />
       <div className={`dashboard ${isMobile ? 'dashboard--mobile' : ''}`}>
-        <VendorHeader title={title} showSearch={false} />
+        <div className="vendor-dashboard__sticky-header">
+          <VendorHeader title={title} showSearch={false} />
+        </div>
         {children}
       </div>
     </div>

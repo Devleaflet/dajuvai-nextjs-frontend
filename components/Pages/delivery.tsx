@@ -138,7 +138,7 @@ const createDeliveryAPI = (token: string | null) => {
     }
 
     if (token) {
-      headers.Authorization = `Bearer ${token}`;
+      headers['Authorization'] = `Bearer ${token}`;
     }
 
     const requestUrl =
@@ -456,16 +456,21 @@ export default function DeliveryPage() {
         summaries.map(async (summary) => {
           try {
             const detail = await deliveryAPI.getProcessingOrderDetails(summary.id);
+            const deliveryStatus = detail.deliveryStatus ?? summary.deliveryStatus;
+            const status = detail.status ?? summary.status;
+
             return {
               ...detail,
-              deliveryStatus: detail.deliveryStatus || summary.deliveryStatus,
-              status: detail.status || summary.status,
+              ...(deliveryStatus !== undefined ? { deliveryStatus } : {}),
+              ...(status !== undefined ? { status } : {}),
             };
           } catch {
             return {
               id: summary.id,
-              deliveryStatus: summary.deliveryStatus,
-              status: summary.status,
+              ...(summary.deliveryStatus !== undefined
+                ? { deliveryStatus: summary.deliveryStatus }
+                : {}),
+              ...(summary.status !== undefined ? { status: summary.status } : {}),
               orderItems: [],
             } as DeliveryOrderRecord;
           }
@@ -603,7 +608,7 @@ export default function DeliveryPage() {
 
   const handleRiderFormChange = useCallback(
     (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-      const field = event.target.dataset.field || event.target.name;
+      const field = event.target.dataset['field'] || event.target.name;
       const { value } = event.target;
       setRiderForm((current) => ({
         ...current,

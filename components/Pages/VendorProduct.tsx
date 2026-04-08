@@ -4,7 +4,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useState } from "react";
 import { toast } from "react-hot-toast";
 import { fetchProducts, updateProduct, deleteProduct } from "@/lib/api/products";
-import Header from "@/components/Components/Header";
 import EditProductModal from "@/components/Components/Modal/EditProductModalRedesigned";
 import NewProductModal from "@/components/Components/NewProductModalRedesigned";
 import Pagination from "@/components/Components/Pagination";
@@ -960,9 +959,6 @@ const VendorProduct: React.FC = () => {
 		vendorProductsStats?.outOfStockProducts ?? outOfStockCount;
 	const displayTopSellingItemName =
 		vendorProductsStats?.topSellingProductName || "N/A";
-	const displayAverageRating = (vendorProductsStats?.averageRating ?? 0).toFixed(1);
-	const displayTotalReviews = vendorProductsStats?.totalReviews ?? recentReviews.length;
-
 	const handlePageChange = (pageNumber: number) => {
 		setCurrentPage(pageNumber);
 	};
@@ -986,7 +982,7 @@ const VendorProduct: React.FC = () => {
 	};
 
 	return (
-		<>
+		<div className="vendor-product-page">
 			<div className="vendor-product__stats-grid">
 				<div className="vendor-product__stats-card">
 					<p className="vendor-product__stats-label">Total Products</p>
@@ -1011,13 +1007,6 @@ const VendorProduct: React.FC = () => {
 					<h3 className="vendor-product__stats-value vendor-product__stats-value--text">
 						{vendorStatsLoading ? "Loading..." : displayTopSellingItemName}
 					</h3>
-				</div>
-				<div className="vendor-product__stats-card">
-					<p className="vendor-product__stats-label">Average Rating</p>
-					<h3 className="vendor-product__stats-value">
-						{vendorStatsLoading ? "..." : displayAverageRating}
-					</h3>
-					<p className="vendor-product__stats-meta">Based on {displayTotalReviews} reviews</p>
 				</div>
 			</div>
 
@@ -1079,7 +1068,7 @@ const VendorProduct: React.FC = () => {
 				</select>
 			</div>
 			<main
-				className="dashboard__main"
+				className="dashboard__main vendor-product__content"
 				style={{
 					paddingBottom: isMobile ? `${docketHeight + 24}px` : "24px",
 				}}
@@ -1169,7 +1158,7 @@ const VendorProduct: React.FC = () => {
 						<div className="vendor-product__no-results">No product found.</div>
 					)}
 			</main>
-		</>
+		</div>
 	);
 };
 

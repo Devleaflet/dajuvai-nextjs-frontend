@@ -15,6 +15,16 @@
   padding: 0px;
 }
 
+.vendor-dashboard__sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.vendor-dashboard__sticky-header .dashboard__header {
+  margin-bottom: 0;
+}
+
 .dashboard__header {
   display: flex;
   flex-direction: row;
@@ -104,6 +114,11 @@
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 24px;
   margin-bottom: 10px;
+}
+
+.dashboard__stats--summary {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-bottom: 24px;
 }
 
 .dashboard__section {
@@ -552,9 +567,17 @@
 
 .table-header-with-button {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  justify-content: flex-start;
+  margin-bottom: 30px;
+}
+
+.table-header-with-button h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #1f2f46;
 }
 
 .view-more-button {
@@ -574,36 +597,73 @@
 
 .table-container {
   width: 100%;
-  max-height: 400px; /* Fixed height for the table container */
-  overflow-x: auto; /* Enable horizontal scrolling */
-  overflow-y: auto; /* Enable vertical scrolling for more data */
-  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 .low-stock-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 16px;
-  min-width: 600px; /* Ensure table is wide enough to prevent text wrapping */
+  table-layout: fixed;
+  min-width: 760px;
+  border: 1px solid #d8e0e8;
+  background: #ffffff;
 }
 
 .low-stock-table th,
 .low-stock-table td {
-  padding: 8px;
-  border: 1px solid #e5e7eb;
+  padding: 11px 18px;
+  border: 1px solid #d8e0e8;
   text-align: left;
   font-size: 14px;
-  white-space: nowrap; /* Prevent text wrapping in cells */
+  line-height: 1.35;
+  white-space: nowrap;
 }
 
 .low-stock-table th {
-  background-color: #f3f4f6;
+  background-color: #f2f4f7;
   font-weight: 500;
-  color: #6b7280;
+  color: #506784;
 }
 
 .low-stock-table td {
-  color: #1f2937;
+  color: #102a43;
+  font-weight: 400;
+}
+
+.low-stock-table th:nth-child(1),
+.low-stock-table td:nth-child(1) {
+  width: 17%;
+}
+
+.low-stock-table th:nth-child(2),
+.low-stock-table td:nth-child(2) {
+  width: 50%;
+}
+
+.low-stock-table th:nth-child(3),
+.low-stock-table td:nth-child(3) {
+  width: 10%;
+}
+
+.low-stock-table th:nth-child(4),
+.low-stock-table td:nth-child(4) {
+  width: 23%;
+}
+
+.low-stock-panel {
+  border: 1px solid #e6edf5;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+  padding: 30px;
+}
+
+.low-stock-panel__empty {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
 }
 
 .dashboard__dropdown-menu {
@@ -652,6 +712,12 @@
 }
 
 /* Responsive Styles */
+@media (max-width: 1400px) {
+  .dashboard__stats--summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 999px) {
   .dashboard {
     width: 100%;
@@ -661,6 +727,10 @@
   .dashboard__stats {
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 16px;
+  }
+
+  .dashboard__stats--summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .dashboard__table-header th:nth-child(2),
@@ -708,43 +778,24 @@
 
 /* Mobile-responsive styles for low stock table */
 @media (max-width: 768px) {
+  .dashboard__stats--summary {
+    grid-template-columns: 1fr;
+  }
+
   .table-container {
-    max-height: 300px; /* Smaller fixed height for mobile */
     overflow-x: auto;
-    overflow-y: auto;
+    overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
   }
 
   .low-stock-table {
-    min-width: 600px;
+    min-width: 720px;
     font-size: 12px;
   }
 
   .low-stock-table th,
   .low-stock-table td {
-    padding: 6px;
-  }
-
-  /* Hide less critical columns on mobile */
-  .low-stock-table th:nth-child(1), /* Product ID */
-  .low-stock-table td:nth-child(1) {
-    display: none;
-  }
-
-  /* Ensure essential columns are prioritized and readable */
-  .low-stock-table th:nth-child(2), /* Product Name */
-  .low-stock-table td:nth-child(2) {
-    min-width: 150px;
-  }
-
-  .low-stock-table th:nth-child(3), /* Stock */
-  .low-stock-table td:nth-child(3) {
-    min-width: 80px;
-  }
-
-  .low-stock-table th:nth-child(4), /* Variant Status */
-  .low-stock-table td:nth-child(4) {
-    min-width: 100px;
+    padding: 10px 14px;
   }
 }
 
@@ -771,6 +822,19 @@
 
 /* Mobile-responsive styles */
 @media (max-width: 768px) {
+  .low-stock-panel {
+    padding: 22px 18px;
+    border-radius: 16px;
+  }
+
+  .table-header-with-button {
+    margin-bottom: 20px;
+  }
+
+  .table-header-with-button h3 {
+    font-size: 17px;
+  }
+
   .view-more-button {
     padding: 6px 12px;
     font-size: 12px;
