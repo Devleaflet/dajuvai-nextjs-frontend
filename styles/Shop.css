@@ -1,7 +1,17 @@
 /* Shop-specific ProductCard adjustments */
 
+.shop-products .products-grid {
+    gap: calc(1.25rem - 1px);
+}
+
 .shop-products .product-card__cart-button {
     bottom: 10px !important;
     right: 10px !important;
     z-index: 10 !important;
+}
+
+@media (max-width: 768px) {
+    .shop-products .products-grid {
+        gap: calc(0.75rem - 1px);
+    }
 }
