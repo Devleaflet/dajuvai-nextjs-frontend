@@ -1,7 +1,32 @@
-/* Shop-specific ProductCard adjustments */
+/* Shop-specific product surface polish */
+
+.shop-products {
+    padding-bottom: 2.5rem;
+}
 
 .shop-products .products-grid {
-    gap: calc(1.25rem - 1px);
+    gap: 1.35rem;
+    align-items: stretch;
+}
+
+.shop-products .product-card {
+    border-radius: 16px;
+}
+
+.shop-products .product-card__image {
+    background: #ffffff;
+    border: none;
+    box-shadow: none;
+}
+
+.shop-products .product-card__info,
+.shop-products .product__info {
+    gap: 5px;
+}
+
+.shop-products .product-card__price {
+    margin-top: 4px;
+    padding-top: 4px;
 }
 
 .shop-products .product-card__cart-button {
@@ -10,8 +35,60 @@
     z-index: 10 !important;
 }
 
+.shop-products .products-grid > .col-span-full,
+.shop-no-products {
+    border-radius: 18px;
+    border: 1px solid rgba(234, 95, 10, 0.1);
+    background: linear-gradient(180deg, #fffaf6 0%, #ffffff 100%);
+    box-shadow: var(--surface-shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.05));
+}
+
+.shop-products .products-grid > .col-span-full {
+    padding: 2.5rem 1.75rem;
+}
+
+.shop-no-products {
+    width: 100%;
+    padding: 2.75rem 1.75rem;
+    text-align: center;
+}
+
+.shop-products .products-grid > .col-span-full h3,
+.shop-no-products-title {
+    margin-bottom: 0.75rem !important;
+    line-height: 1.25;
+}
+
+.shop-products .products-grid > .col-span-full p,
+.shop-no-products-text {
+    margin-bottom: 1.5rem !important;
+    line-height: 1.6;
+}
+
+.shop-products input[type="text"] {
+    border-color: var(--surface-border-strong, #e5e7eb);
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+}
+
+.shop-products input[type="text"]:focus {
+    box-shadow: 0 0 0 3px rgba(234, 95, 10, 0.14), 0 8px 18px rgba(15, 23, 42, 0.06) !important;
+}
+
+.shop-products button:not(.product-card__wishlist-button):not(.product-card__cart-button):not(.product-card__dot) {
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+}
+
+.shop-products button:not(.product-card__wishlist-button):not(.product-card__cart-button):not(.product-card__dot):hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
 @media (max-width: 768px) {
     .shop-products .products-grid {
-        gap: calc(0.75rem - 1px);
+        gap: 0.85rem;
+    }
+
+    .shop-products .products-grid > .col-span-full,
+    .shop-no-products {
+        padding: 2rem 1.25rem;
     }
 }

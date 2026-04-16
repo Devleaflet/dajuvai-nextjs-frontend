@@ -117,11 +117,13 @@
    flex: 0 0 auto; 
    pointer-events: auto; 
    width: 260px; 
-   transition: box-shadow 0.3s ease; 
+   border-radius: 16px;
+   transition: box-shadow 0.22s ease, transform 0.22s ease; 
  } 
  
  .recommended-product-card__wrapper:hover { 
-   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); 
+   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); 
+   transform: translateY(-2px);
  } 
  
  /* Skeleton loading styles */ 
@@ -190,8 +192,10 @@
  .recommended-empty { 
    text-align: center; 
    padding: 3rem 2rem; 
-   border: 2px dashed #cbd5e1; 
-   border-radius: 12px; 
+   border: 1px dashed rgba(234, 95, 10, 0.24); 
+   border-radius: 18px; 
+   background: linear-gradient(180deg, #fffaf6 0%, #ffffff 100%);
+   box-shadow: var(--surface-shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.05));
    max-width: 500px; 
    margin: 0 auto; 
    position: relative;

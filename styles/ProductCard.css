@@ -164,24 +164,26 @@
 .product-card {
 	position: relative;
 	z-index: 0;
-	border-radius: 12px;
+	border-radius: 14px;
 	overflow: hidden;
 	background: #ffffff;
-	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+	border: 1px solid var(--surface-border, #eceff3);
+	box-shadow: var(--surface-shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.05));
 	display: flex;
 	flex-direction: column;
 	height: 100%;
 	flex: 1;
-	padding: 12px;
+	padding: 13px;
 	container-type: inline-size;
-	transition: transform 0.2s ease, box-shadow 0.2s ease;
+	transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
 /* flex: 0 0 150px;  */
 	
 }
 
 .product-card:hover {
-	box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
-	transform: translateY(-2px);
+	box-shadow: var(--surface-shadow-md, 0 14px 30px rgba(15, 23, 42, 0.08));
+	border-color: rgba(234, 95, 10, 0.12);
+	transform: translateY(-3px);
 }
 
 .product-card__badge {
@@ -203,8 +205,8 @@
 .product-card__media {
         position: relative;
         width: 100%;
-        border-radius: 8px;
-        margin-bottom: 4px;
+        border-radius: 10px;
+        margin-bottom: 6px;
 }
 
 /* Action Buttons */
@@ -221,16 +223,17 @@
         align-items: center;
         justify-content: center;
         cursor: pointer !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        transition: all 0.2s ease;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+        transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
         z-index: 10;
-        border: 1px solid #f1f2f4;
+        border: 1px solid #f1e6dc;
 }
 
 .product-card__wishlist-button:hover {
         background: #ffffff;
-        transform: scale(1.1);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        transform: scale(1.04);
+        border-color: rgba(234, 95, 10, 0.16);
+        box-shadow: 0 8px 18px rgba(234, 95, 10, 0.14);
 }
 
 .product-card__wishlist-button:disabled {
@@ -268,18 +271,22 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background-color: #ede6e6;
+        background-color: #ffffff;
         height: 32px;
         width: 32px;
         box-sizing: border-box;
         border-radius: 50%;
-        transition: background-color 0.2s;
+        border: 1px solid #f1e6dc;
+        transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
         z-index: 10;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
 }
 
 .product-card__cart-button:hover {
         background-color: #ea5f0a;
+        border-color: #ea5f0a;
+        box-shadow: 0 8px 18px rgba(234, 95, 10, 0.22);
+        transform: translateY(-1px);
         cursor: pointer;
 }
 
@@ -300,7 +307,7 @@
         flex-direction: column;
         justify-content: flex-end;
         max-width: 100%;
-        gap: 4px;
+        gap: 5px;
         text-align: left;
         flex: 1;
 }
@@ -339,7 +346,7 @@
 .product-card__info {
         display: flex;
         flex-direction: column;
-	gap: 3px;
+	gap: 5px;
         text-align: left;
         justify-content: flex-end;
 }
@@ -381,8 +388,8 @@
         flex-direction: row;
         align-items: baseline;
         gap: 8px;
-	margin-top: 2px;
-	padding-top: 2px;
+	margin-top: 4px;
+	padding-top: 4px;
 }
 
 .product-card__current-price {
@@ -426,8 +433,9 @@
 }
 
 /* Image */
-.product-card__image {position: relative;width: 100%;aspect-ratio: 1;background: transparent;overflow: hidden;border-radius: 8px;margin-bottom: 0;}
-.product-card__image img {width: 100%;height: 100%;object-fit: contain;}
+.product-card__image {position: relative;width: 100%;aspect-ratio: 1;background: #ffffff;overflow: hidden;border-radius: 10px;margin-bottom: 0;border: none;box-shadow: none;}
+.product-card__image img {width: 100%;height: 100%;object-fit: contain;transition: transform 0.24s ease;}
+.product-card:hover .product-card__image img {transform: scale(1.03);}
 /* Pagination Dots */
 .product-card__pagination {
 	position: absolute;
@@ -457,6 +465,7 @@
 
 .product-card__dot:hover {
 	background: #9ca3af;
+	transform: scale(1.06);
 }
 
 .product-card__dot--active {

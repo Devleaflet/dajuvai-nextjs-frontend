@@ -13,6 +13,17 @@ body {
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --surface-muted: #fff9f4;
+  --surface-border: #eceff3;
+  --surface-border-strong: #e5e7eb;
+  --surface-shadow-sm: 0 8px 24px rgba(15, 23, 42, 0.05);
+  --surface-shadow-md: 0 14px 30px rgba(15, 23, 42, 0.08);
+  --surface-shadow-hover: 0 16px 34px rgba(15, 23, 42, 0.1);
+  --surface-radius-sm: 10px;
+  --surface-radius-md: 14px;
+  --surface-radius-lg: 18px;
+  --accent-orange: #ea5f0a;
+  --accent-orange-soft: rgba(234, 95, 10, 0.14);
 }
 
 @theme inline {
@@ -63,6 +74,13 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
 /* Custom Keyframes */
 @keyframes fade-in {
   from {
@@ -109,6 +127,89 @@ body {
 /* Global button styles */
 button {
   cursor: pointer;
+}
+
+button,
+.btn,
+[role="button"] {
+  border-radius: var(--surface-radius-sm);
+  transition:
+    background-color 0.22s ease,
+    border-color 0.22s ease,
+    color 0.22s ease,
+    box-shadow 0.22s ease,
+    transform 0.22s ease;
+}
+
+button:focus-visible,
+.btn:focus-visible,
+[role="button"]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-orange-soft);
+}
+
+:where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  select,
+  textarea
+) {
+  transition:
+    border-color 0.22s ease,
+    box-shadow 0.22s ease,
+    background-color 0.22s ease;
+}
+
+:where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  select,
+  textarea
+):focus,
+:where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  select,
+  textarea
+):focus-visible {
+  outline: none;
+  border-color: var(--accent-orange) !important;
+  box-shadow: 0 0 0 3px var(--accent-orange-soft), 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+}
+
+:where(
+  .product-card,
+  .recommended-empty,
+  .shop-no-products,
+  .empty-state,
+  .table-container,
+  [class$="__table-container"],
+  [class$="__stats-card"],
+  [class$="__reviews-card"],
+  [class$="__credentials-card"],
+  [class$="__card"],
+  [class$="-card"],
+  [class$="__panel"],
+  [class$="-panel"]
+) {
+  transition:
+    background-color 0.22s ease,
+    border-color 0.22s ease,
+    box-shadow 0.22s ease,
+    transform 0.22s ease;
+}
+
+:where(.table-row, [class$="__table-row"], tbody tr) {
+  transition: background-color 0.2s ease;
+}
+
+:where(.table-row:hover, [class$="__table-row"]:hover, tbody tr:hover) {
+  background-color: rgba(234, 95, 10, 0.035);
+}
+
+:where(.list-item, [class$="__list-item"]) {
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+:where(.list-item:hover, [class$="__list-item"]:hover) {
+  background-color: rgba(234, 95, 10, 0.03);
 }
 
 /* Global fallback for shared error helpers */
