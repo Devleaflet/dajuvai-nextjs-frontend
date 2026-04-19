@@ -10,7 +10,6 @@ describe('AppError', () => {
       400,
       { field: 'email' }
     );
-
     expect(error).toBeInstanceOf(Error);
     expect(error).toBeInstanceOf(AppError);
     expect(error.name).toBe('AppError');
