@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useQuery } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
+import { useRouter } from "next/navigation";
 import "@/styles/Dashboard.css";
 import { Chart } from "chart.js/auto";
 import { useDocketHeight } from "@/lib/hooks/UseDockerHeight";
@@ -31,10 +32,12 @@ interface LowStockItem {
 
 export function Dashboard() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [showPaymentBanner, setShowPaymentBanner] = useState(true);
   const [days, setDays] = useState<number>(10); // State for days selector
   const docketHeight = useDocketHeight();
   const chartRef = useRef<Chart | null>(null);
   const { authState } = useVendorAuth();
+  const router = useRouter();
 
   // TanStack Query for stats
   const {
@@ -197,16 +200,39 @@ export function Dashboard() {
           },
           scales: {
             x: {
+              border: {
+                display: true,
+                color: "#d7dee8",
+                width: 1,
+              },
               grid: {
                 display: false,
+              },
+              ticks: {
+                color: "#7b8794",
+                font: {
+                  size: 11,
+                  weight: 400,
+                },
               },
             },
             y: {
               beginAtZero: true,
+              border: {
+                display: true,
+                color: "#d7dee8",
+                width: 1,
+              },
               grid: {
-                color: "#e5e7eb",
+                color: "#dfe6ee",
+                lineWidth: 1,
               },
               ticks: {
+                color: "#7b8794",
+                font: {
+                  size: 11,
+                  weight: 400,
+                },
                 callback: (value) => `Rs ${value}`,
               },
             },
@@ -226,6 +252,10 @@ export function Dashboard() {
 
   const handleDaysChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setDays(parseInt(event.target.value));
+  };
+
+  const handleAddPaymentMethod = () => {
+    router.push("/vendor/profile");
   };
 
   if (statsLoading || salesLoading || lowStockLoading) {
@@ -284,17 +314,37 @@ export function Dashboard() {
   }
 
   const displayedData = lowStockData?.data ?? [];
-  const totalSales = Number(statsData?.totalSales || 0);
-  const netEarnings = Math.max(totalSales * 0.9, 0);
 
   return (
     <main className="dashboard__main" style={{ paddingBottom: isMobile ? `${docketHeight + 24}px` : "24px" }}>
+          {showPaymentBanner ? (
+            <div className="dashboard__payment-banner" role="status" aria-live="polite">
+              <div className="dashboard__payment-banner-message">
+                <span className="dashboard__payment-banner-icon" aria-hidden="true"></span>
+                <p className="dashboard__payment-banner-text">
+                  Want a smoother payment experience? Add a payment method anytime.
+                </p>
+              </div>
+              <div className="dashboard__payment-banner-actions">
+                <button
+                  type="button"
+                  className="dashboard__payment-banner-button"
+                  onClick={handleAddPaymentMethod}
+                >
+                  Add Payment Method
+                </button>
+                <button
+                  type="button"
+                  className="dashboard__payment-banner-close"
+                  aria-label="Dismiss payment method banner"
+                  onClick={() => setShowPaymentBanner(false)}
+                >
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+            </div>
+          ) : null}
           <div className="dashboard__stats dashboard__stats--summary">
-            <StatsCard
-              title="Net Earnings"
-              value={`Rs ${netEarnings.toFixed(2)}`}
-              iconType="earnings"
-            />
             <StatsCard
               title="Total Products"
               value={statsData?.totalProducts?.toString() || "0"}
@@ -331,13 +381,8 @@ export function Dashboard() {
           {/* Charts Row */}
           <div className="dashboard__two-columns">
             <div className="dashboard__column">
-              <div className="section-card revenue-analytics">
-                <h3
-                  style={{
-                    marginBottom: "5px",
-                    textAlign: "center"
-                  }}
-                >Total Sales</h3>
+              <div className="section-card revenue-analytics dashboard__sales-card">
+                <h3 className="dashboard__panel-title">Total Sales</h3>
                 <div className="revenue-analytics__legend">
                   <div className="legend-item">
                     <div className="legend-item__color legend-item__color--revenue"></div>
@@ -351,13 +396,15 @@ export function Dashboard() {
                 <div className="revenue-analytics__chart">
                   <canvas id="sales-chart"></canvas>
                 </div>
-                <select className="days-selector" value={days} onChange={handleDaysChange}>
-                  <option value="7">Last 7 Days</option>
-                  <option value="10">Last 10 Days</option>
-                  <option value="30">Last 30 Days</option>
-                  <option value="60">Last 60 Days</option>
-                  <option value="180">Last 6 months</option>
-                </select>
+                <div className="revenue-analytics__footer">
+                  <select className="days-selector" value={days} onChange={handleDaysChange}>
+                    <option value="7">Last 7 Days</option>
+                    <option value="10">Last 10 Days</option>
+                    <option value="30">Last 30 Days</option>
+                    <option value="60">Last 60 Days</option>
+                    <option value="180">Last 6 months</option>
+                  </select>
+                </div>
               </div>
             </div>
             <div className="dashboard__column">

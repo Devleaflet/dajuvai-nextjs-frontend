@@ -67,25 +67,31 @@ const VendorRevenueByCategory = () => {
 
 const styles: { [key: string]: React.CSSProperties } = {
     container: {
-        padding: '16px 20px',
-        backgroundColor: '#FAFAFA',
-        borderRadius: '12px',
-        boxShadow: '0 1px 6px rgba(0,0,0,0.08)',
-        maxWidth: '780px',
-        margin: '40px auto',
+        width: '100%',
+        minHeight: '180px',
+        padding: '18px 22px 20px',
+        backgroundColor: '#ffffff',
+        border: '1px solid #e7ebf1',
+        borderRadius: '16px',
+        boxShadow: '0 2px 10px rgba(15, 23, 42, 0.05)',
+        margin: '48px 0 0',
+        boxSizing: 'border-box',
     },
     title: {
-        fontSize: '18px',
+        fontSize: '20px',
         fontWeight: 600,
-        marginBottom: '16px',
-        color: '#1F2937',
+        lineHeight: 1.25,
+        marginBottom: '34px',
+        color: '#172B4D',
         textAlign: 'center',
+        marginTop: 0,
     },
     noData: {
         textAlign: 'center',
-        color: '#9CA3AF',
-        fontSize: '14px',
-        padding: '40px 0',
+        color: '#98A2B3',
+        fontSize: '13px',
+        fontWeight: 400,
+        padding: '30px 0 18px',
     },
 };
 

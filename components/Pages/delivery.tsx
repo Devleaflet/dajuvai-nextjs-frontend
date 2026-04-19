@@ -329,7 +329,7 @@ function DataTable({
 }
 
 /** Order items list inside detail cards */
-function OrderItemsList({ items }: { items?: DeliveryOrderItem[] }) {
+function OrderItemsList({ items }: { items: DeliveryOrderItem[] | undefined }) {
   if (!items || items.length === 0)
     return <p className="py-3 text-sm text-slate-400">No items found.</p>;
   return (

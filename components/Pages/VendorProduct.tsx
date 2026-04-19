@@ -91,6 +91,7 @@ const ProductListSkeleton: React.FC = () => {
 const VendorProduct: React.FC = () => {
 	const { authState } = useVendorAuth();
 	const queryClient = useQueryClient();
+	const serverFetchLimit = 100;
 	const [isMobile] = useState<boolean>(window.innerWidth < 768);
 	const [showAddModal, setShowAddModal] = useState<boolean>(false);
 	const [currentPage, setCurrentPage] = useState<number>(1);
@@ -123,8 +124,6 @@ const VendorProduct: React.FC = () => {
 				queryKey: [
 					"vendor-products",
 					authState.vendor?.id,
-					currentPage,
-					productsPerPage,
 					authState.token,
 				],
 			});
@@ -145,32 +144,49 @@ const VendorProduct: React.FC = () => {
 		queryKey: [
 			"vendor-products",
 			authState.vendor?.id,
-			currentPage,
-			productsPerPage,
 			authState.token,
 		],
 		queryFn: async () => {
 			if (!authState.vendor?.id || !authState.token)
 				throw new Error("Missing vendor or token");
 
-			const response = await fetchProducts(
-				Number(authState.vendor.id),
-				currentPage,
-				productsPerPage
-			);
+			const vendorId = Number(authState.vendor.id);
+			const firstResponse = await fetchProducts(vendorId, 1, serverFetchLimit);
 
-			//("Vendor products response:", response);
-			//("Response data:", response.data);
-
-			if (!response.data || typeof response.data !== "object")
+			if (!firstResponse.data || typeof firstResponse.data !== "object")
 				throw new Error("Invalid response");
 			if (
-				!response.data.success ||
-				!response.data.data ||
-				!Array.isArray(response.data.data.product)
+				!firstResponse.data.success ||
+				!firstResponse.data.data ||
+				!Array.isArray(firstResponse.data.data.product)
 			)
 				throw new Error("Invalid response format");
-			const products: Product[] = response.data.data.product.map(
+
+			const totalProductsCount = Number(firstResponse.data.data.total || 0);
+			const totalPages = Math.max(
+				1,
+				Math.ceil(totalProductsCount / serverFetchLimit)
+			);
+
+			const remainingResponses =
+				totalPages > 1
+					? await Promise.all(
+							Array.from({ length: totalPages - 1 }, (_, index) =>
+								fetchProducts(vendorId, index + 2, serverFetchLimit)
+							)
+					  )
+					: [];
+
+			const allRawProducts = [
+				...firstResponse.data.data.product,
+				...remainingResponses.flatMap((pageResponse) =>
+					Array.isArray(pageResponse.data?.data?.product)
+						? pageResponse.data.data.product
+						: []
+				),
+			];
+
+			const products: Product[] = allRawProducts.map(
 				(product: ApiProduct): Product => {
 					const productImages = Array.isArray(product.productImages)
 						? product.productImages.map((img: string | { url?: string }) =>
@@ -326,8 +342,8 @@ const VendorProduct: React.FC = () => {
 
 			return {
 				products,
-				total: response.data.data.total || products.length,
-				serverTotal: response.data.data.total || products.length,
+				total: totalProductsCount || products.length,
+				serverTotal: totalProductsCount || products.length,
 			} as { products: Product[]; total: number; serverTotal: number };
 		},
 		enabled: !!authState.vendor?.id && !!authState.token,
@@ -496,29 +512,78 @@ const VendorProduct: React.FC = () => {
 
 	const sortProducts = (products: Product[]) => {
 		const sorted = [...products];
+		const collator = new Intl.Collator("en", {
+			numeric: true,
+			sensitivity: "base",
+		});
+
+		const getSortableName = (product: Product) =>
+			String(product.name || product.title || "")
+				.trim()
+				.replace(/\s+/g, " ");
+
+		const getSortablePrice = (product: Product) => {
+			if (product.variants && product.variants.length > 0) {
+				const variantPrices = product.variants
+					.map((variant: any) => {
+						const rawPrice =
+							variant?.calculatedPrice ??
+							variant?.price ??
+							variant?.originalPrice ??
+							variant?.basePrice;
+						const parsed =
+							typeof rawPrice === "string"
+								? parseFloat(rawPrice)
+								: Number(rawPrice);
+						return Number.isFinite(parsed) ? parsed : null;
+					})
+					.filter((value): value is number => value !== null);
+
+				if (variantPrices.length > 0) {
+					return Math.min(...variantPrices);
+				}
+			}
+
+			const parsedPrice =
+				typeof product.price === "string"
+					? parseFloat(product.price)
+					: Number(product.price);
+
+			return Number.isFinite(parsedPrice) ? parsedPrice : 0;
+		};
+
+		const getSortableDate = (product: Product) => {
+			const rawDate = product.created_at;
+			if (!rawDate) return 0;
+			const parsedDate = new Date(rawDate).getTime();
+			return Number.isFinite(parsedDate) ? parsedDate : 0;
+		};
 
 		switch (sortOption) {
 			case "newest":
-				//(sorted);
 				return sorted.sort(
-					(a: Product, b: Product) =>
-						new Date(b.created_at || 0).getTime() -
-						new Date(a.created_at || 0).getTime()
+					(a: Product, b: Product) => getSortableDate(b) - getSortableDate(a)
 				);
 			case "oldest":
 				return sorted.sort(
-					(a: Product, b: Product) =>
-						new Date(a.created_at || 0).getTime() -
-						new Date(b.created_at || 0).getTime()
+					(a: Product, b: Product) => getSortableDate(a) - getSortableDate(b)
 				);
 			case "price-asc":
-				return sorted.sort((a, b) => parseFloat(String(a.price)) - parseFloat(String(b.price)));
+				return sorted.sort(
+					(a, b) => getSortablePrice(a) - getSortablePrice(b)
+				);
 			case "price-desc":
-				return sorted.sort((a, b) => parseFloat(String(b.price)) - parseFloat(String(a.price)));
+				return sorted.sort(
+					(a, b) => getSortablePrice(b) - getSortablePrice(a)
+				);
 			case "name-asc":
-				return sorted.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+				return sorted.sort((a, b) =>
+					collator.compare(getSortableName(a), getSortableName(b))
+				);
 			case "name-desc":
-				return sorted.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+				return sorted.sort((a, b) =>
+					collator.compare(getSortableName(b), getSortableName(a))
+				);
 			default:
 				return sorted;
 		}
@@ -665,8 +730,6 @@ const VendorProduct: React.FC = () => {
 				queryKey: [
 					"vendor-products",
 					authState.vendor?.id,
-					currentPage,
-					productsPerPage,
 					authState.token,
 				],
 			});
@@ -764,8 +827,6 @@ const VendorProduct: React.FC = () => {
 				queryKey: [
 					"vendor-products",
 					authState.vendor?.id,
-					currentPage,
-					productsPerPage,
 					authState.token,
 				],
 			});
@@ -925,8 +986,6 @@ const VendorProduct: React.FC = () => {
 	};
 
 	const products: Product[] = productData?.products || [];
-	const totalProducts = productData?.serverTotal || productData?.total || 0;
-	const displayProducts = products;
 
 	const filteredProducts = products.filter((product) => {
 		if (!searchQuery) return true;
@@ -941,11 +1000,12 @@ const VendorProduct: React.FC = () => {
 	});
 
 	const sortedProducts = sortProducts(filteredProducts);
-	const isSearching = searchQuery.trim().length > 0;
-	const finalProducts = isSearching
-		? sortedProducts
-		: sortProducts(displayProducts);
-	const finalTotal = isSearching ? sortedProducts.length : totalProducts;
+	const finalProducts = sortedProducts;
+	const finalTotal = finalProducts.length;
+	const paginatedProducts = finalProducts.slice(
+		(currentPage - 1) * productsPerPage,
+		currentPage * productsPerPage
+	);
 	const outOfStockCount = finalProducts.filter(
 		(product) =>
 			String(product.status || "").toUpperCase() === "OUT_OF_STOCK" ||
@@ -959,6 +1019,14 @@ const VendorProduct: React.FC = () => {
 		vendorProductsStats?.outOfStockProducts ?? outOfStockCount;
 	const displayTopSellingItemName =
 		vendorProductsStats?.topSellingProductName || "N/A";
+
+	React.useEffect(() => {
+		const totalPages = Math.max(1, Math.ceil(finalTotal / productsPerPage));
+		if (currentPage > totalPages) {
+			setCurrentPage(totalPages);
+		}
+	}, [currentPage, finalTotal, productsPerPage]);
+
 	const handlePageChange = (pageNumber: number) => {
 		setCurrentPage(pageNumber);
 	};
@@ -1140,7 +1208,7 @@ const VendorProduct: React.FC = () => {
 					) : finalProducts.length > 0 ? (
 						<>
 							<ProductList
-								products={finalProducts}
+								products={paginatedProducts}
 								isMobile={isMobile}
 								onEdit={handleEditProduct}
 								onDelete={handleDeleteProduct}
