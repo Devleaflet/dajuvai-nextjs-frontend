@@ -6,7 +6,6 @@ interface ProductListProps {
 	products: Product[];
 	onEdit: (product: Product) => void;
 	onDelete: (product: Product) => void;
-	isMobile: boolean;
 	showVendor: boolean;
 }
 
@@ -14,7 +13,6 @@ const ProductList: React.FC<ProductListProps> = ({
 	products,
 	onEdit,
 	onDelete,
-	isMobile,
 	showVendor,
 }) => {
 	// Helper function to compute discounted price
@@ -29,6 +27,9 @@ const ProductList: React.FC<ProductListProps> = ({
 		const discountValue = parseFloat(discount) || 0;
 		if (discountType === "FIXED" || discountType === "FLAT") {
 			return base - discountValue;
+		}
+		if (discountType === "PERCENTAGE") {
+			return base - (base * discountValue) / 100;
 		}
 		return base;
 	};
@@ -69,11 +70,22 @@ const ProductList: React.FC<ProductListProps> = ({
 		}
 
 		const variantImages: string[] = (product.variants || [])
-			.flatMap((v: any) => [
-				v?.image,
-				...(Array.isArray(v?.images) ? v.images : []),
-				...(Array.isArray(v?.variantImages) ? v.variantImages : []),
-			])
+			.flatMap((variant) => {
+				const variantImageSet = variant as {
+					image?: string;
+					images?: string[];
+					variantImages?: string[];
+				};
+				return [
+					variantImageSet.image,
+					...(Array.isArray(variantImageSet.images)
+						? variantImageSet.images
+						: []),
+					...(Array.isArray(variantImageSet.variantImages)
+						? variantImageSet.variantImages
+						: []),
+				];
+			})
 			.filter(
 				(img): img is string =>
 					!!img && typeof img === "string" && img.trim() !== ""
@@ -87,8 +99,8 @@ const ProductList: React.FC<ProductListProps> = ({
 
 	return (
 		<div className="dashboard__card vendor-product__table-container">
-			<table className="dashboard__table">
-				<thead className="dashboard__table-header">
+			<table className="dashboard__table vendor-product__table">
+				<thead className="dashboard__table-header vendor-product__table-head">
 					<tr>
 						<th>Image</th>
 						<th>Product Name</th>
@@ -96,6 +108,8 @@ const ProductList: React.FC<ProductListProps> = ({
 						{showVendor && <th>Vendor</th>}
 						<th>Price</th>
 						<th>Stock</th>
+						<th>Deal</th>
+						<th>Variants</th>
 						<th>Status</th>
 						<th>Action</th>
 					</tr>
@@ -104,7 +118,7 @@ const ProductList: React.FC<ProductListProps> = ({
 					{products.length === 0 ? (
 						<tr>
 							<td
-								colSpan={isMobile ? (showVendor ? 8 : 7) : showVendor ? 9 : 8}
+								colSpan={showVendor ? 10 : 9}
 								className="empty-state"
 							>
 								No products found matching your criteria
@@ -115,9 +129,27 @@ const ProductList: React.FC<ProductListProps> = ({
 							let numericStock = 0;
 							let displayPrice = 0;
 							const displayImage = getDisplayImage(product);
+							const productMeta = product as Product & {
+								hasVariants?: boolean;
+								deal?: { id?: number | string };
+							};
+							const hasVariants =
+								(Array.isArray(product.variants) && product.variants.length > 0) ||
+								Boolean(productMeta.hasVariants);
+							const hasDeal = Boolean(
+								product.dealId || productMeta.deal?.id
+							);
 
 							if (product.variants && product.variants.length > 0) {
-								const firstVariant = product.variants[0] as any;
+								const firstVariant = product.variants[0] as {
+									stock?: number;
+									price?: number | string;
+									originalPrice?: number | string;
+									basePrice?: number | string;
+									calculatedPrice?: number;
+									discount?: number | string;
+									discountType?: string;
+								};
 								numericStock = (firstVariant?.stock ??
 									product.stock ??
 									0) as number;
@@ -158,36 +190,29 @@ const ProductList: React.FC<ProductListProps> = ({
 								numericStock = product.stock ?? 0;
 								displayPrice = calculatePrice(
 									product.price,
-									product.discount as any,
-									product.discountType as any
+									product.discount,
+									product.discountType
 								);
 							}
 
-							const statusDisplay = (() => {
-								if (product.status === "OUT_OF_STOCK") {
-									return (
-										<span className="product-status out-of-stock">
-											Out of Stock
-										</span>
-									);
-								}
-								if (product.status === "LOW_STOCK") {
-									return (
-										<span className="product-status low-stock">Low Stock</span>
-									);
-								}
-								if (product.status === "AVAILABLE") {
-									return (
-										<span className="product-status available">Available</span>
-									);
-								}
-								return "-";
-							})();
+							const status = String(product.status || "").toUpperCase();
+							const statusLabel =
+								status === "OUT_OF_STOCK"
+									? "Out of Stock"
+									: status === "LOW_STOCK"
+										? "Low Stock"
+										: "Available";
+							const statusClass =
+								status === "OUT_OF_STOCK"
+									? "vendor-product__status-badge--out"
+									: status === "LOW_STOCK"
+										? "vendor-product__status-badge--low"
+										: "vendor-product__status-badge--available";
 
 							return (
 								<tr
 									key={product.id}
-									className="dashboard__table-row"
+									className="dashboard__table-row vendor-product__table-row"
 								>
 									<td>
 										<div
@@ -204,20 +229,49 @@ const ProductList: React.FC<ProductListProps> = ({
 										{product.subcategory?.name || product.category || "Unknown"}
 									</td>
 									{showVendor && <td>{product.vendor || "Unknown"}</td>}
-									<td>Rs. {displayPrice.toFixed(2)}</td>
+									<td>
+										Rs. {displayPrice.toFixed(2)}
+										{hasVariants ? " (from)" : ""}
+									</td>
 									<td>{numericStock}</td>
-									<td>{statusDisplay}</td>
+									<td>
+										<span
+											className={`vendor-product__yn-badge ${
+												hasDeal
+													? "vendor-product__yn-badge--yes"
+													: "vendor-product__yn-badge--no"
+											}`}
+										>
+											{hasDeal ? "Yes" : "No"}
+										</span>
+									</td>
+									<td>
+										<span
+											className={`vendor-product__yn-badge ${
+												hasVariants
+													? "vendor-product__yn-badge--yes"
+													: "vendor-product__yn-badge--no"
+											}`}
+										>
+											{hasVariants ? "Yes" : "No"}
+										</span>
+									</td>
+									<td>
+										<span className={`vendor-product__status-badge ${statusClass}`}>
+											{statusLabel}
+										</span>
+									</td>
 									<td>
 										<div className="vendor-product__actions-cell">
 											<button
-												className="vendor-product__action-buttton vendor-product__edit"
+												className="vendor-product__action-button vendor-product__action-btn--edit"
 												onClick={() => onEdit(product)}
 												title="Edit Product"
 											>
 												<span className="vendor-product__edit-icon"></span>
 											</button>
 											<button
-												className="vendor-product__action-buttton vendor-product__delete"
+												className="vendor-product__action-button vendor-product__action-btn--delete"
 												onClick={() => onDelete(product)}
 												title="Delete Product"
 											>

@@ -104,9 +104,12 @@ const GoogleAuthCallback: React.FC = () => {
         setMessage('Successfully authenticated with Google!');
 
         // Redirect based on role
-        const redirectPath = userData.role === 'admin' || userData.role === 'staff'
-          ? '/admin/dashboard'
-          : '/';
+        const redirectPath =
+          userData.role === 'admin' || userData.role === 'staff'
+            ? '/admin/dashboard'
+            : userData.role === 'vendor'
+              ? '/vendor/dashboard'
+              : '/';
 
         setTimeout(() => router.push(redirectPath), 2000);
       } else {
@@ -155,9 +158,12 @@ const GoogleAuthCallback: React.FC = () => {
         setStatus('success');
         setMessage('Successfully authenticated with Google!');
 
-        const redirectPath = userData.role === 'admin' || userData.role === 'staff'
-          ? '/admin/dashboard'
-          : '/';
+        const redirectPath =
+          userData.role === 'admin' || userData.role === 'staff'
+            ? '/admin/dashboard'
+            : userData.role === 'vendor'
+              ? '/vendor/dashboard'
+              : '/';
 
         setTimeout(() => router.push(redirectPath), 2000);
       } else {

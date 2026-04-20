@@ -29,7 +29,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ product, pricing }) => {
   const safeOriginalPrice = Number.isFinite(Number(originalPrice)) ? Number(originalPrice) : 0;
 
   const formatPrice = (value: number) =>
-    Math.round(value).toLocaleString('en-IN');
+    value.toFixed(2);
 
   return (
     <div className="product__info pt-2">
@@ -59,14 +59,19 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ product, pricing }) => {
 
         <div className="product-card__price mt-2">
           <span className="product-card__current-price">
-            Rs {formatPrice(safeCurrentPrice)}
+            <span className="product-card__currency">Rs</span>
+            <span className="product-card__current-amount">{formatPrice(safeCurrentPrice)}</span>
           </span>
-          {hasDiscount && (
-            <div className="product-card__price-details">
+          <div className="product-card__price-details">
+            {hasDiscount ? (
+              <>
               <span className="product-card__original-price">Rs {formatPrice(safeOriginalPrice)}</span>
               <span className="product-card__discount">Save Rs {savedAmount.toFixed(2)}</span>
-            </div>
-          )}
+              </>
+            ) : (
+              <span className="product-card__price-placeholder" aria-hidden="true">&nbsp;</span>
+            )}
+          </div>
         </div>
       </div>
     </div>

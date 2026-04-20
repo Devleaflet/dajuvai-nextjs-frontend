@@ -5,6 +5,11 @@ export function middleware(request: NextRequest) {
   const authToken = request.cookies.get('authToken')?.value;
   const vendorToken = request.cookies.get('vendorToken')?.value;
   const pathname = request.nextUrl.pathname;
+  const isVendorPublicRoute =
+    pathname === '/vendor/login' ||
+    pathname.startsWith('/vendor/login/') ||
+    pathname === '/vendor/signup' ||
+    pathname.startsWith('/vendor/signup/');
 
   // Admin routes protection
   if (pathname.startsWith('/admin') || pathname.startsWith('/admin-dashboard')) {
@@ -16,7 +21,11 @@ export function middleware(request: NextRequest) {
   }
 
   // Vendor routes protection
-  if (pathname.startsWith('/vendor') && !pathname.startsWith('/vendor-store')) {
+  if (
+    pathname.startsWith('/vendor') &&
+    !pathname.startsWith('/vendor-store') &&
+    !isVendorPublicRoute
+  ) {
     if (!vendorToken) {
       return NextResponse.redirect(new URL('/', request.url));
     }

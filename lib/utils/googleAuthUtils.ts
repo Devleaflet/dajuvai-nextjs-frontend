@@ -49,8 +49,8 @@ export const processGoogleAuthResponse = async (
         //('[GoogleAuthUtils] Navigating to /admin/dashboard');
         navigate('/admin/dashboard', { replace: true });
       } else if (role === 'vendor') {
-        //('[GoogleAuthUtils] Navigating to /dashboard');
-        navigate('/dashboard', { replace: true });
+        //('[GoogleAuthUtils] Navigating to /vendor/dashboard');
+        navigate('/vendor/dashboard', { replace: true });
       } else {
         //('[GoogleAuthUtils] Navigating to /');
         navigate('/', { replace: true });

@@ -678,6 +678,21 @@ const Navbar: React.FC = () => {
 	}, [searchParams]);
 
 	useEffect(() => {
+		const shouldOpenVendorLogin = searchParams.get('vendorLogin') === '1';
+		if (!shouldOpenVendorLogin || vendorAuthState.isAuthenticated) {
+			return;
+		}
+
+		setVendorAuthModalOpen(true);
+
+		const nextParams = new URLSearchParams(searchParams.toString());
+		nextParams.delete('vendorLogin');
+		const nextQuery = nextParams.toString();
+		const nextUrl = nextQuery ? `${pathname}?${nextQuery}` : pathname;
+		router.replace(nextUrl);
+	}, [pathname, router, searchParams, vendorAuthState.isAuthenticated]);
+
+	useEffect(() => {
 		async function fetchSubs() {
 			if (activeDropdown) {
 				setDropdownLoading(true);

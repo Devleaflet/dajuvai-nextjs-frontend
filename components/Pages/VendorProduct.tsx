@@ -24,15 +24,6 @@ interface VendorProductsStats {
 	topSellingProductName: string;
 }
 
-interface VendorRecentReview {
-	id: string | number;
-	productName: string;
-	rating: number;
-	comment: string;
-	reviewerName: string;
-	createdAt: string;
-}
-
 const ProductListSkeleton: React.FC = () => {
 	return (
 		<div className="vendor-product__skeleton">
@@ -106,8 +97,7 @@ const VendorProduct: React.FC = () => {
 	const [vendorProductsStats, setVendorProductsStats] =
 		useState<VendorProductsStats | null>(null);
 	const [vendorStatsLoading, setVendorStatsLoading] = useState<boolean>(true);
-	const [recentReviews, setRecentReviews] = useState<VendorRecentReview[]>([]);
-	const [recentReviewsLoading, setRecentReviewsLoading] = useState<boolean>(true);
+	const [showRestockBanner, setShowRestockBanner] = useState<boolean>(true);
 
 	React.useEffect(() => {
 		setCurrentPage(1);
@@ -422,93 +412,15 @@ const VendorProduct: React.FC = () => {
 		}
 	}, [authState.token]);
 
-	const fetchRecentReviews = React.useCallback(async () => {
-		if (!authState.token) return;
-		setRecentReviewsLoading(true);
-		try {
-			const response = await axiosInstance.get(
-				"/api/vendor/products/recent-reviews",
-				{
-					params: { limit: 10 },
-					headers: {
-						Authorization: `Bearer ${authState.token}`,
-					},
-				}
-			);
-
-			const payload = response.data?.data ?? response.data ?? [];
-			const rows = Array.isArray(payload)
-				? payload
-				: typeof payload === "object" && payload !== null
-					? ((payload as Record<string, unknown>)["reviews"] ??
-						(payload as Record<string, unknown>)["items"] ??
-						[])
-					: [];
-
-			const toNumber = (value: unknown, fallback = 0): number => {
-				const parsed = typeof value === "number" ? value : Number(value);
-				return Number.isFinite(parsed) ? parsed : fallback;
-			};
-
-			const normalizedReviews = (Array.isArray(rows) ? rows : []).map((item, index) => {
-				const review =
-					typeof item === "object" && item !== null
-						? (item as Record<string, unknown>)
-						: {};
-
-				const product =
-					typeof review["product"] === "object" && review["product"] !== null
-						? (review["product"] as Record<string, unknown>)
-						: {};
-
-				const user =
-					typeof review["user"] === "object" && review["user"] !== null
-						? (review["user"] as Record<string, unknown>)
-						: {};
-
-				return {
-					id: String(review["id"] ?? review["reviewId"] ?? `review-${index}`),
-					productName: String(
-						review["productName"] ??
-							product["name"] ??
-							review["title"] ??
-							"Unknown Product"
-					),
-					rating: toNumber(review["rating"] ?? review["stars"] ?? 0),
-					comment: String(review["comment"] ?? review["message"] ?? "No comment"),
-					reviewerName: String(
-						review["reviewerName"] ??
-							user["name"] ??
-							user["fullName"] ??
-							"Anonymous"
-					),
-					createdAt: String(
-						review["createdAt"] ?? review["created_at"] ?? new Date().toISOString()
-					),
-				} as VendorRecentReview;
-			});
-
-			setRecentReviews(normalizedReviews);
-		} catch (error) {
-			console.error("Error fetching recent reviews:", error);
-			setRecentReviews([]);
-		} finally {
-			setRecentReviewsLoading(false);
-		}
-	}, [authState.token]);
-
 	React.useEffect(() => {
 		if (!authState.token) {
 			setVendorProductsStats(null);
-			setRecentReviews([]);
 			setVendorStatsLoading(false);
-			setRecentReviewsLoading(false);
 			return;
 		}
 
 		fetchVendorProductsStats();
-		fetchRecentReviews();
-	}, [authState.token, fetchRecentReviews, fetchVendorProductsStats]);
+	}, [authState.token, fetchVendorProductsStats]);
 
 	const sortProducts = (products: Product[]) => {
 		const sorted = [...products];
@@ -1002,6 +914,13 @@ const VendorProduct: React.FC = () => {
 	const sortedProducts = sortProducts(filteredProducts);
 	const finalProducts = sortedProducts;
 	const finalTotal = finalProducts.length;
+	const lowStockProductsCount = finalProducts.filter((product) => {
+		const status = String(product.status || "").toUpperCase();
+		if (status === "LOW_STOCK") return true;
+		if (status.length > 0) return false;
+		const stock = Number(product.stock ?? 0);
+		return Number.isFinite(stock) && stock > 0 && stock <= 5;
+	}).length;
 	const paginatedProducts = finalProducts.slice(
 		(currentPage - 1) * productsPerPage,
 		currentPage * productsPerPage
@@ -1077,35 +996,6 @@ const VendorProduct: React.FC = () => {
 					</h3>
 				</div>
 			</div>
-
-			<div className="vendor-product__reviews-card">
-				<div className="vendor-product__reviews-header">
-					<h3 className="vendor-product__reviews-title">Recent Reviews</h3>
-					<span className="vendor-product__reviews-subtitle">Latest 10</span>
-				</div>
-				{recentReviewsLoading ? (
-					<p className="vendor-product__reviews-empty">Loading reviews...</p>
-				) : recentReviews.length > 0 ? (
-					<div className="vendor-product__reviews-list">
-						{recentReviews.map((review) => (
-							<div className="vendor-product__reviews-item" key={String(review.id)}>
-								<div className="vendor-product__reviews-item-head">
-									<p className="vendor-product__reviews-product">{review.productName}</p>
-									<span className="vendor-product__reviews-rating">
-										{Number(review.rating || 0).toFixed(1)} / 5
-									</span>
-								</div>
-								<p className="vendor-product__reviews-comment">{review.comment}</p>
-								<p className="vendor-product__reviews-meta">
-									By {review.reviewerName} • {new Date(review.createdAt).toLocaleDateString()}
-								</p>
-							</div>
-						))}
-					</div>
-				) : (
-					<p className="vendor-product__reviews-empty">No recent reviews found.</p>
-				)}
-			</div>
 			<div className="vendor-product__search-row dashboard__search-container">
 				<div
 					className="dashboard__search"
@@ -1141,6 +1031,24 @@ const VendorProduct: React.FC = () => {
 					paddingBottom: isMobile ? `${docketHeight + 24}px` : "24px",
 				}}
 			>
+					{showRestockBanner && lowStockProductsCount > 0 && (
+						<div className="vendor-product__restock-alert" role="status" aria-live="polite">
+							<div className="vendor-product__restock-alert-message">
+								<span className="vendor-product__restock-alert-icon" aria-hidden="true" />
+								<p className="vendor-product__restock-alert-text">
+									You have <span style={{ fontWeight: 700 }}>{lowStockProductsCount}</span> products with low stock. Consider restocking soon.
+								</p>
+							</div>
+							<button
+								type="button"
+								className="vendor-product__restock-alert-close"
+								onClick={() => setShowRestockBanner(false)}
+								aria-label="Dismiss low stock alert"
+							>
+								&times;
+							</button>
+						</div>
+					)}
 					<div className="vendor-product__actions">
 						<button
 							className="vendor-product__add-btn"
@@ -1179,8 +1087,9 @@ const VendorProduct: React.FC = () => {
 							<div className="vendor-product__delete-dialog-content">
 								<h3>Confirm Delete</h3>
 								<p>
-									Are you sure you want to delete "<b>{productToDelete.name}</b>
-									"? This action cannot be undone.
+									Are you sure you want to delete &quot;
+									<b>{productToDelete.name}</b>
+									&quot;? This action cannot be undone.
 								</p>
 								<div className="vendor-product__delete-dialog-actions">
 									<button
@@ -1209,7 +1118,6 @@ const VendorProduct: React.FC = () => {
 						<>
 							<ProductList
 								products={paginatedProducts}
-								isMobile={isMobile}
 								onEdit={handleEditProduct}
 								onDelete={handleDeleteProduct}
 								showVendor={false}

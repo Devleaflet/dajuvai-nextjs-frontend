@@ -173,7 +173,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
 	);
 
 	return (
-		<section className="product-carousel">
+		<section className="product-carousel product-carousel--mobile-reference">
 			{showTitle && (
 				<div className="product-carousel__title-container">
 					<h2 className="product-carousel__title">{title}</h2>
