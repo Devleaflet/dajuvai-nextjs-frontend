@@ -4,132 +4,134 @@
 
 .vendor-profile-page {
   width: 100%;
-  padding: 20px 24px 18px;
+  padding: 24px;
   min-height: calc(100vh - 60px);
 }
 
 .vendor-profile-page__card {
   display: grid;
-  grid-template-columns: 250px minmax(0, 1fr);
-  gap: 26px;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 24px;
   align-items: flex-start;
+  max-width: 1400px;
+  margin: 0;
 }
 
 .vendor-profile-page__sidebar {
   background: #ffffff;
-  padding: 20px 20px 22px;
+  padding: 24px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 18px;
+  gap: 16px;
   min-width: 0;
   align-self: flex-start;
-  border: 1px solid #e5ebf2;
- 
   border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+  border: 1px solid #f3f4f6;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.vendor-profile-page__avatar-wrap {
+  margin-bottom: 8px;
 }
 
 .vendor-profile-page__avatar,
 .vendor-profile-page__avatar-image {
-  width: 100px;
-  height: 100px;
-  border-radius: 999px;
+  width: 120px;
+  height: 120px;
+  border-radius: 9999px;
 }
 
 .vendor-profile-page__avatar {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #ea4f3f;
+  background: #6366f1; 
+  background: #7c3aed; 
   color: #ffffff;
-  font-size: 38px;
-  font-weight: 700;
+  font-size: 48px;
+  font-weight: 600;
 }
 
 .vendor-profile-page__avatar-image {
   object-fit: cover;
-  border: 1px solid #d6d9de;
+  border: 1px solid #f3f4f6;
 }
 
 .vendor-profile-page__side-btn {
   width: 100%;
   border: none;
   min-height: 40px;
-  border-radius: 4px;
-  padding: 0 12px;
+  border-radius: 6px;
+  padding: 0 16px;
   font-size: 14px;
   font-weight: 500;
   color: #374151;
-  background: #eef1f5;
+  background: #e2e8f0;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .vendor-profile-page__side-btn:hover {
-  filter: brightness(0.98);
+  filter: brightness(0.95);
 }
 
 .vendor-profile-page__side-btn--active {
-  background: #ff7b16;
+  background: #f97316;
   color: #ffffff;
-}
-
-.vendor-profile-page__side-btn--muted {
-  background: #eef0f3;
 }
 
 .vendor-profile-page__content {
   background: #ffffff;
-  padding: 30px 36px 36px;
+  padding: 32px 36px;
   border: 1px solid #f3f4f6;
-  border-radius: 6px;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
 .vendor-profile-page__title {
-  margin: 0 0 22px;
-  font-size: 24px;
+  margin: 0 0 24px;
+  font-size: 22px;
   font-weight: 600;
-  color: #1e2530;
-  line-height: 1.15;
+  color: #111827;
+  line-height: 1.2;
 }
 
 .vendor-profile-page__state {
   border: 1px dashed #cfd5de;
   border-radius: 6px;
-  background: #f7f9fb;
-  color: #5b6472;
+  background: #f8fafc;
+  color: #475569;
   padding: 12px;
   font-size: 13px;
 }
 
 .vendor-profile-page__state--error {
-  border-color: #edb6b6;
-  color: #9b2f2f;
-  background: #fff6f6;
+  border-color: #fecaca;
+  color: #b91c1c;
+  background: #fef2f2;
 }
 
 .vendor-profile-page__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px 28px;
+  gap: 20px 32px;
 }
 
 .vendor-profile-page__field label,
 .vendor-profile-page__document-group > label {
   display: block;
-  margin-bottom: 6px;
-  color: #30394a;
-  font-size: 13px;
-  font-weight: 500;
+  margin-bottom: 8px;
+  color: #4b5563;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .vendor-profile-page__field-value {
-  min-height: 40px;
-  border-radius: 4px;
-  background: #f4f5f7;
+  min-height: 42px;
+  border-radius: 6px;
+  background: #f8fafc;
   padding: 0 16px;
   color: #1f2937;
   font-size: 14px;
@@ -139,14 +141,14 @@
 }
 
 .vendor-profile-page__document-group {
-  margin-top: 24px;
+  margin-top: 28px;
 }
 
 .vendor-profile-page__document-box,
 .vendor-profile-page__payment-box {
-  border-radius: 4px;
-  background: #f4f5f7;
-  min-height: 164px;
+  border-radius: 6px;
+  background: #f8fafc;
+  min-height: 140px;
   padding: 20px;
   border: 1px solid transparent;
 }
@@ -154,15 +156,15 @@
 .vendor-profile-page__document-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 16px;
 }
 
 .vendor-profile-page__document-thumb {
-  width: 92px;
-  height: 92px;
-  border-radius: 4px;
+  width: 96px;
+  height: 96px;
+  border-radius: 6px;
   overflow: hidden;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e2e8f0;
   display: block;
   background: #ffffff;
 }
@@ -174,25 +176,25 @@
 }
 
 .vendor-profile-page__empty-inline {
-  color: #717a88;
-  font-size: 12px;
+  color: #64748b;
+  font-size: 13px;
 }
 
 .vendor-profile-page__payment-list {
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 
 .vendor-profile-page__payment-item {
-  border: 1px solid #d4d9df;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
-  padding: 10px 12px;
+  padding: 12px 16px;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  background: #f6f8fb;
-  font-size: 13px;
-  color: #374151;
+  background: #f8fafc;
+  font-size: 14px;
+  color: #334155;
 }
 
 .vendor-profile-page__empty-payment {
@@ -202,23 +204,23 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  gap: 4px;
+  gap: 6px;
 }
 
 .vendor-profile-page__empty-icon {
-  font-size: 20px;
+  font-size: 24px;
 }
 
 .vendor-profile-page__empty-payment h4 {
-  margin: 2px 0 0;
-  color: #334155;
-  font-size: 14px;
+  margin: 4px 0 0;
+  color: #1e293b;
+  font-size: 15px;
 }
 
 .vendor-profile-page__empty-payment p {
-  margin: 0 0 8px;
+  margin: 0 0 10px;
   color: #64748b;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .vendor-profile-page__add-payment-btn,
@@ -226,63 +228,63 @@
 .vendor-profile-page__credentials-card button {
   border: none;
   border-radius: 6px;
-  padding: 8px 12px;
-  font-size: 12px;
+  padding: 10px 16px;
+  font-size: 13px;
   font-weight: 600;
   color: #ffffff;
-  background: #ff7b16;
+  background: #f97316;
   cursor: pointer;
 }
 
 .vendor-profile-page__add-payment-btn {
-  background: #4caf50;
+  background: #22c55e;
 }
 
 .vendor-profile-page__edit-btn {
-  margin-top: 12px;
+  margin-top: 16px;
 }
 
 .vendor-profile-page__credentials {
   display: grid;
-  gap: 12px;
+  gap: 16px;
 }
 
 .vendor-profile-page__credentials-card {
-  border: 1px solid #d4d9df;
-  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
   background: #ffffff;
-  padding: 12px;
+  padding: 20px;
 }
 
 .vendor-profile-page__credentials-card h3 {
-  margin: 0 0 10px;
-  font-size: 14px;
-  color: #1e2530;
+  margin: 0 0 16px;
+  font-size: 16px;
+  color: #0f172a;
 }
 
 .vendor-profile-page__credentials-card form {
   display: grid;
-  gap: 8px;
+  gap: 12px;
 }
 
 .vendor-profile-page__credentials-card input {
-  border: 1px solid #d4d9df;
+  border: 1px solid #cbd5e1;
   border-radius: 6px;
-  background: #f6f8fb;
-  padding: 10px;
-  font-size: 13px;
+  background: #ffffff;
+  padding: 10px 14px;
+  font-size: 14px;
 }
 
 .vendor-profile-page__message {
-  margin: 8px 0 0;
-  font-size: 12px;
-  color: #334155;
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: #475569;
 }
 
 @media (max-width: 900px) {
   .vendor-profile-page__card {
     grid-template-columns: 1fr;
-    gap: 18px;
+    gap: 20px;
   }
 
   .vendor-profile-page__sidebar {
@@ -295,33 +297,37 @@
     width: 100%;
     display: flex;
     justify-content: center;
+    margin-bottom: 0;
+  }
+  
+  .vendor-profile-page__side-btn {
+    width: auto;
+    min-width: 140px;
   }
 }
 
 @media (max-width: 640px) {
   .vendor-profile-page {
-    padding: 12px;
+    padding: 16px;
   }
 
   .vendor-profile-page__content {
-  background: #ffffff;
-  padding: 30px 36px 36px;
-  border: 1px solid #f3f4f6;
-  border-radius: 6px;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
-}
+    background: #ffffff;
+    padding: 24px 20px;
+    border-radius: 8px;
+  }
 
   .vendor-profile-page__grid {
     grid-template-columns: 1fr;
   }
 
   .vendor-profile-page__title {
-    font-size: 28px;
+    font-size: 20px;
   }
 
   .vendor-profile-page__avatar,
   .vendor-profile-page__avatar-image {
-    width: 96px;
-    height: 96px;
+    width: 100px;
+    height: 100px;
   }
 }
