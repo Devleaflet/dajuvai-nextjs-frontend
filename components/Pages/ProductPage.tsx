@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useRouter, useParams } from "next/navigation";
-import { Truck, Undo2, ShieldCheck, Phone } from "lucide-react";
+import { Truck, Undo2, ShieldCheck, Phone, Check, Star, LockKeyhole } from "lucide-react";
 import React from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
@@ -43,6 +43,16 @@ interface Review {
 interface ReviewsResponse {
   success: boolean;
   data: { averageRating: number; reviews: Review[]; total: number; totalPages: number };
+}
+
+interface CustomerOrderHistoryItem {
+  productId?: number | string;
+  product?: { id?: number | string };
+}
+
+interface CustomerOrderHistoryOrder {
+  status?: string;
+  orderItems?: CustomerOrderHistoryItem[];
 }
 
 const ProductPage = () => {
@@ -191,6 +201,35 @@ const ProductPage = () => {
     queryKey: ["category", categoryId],
     queryFn: async () => { if (!categoryId) return null; try { const r = await axiosInstance.get(`/api/categories/${categoryId}`); return r.data; } catch { return null; } },
     enabled: !!categoryId, staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: canWriteReview = false } = useQuery({
+    queryKey: ["reviewEligibility", id, token],
+    queryFn: async () => {
+      try {
+        const response = await axiosInstance.get(`/api/order/customer/history`);
+        const orders: CustomerOrderHistoryOrder[] = Array.isArray(response?.data?.data)
+          ? response.data.data
+          : Array.isArray(response?.data)
+            ? response.data
+            : [];
+        const targetProductId = Number(id);
+
+        return orders.some((order) => {
+          if (order?.status === "CANCELLED") return false;
+
+          return Array.isArray(order?.orderItems) && order.orderItems.some((item) => {
+            const itemProductId = item?.productId ?? item?.product?.id;
+            return Number(itemProductId) === targetProductId;
+          });
+        });
+      } catch {
+        return false;
+      }
+    },
+    enabled: !!id && isAuthenticated && !!token,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
   });
 
   const reviews = (reviewsData?.reviews || []).map((r: Review) => ({ ...r, userName: r.user?.username || r.user?.email?.split("@")[0] || "Anonymous" }));
@@ -348,44 +387,46 @@ const ProductPage = () => {
           <div className="flex flex-col xl:flex-row gap-8 lg:gap-12 items-start bg-white p-6 sm:p-8 rounded-xl shadow-sm">
 
             {/* ── COLUMN 1: Product Image ── */}
-            <div className="w-full xl:w-[450px] flex-shrink-0 flex flex-col gap-3">
+            <div className="w-full xl:w-[450px] flex-shrink-0 flex flex-col gap-3 xl:relative">
               {/* Main image */}
-              <div
-                ref={mainImageRef}
-                className="relative w-full aspect-square rounded-md overflow-hidden bg-gray-100 cursor-crosshair"
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
-                onMouseMove={handleMouseMove}
-              >
-                {currentImage ? (
-                  <Image
-                    src={currentImage}
-                    alt={product.name}
-                    fill
-                    priority
-                    className="object-cover"
-                    onError={() => setImageError(prev => { const n = [...prev]; n[selectedImageIndex] = true; return n; })}
-                    onLoad={() => setZoomPosition({ x: 50, y: 50 })}
-                    draggable={false}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">No image available</div>
-                )}
+              <div className="relative">
+                <div
+                  ref={mainImageRef}
+                  className="group relative w-full aspect-square overflow-hidden rounded-[24px] border border-gray-200 bg-[#f6f7f9] p-4 sm:p-5 shadow-[0_10px_30px_rgba(15,23,42,0.08)] cursor-crosshair"
+                  onMouseEnter={handleMouseEnter}
+                  onMouseLeave={handleMouseLeave}
+                  onMouseMove={handleMouseMove}
+                >
+                  {currentImage ? (
+                    <>
+                      <Image
+                        src={currentImage}
+                        alt={product.name}
+                        fill
+                        priority
+                        className="object-cover select-none transition-transform duration-300 ease-out group-hover:scale-[1.02]"
+                        onError={() => setImageError(prev => { const n = [...prev]; n[selectedImageIndex] = true; return n; })}
+                        onLoad={() => setZoomPosition({ x: 50, y: 50 })}
+                        draggable={false}
+                      />
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/25 via-transparent to-transparent" />
 
-                {/* Zoom lens — desktop only */}
+                    </>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">No image available</div>
+                  )}
+                </div>
+
                 {isZoomActive && currentImage && (
                   <div
-                    className="hidden lg:block absolute top-0 z-50 pointer-events-none rounded-xl border border-gray-200 shadow-2xl"
+                    className="pointer-events-none absolute left-[calc(100%+24px)] top-0 z-40 hidden xl:flex h-[380px] w-[380px] overflow-hidden rounded-[18px] border-2 border-[#1f2937] bg-white shadow-[0_18px_45px_rgba(15,23,42,0.2)]"
                     style={{
-                      left: "calc(100% + 16px)",
-                      width: "420px",
-                      height: "420px",
                       backgroundImage: `url(${currentImage})`,
                       backgroundSize: `${ZOOM_LEVEL * 100}%`,
                       backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
                       backgroundRepeat: "no-repeat",
-                      backgroundColor: "#fff",
                     }}
+                    aria-hidden="true"
                   />
                 )}
               </div>
@@ -567,19 +608,19 @@ const ProductPage = () => {
               {/* Visit Store button */}
               <button
                 onClick={handleVendorClick}
-                className="w-full h-11 bg-[#ea5f0a] hover:bg-[#d65509] text-white font-medium text-[0.95rem] rounded-md transition-colors mb-5"
+                className="w-full h-11 bg-[#ea5f0a] hover:bg-[#d65509] text-white font-semibold text-[0.95rem] rounded-xl transition-colors mb-3"
               >
                 Visit Store
               </button>
 
               {/* Badge pills */}
-              <div className="flex gap-2 flex-wrap justify-between mt-2">
+              <div className="grid grid-cols-3 gap-2">
                 {[
                   { id: "verified", icon: "✓", text: "Verified", color: "text-gray-700" },
                   { id: "top_rated", icon: "⭐", text: "Top Rated", color: "text-gray-700" },
                   { id: "trusted", icon: "🔒", text: "Trusted", color: "text-gray-700" },
                 ].map(({ id, icon, text, color }) => (
-                  <span key={id} className={`px-3 py-1 border border-[#ea5f0a]/40 rounded-full text-[0.75rem] font-medium ${color} bg-white flex items-center gap-1`}>
+                  <span key={id} className={`inline-flex w-full min-w-0 items-center justify-center gap-1 whitespace-nowrap rounded-full border border-[#ea5f0a]/40 bg-white px-2 py-1 text-center text-[0.7rem] font-medium ${color}`}>
                     <span className="opacity-90">{icon}</span> {text}
                   </span>
                 ))}
@@ -596,6 +637,7 @@ const ProductPage = () => {
           <div className="bg-white rounded-2xl overflow-hidden">
             <Reviews
               productId={Number(id)}
+              canWriteReview={canWriteReview}
               initialReviews={reviews}
               initialAverageRating={averageRating}
               totalReviews={totalReviews}

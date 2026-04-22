@@ -62,7 +62,8 @@ interface ApiProduct {
   };
   vendor: {
     id: number;
-    businessName: string;
+    businessName?: string;
+    name?: string;
     email: string;
     phoneNumber: string;
     districtId: number;

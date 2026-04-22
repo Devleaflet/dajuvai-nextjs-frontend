@@ -32,14 +32,14 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ product, pricing }) => {
     value.toFixed(2);
 
   return (
-    <div className="product__info pt-2">
-      <div className="product-card__rating mb-1">
+    <div className="product__info">
+      <div className="product-card__rating">
         <span className="product-card__rating-star text-[#16a34a] leading-none">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M12 2l3.09 6.26L22 9.27l-5 4.88L18.18 22 12 18.77 5.82 22 7 14.15l-5-4.88 6.91-1.01L12 2z" />
           </svg>
         </span>
-        <div className="product-card__rating-info text-[12px]">
+        <div className="product-card__rating-info">
           <span className="product-card__rating-score">{safeRating}</span>
           <span className="mx-1 text-gray-400">|</span>
           <span className="product-card__rating-count">({safeRatingCount})</span>
@@ -47,7 +47,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ product, pricing }) => {
       </div>
 
       <div className="product-card__info">
-        <h3 className="product-card__title text-[14px]" title={title}>
+        <h3 className="product-card__title" title={title}>
           {title}
         </h3>
         {description && (
@@ -57,12 +57,12 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ product, pricing }) => {
           />
         )}
 
-        <div className="product-card__price mt-2">
-          <span className="product-card__current-price">
+        <div className={`product-card__price ${hasDiscount ? 'product-card__price--discounted' : 'product-card__price--regular'}`}>
+          <span className={`product-card__current-price ${hasDiscount ? 'product-card__current-price--discounted' : ''}`}>
             <span className="product-card__currency">Rs</span>
             <span className="product-card__current-amount">{formatPrice(safeCurrentPrice)}</span>
           </span>
-          <div className="product-card__price-details">
+          <div className={`product-card__price-details ${hasDiscount ? 'product-card__price-details--discounted' : ''}`}>
             {hasDiscount ? (
               <>
               <span className="product-card__original-price">Rs {formatPrice(safeOriginalPrice)}</span>

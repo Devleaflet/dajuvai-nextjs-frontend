@@ -16,10 +16,15 @@ export interface Product {
     image: string | null;
     createdAt: string;
     updatedAt: string;
+    category?: {
+      id: number;
+      name: string;
+    };
   };
   vendor: {
     id: number;
-    businessName: string;
+    businessName?: string;
+    name?: string;
     email: string;
     phoneNumber: string;
     districtId: number;
@@ -185,10 +190,15 @@ export interface ApiProduct {
     image: string | null;
     createdAt: string;
     updatedAt: string;
+    category?: {
+      id: number;
+      name: string;
+    };
   };
   vendor: {
     id: number;
-    businessName: string;
+    businessName?: string;
+    name?: string;
     email: string;
     phoneNumber: string;
     districtId: number;

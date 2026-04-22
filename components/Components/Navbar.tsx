@@ -54,6 +54,18 @@ interface Subcategory {
 	category_id: number;
 }
 
+interface SearchApiProduct {
+	id: number;
+	name: string;
+	description?: string;
+	productImages?: string[];
+	variants?: Array<{
+		image?: string;
+		images?: string[];
+		variantImages?: string[];
+	}>;
+}
+
 const Navbar: React.FC = () => {
 	const {
 		user,
@@ -68,6 +80,8 @@ const Navbar: React.FC = () => {
 	const [searchQuery, setSearchQuery] = useState<string>('');
 	const [searchResults, setSearchResults] = useState<any[]>([]);
 	const [showSearchDropdown, setShowSearchDropdown] = useState<boolean>(false);
+	const [searchMessage, setSearchMessage] = useState<string>('');
+	const [isSearching, setIsSearching] = useState<boolean>(false);
 	const [isLifted, setIsLifted] = useState<boolean>(false);
 	const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
 	const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
@@ -364,6 +378,8 @@ const Navbar: React.FC = () => {
 
 	const router = useRouter();
 	const pathname = usePathname();
+	const searchParams = useSearchParams();
+	const isShopRoute = pathname === '/shop' || pathname.startsWith('/shop/');
 
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
@@ -379,23 +395,18 @@ const Navbar: React.FC = () => {
 		return () => document.removeEventListener('mousedown', handleClickOutside);
 	}, []);
 
-	const { data: allProducts = [] } = useQuery({
-		queryKey: ['allProducts'],
-		queryFn: async () => {
-			try {
-				const response = await fetch(
-					`${API_BASE_URL}/api/categories/all/products`
-				);
-				if (!response.ok) throw new Error('Failed to fetch products');
-				const data = await response.json();
-				return data.success ? data.data : [];
-			} catch (error) {
-				console.error('Error fetching products:', error);
-				return [];
-			}
-		},
-		staleTime: 5 * 60 * 1000,
-	});
+	const getSearchResultImage = (product: SearchApiProduct) =>
+		product.productImages?.[0] ||
+		product.variants?.find(
+			(variant) =>
+				variant?.image ||
+				variant?.images?.[0] ||
+				variant?.variantImages?.[0]
+		)?.image ||
+		product.variants?.find((variant) => variant?.images?.[0])?.images?.[0] ||
+		product.variants?.find((variant) => variant?.variantImages?.[0])
+			?.variantImages?.[0] ||
+		'../assets/iphone.jpg';
 
 	useEffect(() => {
 		const handleSetNavbarSearch = (event: CustomEvent) => {
@@ -403,9 +414,9 @@ const Navbar: React.FC = () => {
 			//('🔍 Navbar received search query:', searchQuery);
 			setSearchQuery(searchQuery);
 
-			if (searchQuery && allProducts.length > 0) {
+			if (searchQuery) {
 				setTimeout(() => {
-					handleSearch();
+					handleSearch(searchQuery);
 				}, 100);
 			}
 		};
@@ -421,50 +432,96 @@ const Navbar: React.FC = () => {
 				handleSetNavbarSearch as EventListener
 			);
 		};
-	}, [allProducts]);
+	}, []);
 
-	const handleSearch = async (e?: React.FormEvent) => {
-		e?.preventDefault();
-		if (!searchQuery.trim() || !allProducts.length) {
+	const handleSearch = async (
+		eOrQuery?: React.FormEvent | string,
+		explicitQuery?: string
+	) => {
+		if (typeof eOrQuery !== 'string') {
+			eOrQuery?.preventDefault?.();
+		}
+
+		const query =
+			typeof eOrQuery === 'string'
+				? eOrQuery
+				: explicitQuery !== undefined
+					? explicitQuery
+					: searchQuery;
+		const trimmedQuery = query.trim();
+
+		if (!trimmedQuery) {
 			setSearchResults([]);
+			setSearchMessage('');
 			setShowSearchDropdown(false);
 			return;
 		}
 
 		try {
-			const searchTerm = searchQuery.toLowerCase().trim();
+			setIsSearching(true);
+			const apiParams = new URLSearchParams();
+			const supportedFilterKeys = [
+				'brandId',
+				'categoryId',
+				'subcategoryId',
+				'dealId',
+				'sort',
+				'bannerId',
+				'vendorId',
+			];
 
-			const filteredProducts = allProducts
-				.filter((product: any) => {
-					const nameMatch = product.name.toLowerCase().includes(searchTerm);
-					const descMatch = product.description
-						?.toLowerCase()
-						.includes(searchTerm);
-					return nameMatch || descMatch;
-				})
-				.map((product: any) => ({
+			supportedFilterKeys.forEach((key) => {
+				const value = searchParams.get(key);
+				if (value) {
+					apiParams.set(key, value);
+				}
+			});
+
+			apiParams.set('page', '1');
+			apiParams.set('limit', searchParams.get('limit') || '10');
+			apiParams.set('isAdmin', searchParams.get('isAdmin') || 'false');
+			apiParams.set('search', trimmedQuery);
+
+			const response = await fetch(
+				`${API_BASE_URL}/api/categories/all/products?${apiParams.toString()}`
+			);
+			if (!response.ok) {
+				throw new Error('Failed to search products');
+			}
+
+			const data = await response.json();
+			const products: SearchApiProduct[] =
+				data?.success && Array.isArray(data?.data) ? data.data : [];
+			const searchTerm = trimmedQuery.toLowerCase();
+
+			const filteredProducts = products
+				.map((product) => ({
 					id: product.id,
 					name: product.name,
-					image:
-						product.productImages?.[0] ||
-						product.variants?.find((v: any) => v?.variantImages?.[0])
-							?.variantImages?.[0] ||
-						'../assets/iphone.jpg',
+					image: getSearchResultImage(product),
 					matchScore: calculateMatchScore(product, searchTerm),
 				}))
 				.sort((a: any, b: any) => b.matchScore - a.matchScore)
 				.slice(0, 3);
 
 			setSearchResults(filteredProducts);
-			setShowSearchDropdown(filteredProducts.length > 0);
+			setSearchMessage(
+				filteredProducts.length > 0
+					? ''
+					: `No products found for "${trimmedQuery}".`
+			);
+			setShowSearchDropdown(true);
 		} catch (error) {
 			console.error('Search error:', error);
 			setSearchResults([]);
-			setShowSearchDropdown(false);
+			setSearchMessage('Unable to search products right now.');
+			setShowSearchDropdown(true);
+		} finally {
+			setIsSearching(false);
 		}
 	};
 
-	const calculateMatchScore = (product: any, searchTerm: string) => {
+	const calculateMatchScore = (product: SearchApiProduct, searchTerm: string) => {
 		let score = 0;
 		const name = product.name.toLowerCase();
 		const description = product.description?.toLowerCase() || '';
@@ -482,9 +539,10 @@ const Navbar: React.FC = () => {
 		setSearchQuery(value);
 
 		if (value.trim()) {
-			handleSearch();
+			handleSearch(value);
 		} else {
 			setSearchResults([]);
+			setSearchMessage('');
 			setShowSearchDropdown(false);
 		}
 	};
@@ -492,6 +550,7 @@ const Navbar: React.FC = () => {
 	const handleSearchResultClick = (productId: number) => {
 		setShowSearchDropdown(false);
 		setSearchQuery('');
+		setSearchMessage('');
 		router.push(`/product/${productId}`);
 	};
 
@@ -667,8 +726,6 @@ const Navbar: React.FC = () => {
 			</div>
 		);
 	};
-
-	const searchParams = useSearchParams();
 
 	useEffect(() => {
 		const categoryId = searchParams.get('categoryId');
@@ -973,7 +1030,9 @@ const Navbar: React.FC = () => {
 						</div>
 					)}
 
-					<div className="navbar__search-row">
+					<div
+						className={`navbar__search-row ${isShopRoute ? 'navbar__search-row--shop-mobile-hidden' : ''}`}
+					>
 						<div
 							className="navbar__search"
 							ref={searchRef}
@@ -1011,28 +1070,38 @@ const Navbar: React.FC = () => {
 				<FaSearch className="w-[18px] h-[18px]" />
 			</button>
 		</form>
-							{showSearchDropdown && searchResults.length > 0 && (
+							{showSearchDropdown && (
 								<div className="navbar__search-dropdown">
-									{searchResults.map((result) => (
-										<div
-											key={result.id}
-											className="navbar__search-result"
-											onClick={() => handleSearchResultClick(result.id)}
-										>
-											<Image
-												src={result.image}
-												alt={result.name}
-												width={50}
-												height={50}
-												className="navbar__search-result-image"
-											/>
-											<div className="navbar__search-result-info">
-												<h4 className="navbar__search-result-title">
-													{result.name}
-												</h4>
-											</div>
+									{isSearching ? (
+										<div className="navbar__search-empty">
+											Searching products...
 										</div>
-									))}
+									) : searchResults.length > 0 ? (
+										searchResults.map((result) => (
+											<div
+												key={result.id}
+												className="navbar__search-result"
+												onClick={() => handleSearchResultClick(result.id)}
+											>
+												<Image
+													src={result.image}
+													alt={result.name}
+													width={50}
+													height={50}
+													className="navbar__search-result-image"
+												/>
+												<div className="navbar__search-result-info">
+													<h4 className="navbar__search-result-title">
+														{result.name}
+													</h4>
+												</div>
+											</div>
+										))
+									) : (
+										<div className="navbar__search-empty">
+											{searchMessage}
+										</div>
+									)}
 								</div>
 							)}
 						</div>

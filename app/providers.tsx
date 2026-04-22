@@ -43,7 +43,17 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <ContextProviders>
-        <Toaster />
+        <Toaster
+          containerStyle={{
+            zIndex: 2147483647,
+          }}
+          toastOptions={{
+            style: {
+              filter: 'none',
+              backdropFilter: 'none',
+            },
+          }}
+        />
         {children}
         <ReactQueryDevtools initialIsOpen={false} />
       </ContextProviders>

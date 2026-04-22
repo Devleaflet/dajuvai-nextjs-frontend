@@ -299,7 +299,23 @@ const CartContextProvider: React.FC<{ children: React.ReactNode }> = ({
       await refreshCart();
       logger.debug("Cart refreshed successfully");
 
-      toast.success("Item added to cart successfully!");
+      toast.success("Item added to cart successfully!", {
+        position: "top-center",
+        duration: 3000,
+        iconTheme: {
+          primary: "#6bd84b",
+          secondary: "#ffffff",
+        },
+        style: {
+          borderRadius: "14px",
+          background: "#ffffff",
+          color: "#3f3f46",
+          padding: "14px 18px",
+          boxShadow: "0 10px 24px rgba(15, 23, 42, 0.12)",
+          fontSize: "15px",
+          fontWeight: "500",
+        },
+      });
       logger.debug("handleCartOnAdd SUCCESS");
     } catch (error: unknown) {
       logger.error("handleCartOnAdd ERROR");

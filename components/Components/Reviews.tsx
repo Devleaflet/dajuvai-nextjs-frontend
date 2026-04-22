@@ -11,6 +11,7 @@ import { sanitizeHtml } from '@/lib/utils/sanitize';
 
 interface ReviewsProps {
     productId: number;
+    canWriteReview?: boolean;
     initialReviews: Review[];
     initialAverageRating: number;
     totalReviews: number;
@@ -22,6 +23,7 @@ interface ReviewsProps {
 
 const Reviews: React.FC<ReviewsProps> = ({
     productId,
+    canWriteReview = false,
     initialReviews,
     initialAverageRating,
     totalReviews,
@@ -1132,7 +1134,7 @@ const Reviews: React.FC<ReviewsProps> = ({
             </div>
 
             {/* Review Form */}
-            {user && (
+            {user && canWriteReview && (
                 <form
                     onSubmit={(e) => {
                         e.preventDefault();

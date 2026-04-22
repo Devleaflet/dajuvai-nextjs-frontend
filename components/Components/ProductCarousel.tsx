@@ -178,7 +178,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
 				<div className="product-carousel__title-container">
 					<h2 className="product-carousel__title">{title}</h2>
 					<Link
-						href={`/section/${sectionId}?sectionname=${title}`}
+						href="/shop"
 						className="product-carousel__view-all"
 					>
 						View All

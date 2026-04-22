@@ -19,6 +19,7 @@ interface PromoCode {
 	id: number;
 	promoCode: string;
 	discountPercentage: number;
+	applyOn?: string;
 }
 
 // Import CartItem type from context to avoid conflicts
@@ -211,6 +212,13 @@ const Checkout: React.FC = () => {
 
 	function capitalizeFirstLetter(string: string) {
 		return string.charAt(0).toUpperCase() + string.slice(1);
+	}
+
+	function getProvinceLabel(province: string) {
+		if (province.toLowerCase() === 'pradesh-1') {
+			return 'Koshi Province';
+		}
+		return province;
 	}
 
 	async function fetchDistricts(province: string) {
@@ -713,7 +721,8 @@ const Checkout: React.FC = () => {
 		};
 
 		cartItems.forEach((item) => {
-			const vendorId = (item.product as any)?.vendorId;
+			const vendorId =
+				(item as any)?.vendor?.id ?? (item.product as any)?.vendorId;
 			if (vendorId && !vendorCache[vendorId]) {
 				fetchVendorDetails(vendorId);
 			}
@@ -721,7 +730,16 @@ const Checkout: React.FC = () => {
 	}, [cartItems, token, vendorCache]);
 
 	const getVendorInfo = (item: CartItem) => {
-		const vendorId = (item.product as any)?.vendorId;
+		const directVendor = (item as any)?.vendor;
+		if (directVendor) {
+			return {
+				businessName: directVendor.businessName || 'Unknown Vendor',
+				district: directVendor.district?.name || 'Unknown District',
+			};
+		}
+
+		const vendorId =
+			(item as any)?.vendor?.id ?? (item.product as any)?.vendorId;
 		if (vendorId && vendorCache[vendorId]) {
 			return {
 				businessName: vendorCache[vendorId].businessName,
@@ -814,14 +832,21 @@ const Checkout: React.FC = () => {
 	);
 
 	const total = subtotal + totalShipping;
+	const promoApplyOn = (appliedPromoCode?.applyOn || 'LINE_TOTAL').toUpperCase();
+	const discountBase =
+		promoApplyOn === 'SHIPPING' ? totalShipping : subtotal;
 
 	const discountPercentage = appliedPromoCode
 		? appliedPromoCode.discountPercentage
 		: 0;
 	const discountAmount = appliedPromoCode
-		? Math.round((total * discountPercentage) / 100)
+		? Math.round((discountBase * discountPercentage) / 100)
 		: 0;
 	const finalTotal = total - discountAmount;
+	const discountLabel =
+		promoApplyOn === 'SHIPPING'
+			? `Shipping Discount (${discountPercentage}%)`
+			: `Subtotal Discount (${discountPercentage}%)`;
 
 	const getVariantLabel = (item: CartItem): string => {
 		const v = item?.variant || null;
@@ -1083,7 +1108,7 @@ const Checkout: React.FC = () => {
 										key={p}
 										value={p}
 									>
-										{p}
+										{getProvinceLabel(p)}
 									</option>
 								))}
 							</select>
@@ -1216,6 +1241,13 @@ const Checkout: React.FC = () => {
 							)}
 						</div>
 
+						<button
+							type="button"
+							className="checkout-container__save-billing-btn"
+						>
+							Save Billing Details
+						</button>
+
 						<div className="checkout-container__promo-section-left">
 							<h3 style={{ marginBottom: '1rem', color: '#333' }}>
 								Have a Promo Code?
@@ -1319,8 +1351,11 @@ const Checkout: React.FC = () => {
 											fontWeight: '600',
 										}}
 									>
-										✓ "{appliedPromoCode.promoCode}" applied (
-										{appliedPromoCode.discountPercentage}% off)
+										{'\u2713'} "{appliedPromoCode.promoCode}" applied {'\u2014'}{' '}
+										{appliedPromoCode.discountPercentage}% off on{' '}
+										{promoApplyOn === 'SHIPPING'
+											? 'shipping'
+											: 'product subtotal'}
 									</span>
 									<button
 										type="button"
@@ -1472,7 +1507,7 @@ const Checkout: React.FC = () => {
 
 							{appliedPromoCode && (
 								<div className="checkout-container__order-total">
-									<span>Discount ({discountPercentage}%):</span>
+									<span>{discountLabel}:</span>
 									<span style={{ color: 'green' }}>
 										- Rs {discountAmount.toLocaleString()}
 									</span>

@@ -212,6 +212,12 @@
 	background-color: #f8f9fa;
 }
 
+.navbar__search-empty {
+	padding: 14px 16px;
+	font-size: 14px;
+	color: #5f6b7a;
+}
+
 .navbar__search-result-image {
 	width: 50px;
 	height: 50px;
@@ -1401,6 +1407,10 @@
 }
 
 @media (max-width: 768px) {
+	.navbar__search-row--shop-mobile-hidden {
+		display: none !important;
+	}
+
 	.navbar__search {
 		max-width: 100%;
 	}

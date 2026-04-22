@@ -73,9 +73,9 @@ export const convertApiProductToDisplayProduct = (apiProduct: ApiProduct) => {
     brand: apiProduct.brand?.name,
     name: apiProduct.name,
     // Map correctly
-    category: (apiProduct as any).category ?? undefined,
+    category: (apiProduct as any).category ?? apiProduct.subcategory?.category?.name ?? undefined,
     subcategory: apiProduct.subcategory,
-    vendor: apiProduct.vendor?.businessName,
+    vendor: (apiProduct.vendor as any)?.businessName ?? (apiProduct.vendor as any)?.name,
     productImages: apiProduct.productImages,
     // Pass through variants in a UI-friendly shape
     variants: orderedVariants.map((v: any) => ({

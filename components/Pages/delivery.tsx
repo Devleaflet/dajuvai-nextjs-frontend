@@ -273,7 +273,7 @@ function StatusBadge({ status }: { status?: string }) {
 }
 
 /** Availability badge for riders */
-function AvailabilityBadge({ onDelivery }: { onDelivery?: boolean }) {
+function AvailabilityBadge({ onDelivery }: { onDelivery?: boolean | undefined }) {
   return onDelivery
     ? <span className="inline-flex items-center gap-1.5 rounded-full bg-orange-500 px-3 py-1 text-[11px] font-semibold text-white shadow-[0_8px_20px_rgba(249,115,22,0.2)]"><span className="inline-block h-1.5 w-1.5 rounded-full bg-white/90" />On Delivery</span>
     : <span className="inline-flex items-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-[11px] font-semibold text-orange-700"><span className="inline-block h-1.5 w-1.5 rounded-full bg-orange-400" />Available</span>;

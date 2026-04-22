@@ -337,7 +337,16 @@ const Cart: React.FC<CartProps> = ({ cartOpen, toggleCart }) => {
 
 					<div className={`flex-1 flex flex-col gap-2 min-w-0 transition-all duration-200 overflow-visible ${itemError ? 'mt-[35px]' : ''} sm:mt-[30px] xs:gap-[6px] xs:mt-7`}>
 						<div className="flex items-start justify-between gap-[10px]">
-							<h4 className="text-[0.95rem] font-semibold text-[#1a202c] m-0 leading-[1.4] flex-1 line-clamp-2 transition-colors duration-200 min-h-[2.8em] sm:text-[0.9rem] sm:min-h-[2.6em] xs:text-[0.85rem] xs:min-h-[2.4em]">{item.name}</h4>
+							<h4
+								className="text-[0.95rem] font-semibold text-[#1a202c] m-0 leading-[1.4] flex-1 line-clamp-2 transition-colors duration-200 min-h-[2.8em] sm:text-[0.9rem] sm:min-h-[2.6em] xs:text-[0.85rem] xs:min-h-[2.4em]"
+								style={{
+									fontSize: '0.98rem',
+									fontWeight: 700,
+									color: '#202938',
+								}}
+							>
+								{item.name}
+							</h4>
 							<button
 								className="bg-[#fef2f2] border border-[#fecaca] rounded-md w-7 h-7 flex items-center justify-center cursor-pointer text-[#dc2626] text-[0.7rem] transition-all duration-200 flex-shrink-0 select-none hover:bg-[#dc2626] hover:text-white hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none focus:outline-2 focus:outline-[#f97316] focus:outline-offset-2 focus:shadow-[0_0_0_2px_rgba(249,115,22,0.3)] sm:w-8 sm:h-8 sm:text-[0.8rem]"
 								aria-label="Remove item"
@@ -449,8 +458,15 @@ const Cart: React.FC<CartProps> = ({ cartOpen, toggleCart }) => {
 			<div className="h-full flex flex-col overflow-hidden">
 				<div className="bg-white border-b border-gray-100 sticky top-0 z-10 flex-shrink-0">
 					<div className="flex items-center justify-between px-6 py-4">
-						<h2 className="flex items-center gap-2 m-0 text-lg font-bold text-gray-800">
-							<FaShoppingBag className="text-[#f97316] text-lg" />
+						<h2
+							className="flex items-center gap-2 m-0 text-lg font-bold text-gray-800"
+							style={{
+								fontSize: '1.25rem',
+								fontWeight: 700,
+								color: '#202938',
+							}}
+						>
+							<FaShoppingBag className="text-[#f97316] text-xl" />
 							Your Shopping Cart
 							{cartItems.length > 0 && (
 								<span className="bg-[#f97316] text-white rounded-full min-w-[20px] h-5 flex items-center justify-center text-xs font-bold ml-2">
@@ -481,7 +497,8 @@ const Cart: React.FC<CartProps> = ({ cartOpen, toggleCart }) => {
 							</p>
 							<Link
 								href="/shop"
-								className="bg-[#f97316] text-white no-underline px-8 py-3 rounded-md font-medium text-sm transition-colors hover:bg-[#ea580c] shadow-sm hover:shadow-md"
+								className="bg-[#f97316] text-white no-underline px-8 py-3 rounded-md font-medium text-md transition-colors hover:bg-[#ea580c] shadow-sm hover:shadow-md"
+								style={{ backgroundColor: '#f97316', color: '#ffffff' }}
 								onClick={(e) => {
 									e.stopPropagation();
 									toggleCart();
@@ -506,8 +523,16 @@ const Cart: React.FC<CartProps> = ({ cartOpen, toggleCart }) => {
 
 							<div className="bg-white border-t border-[#e2e8f0] p-5 flex-shrink-0 shadow-[0_-2px_8px_rgba(0,0,0,0.04)] sm:p-[18px] xs:p-[14px]">
 								<div className="flex items-center justify-between mb-[14px] p-[8px_0] border-b border-[#f1f5f9] xs:mb-3 xs:p-[6px_0]">
-									<span className="text-base font-semibold text-[#475569] sm:text-[0.95rem] xs:text-[0.9rem]">Subtotal:</span>
-									<span className="text-[1.3rem] font-bold text-[#1a202c] whitespace-nowrap sm:text-[1.1rem] xs:text-base">
+									<span
+										className="text-base font-semibold text-[#475569] sm:text-[0.95rem] xs:text-[0.9rem]"
+										style={{ fontWeight: 700, color: '#465469' }}
+									>
+										Subtotal:
+									</span>
+									<span
+										className="text-[1.3rem] font-bold text-[#1a202c] whitespace-nowrap sm:text-[1.1rem] xs:text-base"
+										style={{ fontWeight: 800, color: '#202938' }}
+									>
 										Rs. {subtotal.toLocaleString("en-IN")}
 									</span>
 								</div>
@@ -520,6 +545,7 @@ const Cart: React.FC<CartProps> = ({ cartOpen, toggleCart }) => {
 									<Link
 										href="/checkout"
 										className="block text-center no-underline px-5 py-[14px] rounded-lg font-semibold text-[0.95rem] transition-all duration-300 border-none cursor-pointer select-none bg-gradient-to-br from-[#f97316] to-[#ea580c] text-white shadow-[0_4px_12px_rgba(249,115,22,0.3)] hover:-translate-y-0.5 hover:shadow-[0_6px_18px_rgba(249,115,22,0.4)] active:-translate-y-px focus:outline-2 focus:outline-[#f97316] focus:outline-offset-2 focus:shadow-[0_0_0_2px_rgba(249,115,22,0.3)] sm:px-[18px] sm:py-3 sm:text-[0.9rem] xs:px-[14px] xs:py-[10px] xs:text-[0.85rem] xs:rounded-md"
+										style={{ color: '#ffffff', fontWeight: 700 }}
 										onClick={(e) => {
 											e.stopPropagation();
 											toggleCart();
@@ -531,6 +557,11 @@ const Cart: React.FC<CartProps> = ({ cartOpen, toggleCart }) => {
 									<Link
 										href="/shop"
 										className="block text-center no-underline px-5 py-[14px] rounded-lg font-semibold text-[0.95rem] transition-all duration-300 border-none cursor-pointer select-none bg-white text-[#475569] border-2 border-[#e2e8f0] hover:bg-[#f8fafc] hover:border-[#cbd5e1] hover:-translate-y-px active:translate-y-0 focus:outline-2 focus:outline-[#f97316] focus:outline-offset-2 focus:shadow-[0_0_0_2px_rgba(249,115,22,0.3)] sm:px-[18px] sm:py-3 sm:text-[0.9rem] xs:px-[14px] xs:py-[10px] xs:text-[0.85rem] xs:rounded-md"
+										style={{
+											color: '#4a5870',
+											fontWeight: 700,
+											border: '2px solid #e2e8f0',
+										}}
 										onClick={(e) => {
 											e.stopPropagation();
 											toggleCart();

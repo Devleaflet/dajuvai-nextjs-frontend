@@ -91,7 +91,8 @@ interface ApiProduct {
 	};
 	vendor: {
 		id: number;
-		businessName: string;
+		businessName?: string;
+		name?: string;
 		email: string;
 		phoneNumber: string;
 		districtId: number;
@@ -494,18 +495,18 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 	setShowMoreSubcategories,
 	onClose,
 }) => (
-	<div className="bg-white rounded-xl shadow-sm p-5 h-full overflow-y-auto">
+	<div className="shop-filter-panel bg-white rounded-[8px] shadow-[0_8px_22px_rgba(15,23,42,0.07)] p-6 h-full max-h-[calc(100vh-2rem)] overflow-y-auto">
 		{/* Filter Header */}
-		<div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
-			<h3 className="text-lg font-bold text-gray-800">Filter</h3>
+		<div className="flex items-center justify-between mb-7 pb-5 border-b border-[#e9edf3]">
+			<h3 className="text-[1.35rem] font-semibold text-[#1f2b3d]">Filter</h3>
 			{/* Close button — only rendered inside mobile drawer */}
 			{onClose && (
 				<button
 					onClick={onClose}
-					className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+					className="p-1 rounded-lg hover:bg-gray-100 transition-colors"
 					aria-label="Close filters"
 				>
-					<X size={20} className="text-gray-600" />
+					<X size={18} className="text-[#66758c]" />
 				</button>
 			)}
 		</div>
@@ -534,23 +535,23 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 		)}
 
 		{/* Sort By */}
-		<div className="mb-5 pb-5 border-b border-gray-100">
-			<h4 className="text-sm font-bold text-gray-700 mb-3">Sort By</h4>
-			<div className="flex flex-col gap-2.5">
+		<div className="mb-7 pb-7 border-b border-[#e9edf3]">
+			<h4 className="text-[1rem] font-semibold text-[#1f2b3d] mb-5">Sort By</h4>
+			<div className="flex flex-col gap-4">
 				{[
 					{ value: 'all', label: 'Default' },
 					{ value: 'low-to-high', label: 'Price: Low to High' },
 					{ value: 'high-to-low', label: 'Price: High to Low' },
 				].map((option) => (
-					<label key={option.value} className="flex items-center gap-2.5 cursor-pointer group">
+					<label key={option.value} className="flex items-center gap-3.5 cursor-pointer group py-[2px]">
 						<input
 							type="radio"
 							name="sort"
 							checked={sortBy === option.value}
 							onChange={() => handleSortChange(option.value)}
-							className="w-4 h-4 cursor-pointer accent-[#a855f7]"
+							className="w-6 h-6 cursor-pointer accent-[#bf58f7]"
 						/>
-						<span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">
+						<span className="text-[0.95rem] font-normal text-[#2d3950] group-hover:text-[#1f2b3d] transition-colors">
 							{option.label}
 						</span>
 					</label>
@@ -559,17 +560,17 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 		</div>
 
 		{/* Categories */}
-		<div className={`${selectedCategory !== undefined ? 'mb-5 pb-5 border-b border-gray-100' : 'mb-0'} `}>
+		<div className={`${selectedCategory !== undefined ? 'mb-7 pb-7 border-b border-[#e9edf3]' : 'mb-0'} `}>
 			<button
-				className="w-full flex items-center justify-between mb-3 group"
+				className="filter-section-toggle w-full flex items-center justify-between mb-6 group"
 				onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
 			>
-				<h4 className="text-sm font-bold text-gray-700">Categories</h4>
-				<div className={`p-1.5 rounded-md border transition-colors ${isCategoryDropdownOpen ? 'bg-gray-100 border-gray-300' : 'bg-white border-gray-200 group-hover:border-gray-300'}`}>
+				<h4 className="text-[1rem] font-semibold text-[#1f2b3d]">Categories</h4>
+				<div className="transition-transform duration-200">
 					{isCategoryDropdownOpen ? (
-						<ChevronUp size={16} className="text-gray-600" />
+						<ChevronUp size={18} className="text-[#6d7480]" />
 					) : (
-						<ChevronDown size={16} className="text-gray-600" />
+						<ChevronDown size={18} className="text-[#6d7480]" />
 					)}
 				</div>
 			</button>
@@ -590,22 +591,22 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 								if (match) handleCategoryChange(match.id);
 							}
 						}}
-						className="w-full py-2 px-3 border border-gray-200 rounded-lg text-xs outline-none focus:border-[#ff6b00] mb-3 bg-gray-50"
+						className="shop-filter-search w-full h-[48px] py-0 px-4 border border-[#e6ebf1] rounded-xl text-[0.88rem] outline-none focus:border-[#d9dee8] mb-6 bg-white text-[#2d3950] placeholder:text-[#a2adbd] shadow-none"
 					/>
-					<div className="flex flex-col gap-2 ">
+					<div className="shop-filter-options flex flex-col gap-4">
 						{isLoadingCategories ? (
 							<p className="text-xs text-gray-400 text-center py-2">Loading...</p>
 						) : (
 							<>
-								<label className="flex items-center gap-2.5 cursor-pointer group">
+								<label className="flex items-center gap-3.5 cursor-pointer group py-[2px]">
 									<input
 										type="radio"
 										name="category"
 										checked={selectedCategory === undefined}
 										onChange={() => handleCategoryChange(undefined)}
-										className="w-4 h-4 cursor-pointer accent-[#a855f7]"
+										className="w-6 h-6 cursor-pointer accent-[#bf58f7]"
 									/>
-									<span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">
+									<span className="text-[0.95rem] font-normal text-[#2d3950] group-hover:text-[#1f2b3d] transition-colors">
 										All Categories
 									</span>
 								</label>
@@ -615,15 +616,15 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 									)
 									.slice(0, selectedCategory === undefined ? (showMoreCategories ? undefined : 5) : undefined)
 									.map((category: Category) => (
-										<label key={category.id} className="flex items-center gap-2.5 cursor-pointer group">
+										<label key={category.id} className="flex items-center gap-3.5 cursor-pointer group py-[2px]">
 											<input
 												type="radio"
 												name="category"
 												checked={selectedCategory === category.id}
 												onChange={() => handleCategoryChange(category.id)}
-												className="w-4 h-4 cursor-pointer accent-[#a855f7]"
+												className="w-6 h-6 cursor-pointer accent-[#bf58f7]"
 											/>
-											<span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">
+											<span className="text-[0.95rem] font-normal text-[#2d3950] group-hover:text-[#1f2b3d] transition-colors">
 												{category.name}
 											</span>
 										</label>
@@ -631,9 +632,9 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 								{selectedCategory === undefined && categories.length > 5 && (
 									<button
 										onClick={() => setShowMoreCategories(!showMoreCategories)}
-										className="mt-1 text-[#ff6b00] text-xs font-medium hover:underline text-left"
+										className="shop-filter-view-more mt-2"
 									>
-										{showMoreCategories ? 'View Less ↑' : 'View More ↓'}
+										{showMoreCategories ? 'View Less' : 'View More'}
 									</button>
 								)}
 							</>
@@ -647,14 +648,14 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 		{selectedCategory !== undefined && (
 			<div>
 				<button
-					className="w-full flex items-center justify-between mb-3"
+					className="filter-section-toggle w-full flex items-center justify-between mb-6"
 					onClick={() => setIsSubCategoryDropdownOpen(!isSubCategoryDropdownOpen)}
 				>
-					<h4 className="text-sm font-bold text-gray-700">Subcategories</h4>
+					<h4 className="text-[1rem] font-semibold text-[#1f2b3d]">Subcategories</h4>
 					{isSubCategoryDropdownOpen ? (
-						<ChevronUp size={16} className="text-gray-500" />
+						<ChevronUp size={18} className="text-[#6d7480]" />
 					) : (
-						<ChevronDown size={16} className="text-gray-500" />
+						<ChevronDown size={18} className="text-[#6d7480]" />
 					)}
 				</button>
 
@@ -674,22 +675,22 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 									if (match) handleSubcategoryChange(match.id);
 								}
 							}}
-							className="w-full py-2 px-3 border border-gray-200 rounded-lg text-xs outline-none focus:border-[#ff6b00] mb-3 bg-gray-50"
+							className="w-full py-3.5 px-4 border border-[#e6ebf1] rounded-xl text-[0.95rem] outline-none focus:border-[#d9dee8] mb-6 bg-white text-[#2d3950] placeholder:text-[#a2adbd] shadow-[0_6px_16px_rgba(15,23,42,0.06)]"
 						/>
-						<div className="flex flex-col gap-2">
+						<div className="shop-filter-options flex flex-col gap-4">
 							{isLoadingSubcategories ? (
 								<p className="text-xs text-gray-400 text-center py-2">Loading...</p>
 							) : subcategories.length > 0 ? (
 								<>
-									<label className="flex items-center gap-2.5 cursor-pointer group">
+									<label className="flex items-center gap-3.5 cursor-pointer group py-[2px]">
 										<input
 											type="radio"
 											name="subcategory"
 											checked={selectedSubcategory === undefined}
 											onChange={() => handleSubcategoryChange(undefined)}
-											className="w-4 h-4 cursor-pointer accent-[#a855f7]"
+											className="w-6 h-6 cursor-pointer accent-[#bf58f7]"
 										/>
-										<span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">
+										<span className="text-[0.95rem] font-normal text-[#2d3950] group-hover:text-[#1f2b3d] transition-colors">
 											All Subcategories
 										</span>
 									</label>
@@ -699,15 +700,15 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 										)
 										.slice(0, showMoreSubcategories ? undefined : 5)
 										.map((subcategory: Subcategory) => (
-											<label key={subcategory.id} className="flex items-center gap-2.5 cursor-pointer group">
+											<label key={subcategory.id} className="flex items-center gap-3.5 cursor-pointer group py-[2px]">
 												<input
 													type="radio"
 													name="subcategory"
 													checked={selectedSubcategory === subcategory.id}
 													onChange={() => handleSubcategoryChange(subcategory.id)}
-													className="w-4 h-4 cursor-pointer accent-[#a855f7]"
+													className="w-6 h-6 cursor-pointer accent-[#bf58f7]"
 												/>
-												<span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">
+												<span className="text-[0.95rem] font-normal text-[#2d3950] group-hover:text-[#1f2b3d] transition-colors">
 													{subcategory.name}
 												</span>
 											</label>
@@ -715,9 +716,9 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 									{subcategories.length > 5 && (
 										<button
 											onClick={() => setShowMoreSubcategories(!showMoreSubcategories)}
-											className="mt-1 text-[#ff6b00] text-xs font-medium hover:underline text-left"
+											className="shop-filter-view-more mt-2"
 										>
-											{showMoreSubcategories ? 'View Less ↑' : 'View More ↓'}
+											{showMoreSubcategories ? 'View Less' : 'View More'}
 										</button>
 									)}
 								</>
@@ -1134,36 +1135,6 @@ const Shop: React.FC = () => {
 							</div>
 						</div>
 
-						<div className="mb-3 flex items-stretch gap-2">
-							<form onSubmit={handleSearchSubmit} className="flex w-full items-center gap-2">
-								<div className="relative flex-1 min-w-0">
-									<input
-										type="text"
-										value={searchInputValue}
-										onChange={handleSearchInputChange}
-										placeholder="Search for products, brands, or categories"
-										className="w-full py-2.5 px-3 pr-9 border border-gray-300 rounded-lg text-sm outline-none bg-white transition-colors focus:border-[#ff6b00] shadow-sm"
-									/>
-									{searchInputValue && (
-										<button
-											type="button"
-											onClick={handleClearSearch}
-											className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 flex items-center justify-center"
-										>
-											<X size={15} />
-										</button>
-									)}
-								</div>
-								<button
-									type="submit"
-									className="py-2.5 px-3 bg-[#ff6b00] text-white rounded-lg text-sm font-semibold cursor-pointer flex items-center justify-center hover:bg-[#e05a00] transition-colors shadow-sm flex-shrink-0"
-									aria-label="Search"
-								>
-									<Search size={16} />
-								</button>
-							</form>
-						</div>
-
 						<h2 className="text-lg font-semibold text-gray-800 mb-4 truncate">
 							{getDisplayTitle()}
 							{getCurrentSubcategoryName() && (
@@ -1253,7 +1224,7 @@ const Shop: React.FC = () => {
 					<div className="flex gap-1 sm:gap-5  ">
 
 						{/* ── DESKTOP SIDEBAR (hidden on mobile/tablet) ── */}
-						<div className="hidden lg:block w-[280px]  ">
+						<div className="hidden lg:block w-[270px]">
 							<div className="sticky top-10">
 								<FilterPanel {...filterPanelProps} />
 							</div>
