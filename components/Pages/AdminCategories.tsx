@@ -737,7 +737,7 @@ const AdminCategories: React.FC = () => {
                             onClick={() => handleAddSubCategory(category.id)}
                             aria-label="Add subcategory"
                           >
-                            ADD
+                            Add Subcategory
                           </button>
                         </div>
                       </td>

@@ -203,6 +203,25 @@
 	color: #111827;
 }
 
+.needs-action-empty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 88px;
+	padding: 1rem 1.25rem;
+	border: 1px dashed #d1d5db;
+	border-radius: 0.75rem;
+	background: #f9fafb;
+}
+
+.needs-action-empty p {
+	margin: 0;
+	font-size: 0.95rem;
+	font-weight: 500;
+	color: #6b7280;
+	text-align: center;
+}
+
 .dashboard__two-columns {
 	display: grid;
 	grid-template-columns: repeat(2, 1fr);

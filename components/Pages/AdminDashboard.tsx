@@ -1227,6 +1227,8 @@ export function AdminDashboard() {
 		</div>
 	);
 
+	const hasActionItems = pendingApprovals > 0 || delayedOrders > 0;
+
 	if (error) {
 		return (
 			<div className="vendor-dash-container">
@@ -1392,7 +1394,7 @@ export function AdminDashboard() {
 						<h2>Needs Action</h2>
 						{actionLoading ? (
 							<p>Loading alerts...</p>
-						) : (
+						) : hasActionItems ? (
 							<div className="needs-action-list">
 								{pendingApprovals > 0 && (
 									<div className="needs-action-item" onClick={() => router.push('/admin/vendors')} style={{ cursor: 'pointer' }}>
@@ -1406,6 +1408,10 @@ export function AdminDashboard() {
 										<span className="needs-action-count">{delayedOrders}</span>
 									</div>
 								)}
+							</div>
+						) : (
+							<div className="needs-action-empty">
+								<p>No actions needed right now.</p>
 							</div>
 						)}
 					</div>

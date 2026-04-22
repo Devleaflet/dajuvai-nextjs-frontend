@@ -14,6 +14,18 @@ interface Product {
 	title?: string;
 	price?: number;
 	productImages?: string[];
+	categoryId?: number;
+	categoryName?: string;
+	subcategoryId?: number;
+	subcategoryName?: string;
+	subcategory?: {
+		id: number;
+		name: string;
+		category?: {
+			id: number;
+			name: string;
+		} | null;
+	} | null;
 }
 
 interface HomepageSection {
@@ -22,6 +34,9 @@ interface HomepageSection {
 	isActive: boolean;
 	productSource: string;
 	products: Product[];
+	selectedCategory?: number | { id: number; name: string } | null;
+	selectedSubcategory?: number | { id: number; name: string } | null;
+	selectedDeal?: number | { id: number; name?: string; title?: string } | null;
 }
 
 interface Category {
@@ -76,6 +91,156 @@ const AdminCatalog = () => {
 	const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<number>();
 	const [selectedDealId, setSelectedDealId] = useState<number>();
 	const [sectionToEdit, setSectiontoEdit] = useState<number>();
+
+	const getSelectionId = (
+		selection?: number | { id: number } | null
+	): number | undefined => {
+		if (!selection) return undefined;
+		return typeof selection === "number" ? selection : selection.id;
+	};
+
+	const getSelectionName = (
+		selection?: number | { id: number; name?: string; title?: string } | null,
+		options?: Array<{ id: number; name: string }>
+	): string => {
+		if (!selection) return "";
+		if (typeof selection === "number") {
+			return options?.find((item) => item.id === selection)?.name || "";
+		}
+		return (
+			selection.name ||
+			selection.title ||
+			options?.find((item) => item.id === selection.id)?.name ||
+			""
+		);
+	};
+
+	const resolveEditingDefaults = useCallback(
+		(section: HomepageSection) => {
+			const source = (section.productSource || "").toLowerCase();
+			let categoryId = getSelectionId(section.selectedCategory);
+			let subcategoryId = getSelectionId(section.selectedSubcategory);
+			const dealId = getSelectionId(section.selectedDeal);
+
+			let categoryName = getSelectionName(section.selectedCategory, categories);
+			let subcategoryName =
+				typeof section.selectedSubcategory === "object" &&
+				section.selectedSubcategory
+					? section.selectedSubcategory.name
+					: "";
+			let dealName = getSelectionName(section.selectedDeal, deals);
+
+			if (source === "manual" && section.products.length > 0) {
+				const firstProduct = section.products[0];
+				if (!subcategoryId && firstProduct?.subcategory?.id) {
+					subcategoryId = firstProduct.subcategory.id;
+				}
+				if (!subcategoryName && firstProduct?.subcategory?.name) {
+					subcategoryName = firstProduct.subcategory.name;
+				}
+				if (!categoryId && firstProduct?.subcategory?.category?.id) {
+					categoryId = firstProduct.subcategory.category.id;
+				}
+				if (!categoryName && firstProduct?.subcategory?.category?.name) {
+					categoryName = firstProduct.subcategory.category.name;
+				}
+
+				const selectedProductIds = new Set(
+					section.products.map((product) => product.id)
+				);
+				const matchedProduct = allProducts.find((product) =>
+					selectedProductIds.has(product.id)
+				);
+
+				if (!subcategoryId && matchedProduct?.subcategoryId) {
+					subcategoryId = matchedProduct.subcategoryId;
+				}
+				if (!subcategoryName && matchedProduct?.subcategoryName) {
+					subcategoryName = matchedProduct.subcategoryName;
+				}
+				if (!categoryId && matchedProduct?.categoryId) {
+					categoryId = matchedProduct.categoryId;
+				}
+				if (!categoryName && matchedProduct?.categoryName) {
+					categoryName = matchedProduct.categoryName;
+				}
+
+				if (!categoryId || !subcategoryId || !categoryName || !subcategoryName) {
+					for (const category of categories) {
+						const matchedSubcategory = category.subcategories.find((subcategory) =>
+							subcategory.products?.some((product) =>
+								selectedProductIds.has(product.id)
+							)
+						);
+
+						if (!matchedSubcategory) continue;
+
+						if (!categoryId) {
+							categoryId = category.id;
+						}
+						if (!categoryName) {
+							categoryName = category.name;
+						}
+						if (!subcategoryId) {
+							subcategoryId = matchedSubcategory.id;
+						}
+						if (!subcategoryName) {
+							subcategoryName = matchedSubcategory.name;
+						}
+						break;
+					}
+				}
+			}
+
+			if (!categoryName && categoryId) {
+				const matchedCategory = categories.find(
+					(category) => category.id === categoryId
+				);
+				if (matchedCategory) {
+					categoryName = matchedCategory.name;
+				}
+			}
+
+			if (subcategoryId) {
+				const parentCategory = categories.find((category) =>
+					category.subcategories.some(
+						(subcategory) => subcategory.id === subcategoryId
+					)
+				);
+				const matchedSubcategory = parentCategory?.subcategories.find(
+					(subcategory) => subcategory.id === subcategoryId
+				);
+
+				if (!subcategoryName && matchedSubcategory) {
+					subcategoryName = matchedSubcategory.name;
+				}
+				if (!categoryId && parentCategory) {
+					categoryId = parentCategory.id;
+				}
+				if (!categoryName && parentCategory) {
+					categoryName = parentCategory.name;
+				}
+			}
+
+			if (!dealName && dealId) {
+				const matchedDeal = deals.find((deal) => deal.id === dealId);
+				if (matchedDeal) {
+					dealName = matchedDeal.name;
+				}
+			}
+
+			return {
+				source,
+				categoryId,
+				subcategoryId,
+				dealId,
+				categoryName,
+				subcategoryName,
+				dealName,
+			};
+		},
+		[categories, deals, allProducts]
+	);
 
 	const handleProductSelect = (productId: number) => {
 		setSelectedProducts((prev) => {
@@ -142,13 +307,60 @@ const AdminCatalog = () => {
 			);
 			if (!response.ok) throw new Error("Failed to fetch products");
 			const data = await response.json();
-			const formattedProducts = data.data.map((item: any) => ({
-				id: item.id,
-				name: item.name,
-				title: item.name,
-				price: parseFloat(item.basePrice),
-				productImages: item.variants?.[0]?.variantImages || item.productImages,
-			}));
+			const formattedProducts = data.data.map((item: any) => {
+				const subcategoryIdValue = item?.subcategory?.id ?? item?.subcategoryId;
+				const categoryIdValue =
+					item?.category?.id ??
+					item?.categoryId ??
+					item?.subcategory?.category?.id ??
+					item?.subcategory?.categoryId;
+				const parsedSubcategoryId =
+					subcategoryIdValue !== undefined && subcategoryIdValue !== null
+						? Number(subcategoryIdValue)
+						: NaN;
+				const parsedCategoryId =
+					categoryIdValue !== undefined && categoryIdValue !== null
+						? Number(categoryIdValue)
+						: NaN;
+				const normalizedSubcategoryId =
+					Number.isFinite(parsedSubcategoryId) && parsedSubcategoryId > 0
+						? parsedSubcategoryId
+						: undefined;
+				const normalizedCategoryId =
+					Number.isFinite(parsedCategoryId) && parsedCategoryId > 0
+						? parsedCategoryId
+						: undefined;
+
+				return {
+					id: item.id,
+					name: item.name,
+					title: item.name,
+					price: parseFloat(item.basePrice),
+					productImages: item.variants?.[0]?.variantImages || item.productImages,
+					categoryId: normalizedCategoryId,
+					categoryName:
+						item?.category?.name || item?.subcategory?.category?.name || undefined,
+					subcategoryId: normalizedSubcategoryId,
+					subcategoryName: item?.subcategory?.name || undefined,
+					subcategory:
+						Number.isFinite(normalizedSubcategoryId) && item?.subcategory?.name
+							? {
+								id: normalizedSubcategoryId,
+								name: item.subcategory.name,
+								category:
+									Number.isFinite(normalizedCategoryId) &&
+									(item?.category?.name || item?.subcategory?.category?.name)
+										? {
+											id: normalizedCategoryId,
+											name:
+												item?.category?.name ||
+												item?.subcategory?.category?.name,
+									  }
+										: null,
+							  }
+							: undefined,
+				};
+			});
 			setAllProducts(formattedProducts);
 		} catch (err) {
 			toast.error("Failed to load products");
@@ -232,11 +444,19 @@ const AdminCatalog = () => {
 	const openHomepageModal = useCallback(
 		(section?: HomepageSection, show?: number) => {
 			if (section) {
+				const defaults = resolveEditingDefaults(section);
 				setEditingHomepage(section);
 				setModalTitle(section.title);
 				setModalIsActive(section.isActive);
 				setModalProductIds(section.products.map((p) => p.id));
 				setSelectedProducts(section.products.map((p) => p.id));
+				setSelectedProductSource(defaults.source);
+				setSelectedCategory(defaults.categoryName);
+				setSelectedSubcategory(defaults.subcategoryName);
+				setSelectedDeal(defaults.dealName);
+				setSelectedCategoryId(defaults.categoryId);
+				setSelectedSubcategoryId(defaults.subcategoryId);
+				setSelectedDealId(defaults.dealId);
 				setSectiontoEdit(section.id);
 			} else {
 				setEditingHomepage(null);
@@ -248,6 +468,9 @@ const AdminCatalog = () => {
 				setSelectedCategory("");
 				setSelectedSubcategory("");
 				setSelectedDeal("");
+				setSelectedCategoryId(undefined);
+				setSelectedSubcategoryId(undefined);
+				setSelectedDealId(undefined);
 			}
 			setProductSearchQuery("");
 			setDebouncedSearchQuery("");
@@ -258,8 +481,86 @@ const AdminCatalog = () => {
 				setShowHomepageModal(true);
 			}
 		},
-		[]
+		[resolveEditingDefaults]
 	);
+
+	useEffect(() => {
+		if (!editingHomepage || !showHomepageModal) return;
+
+		if (
+			(selectedProductSource || "").toLowerCase() === "manual" &&
+			!selectedCategory &&
+			modalProductIds.length > 0 &&
+			allProducts.length > 0
+		) {
+			const matchedProduct = allProducts.find((product) =>
+				modalProductIds.includes(product.id)
+			);
+
+			if (matchedProduct?.categoryName) {
+				setSelectedCategory(matchedProduct.categoryName);
+			}
+			if (matchedProduct?.categoryId && !selectedCategoryId) {
+				setSelectedCategoryId(matchedProduct.categoryId);
+			}
+			if (matchedProduct?.subcategoryName && !selectedSubcategory) {
+				setSelectedSubcategory(matchedProduct.subcategoryName);
+			}
+			if (matchedProduct?.subcategoryId && !selectedSubcategoryId) {
+				setSelectedSubcategoryId(matchedProduct.subcategoryId);
+			}
+		}
+
+		if (selectedCategoryId && !selectedCategory) {
+			const matchedCategory = categories.find(
+				(category) => category.id === selectedCategoryId
+			);
+			if (matchedCategory) {
+				setSelectedCategory(matchedCategory.name);
+			}
+		}
+
+		if (selectedSubcategoryId && !selectedSubcategory) {
+			const parentCategory = categories.find((category) =>
+				category.subcategories.some(
+					(subcategory) => subcategory.id === selectedSubcategoryId
+				)
+			);
+			const matchedSubcategory = parentCategory?.subcategories.find(
+				(subcategory) => subcategory.id === selectedSubcategoryId
+			);
+
+			if (matchedSubcategory) {
+				setSelectedSubcategory(matchedSubcategory.name);
+			}
+
+			if (parentCategory && !selectedCategory) {
+				setSelectedCategory(parentCategory.name);
+				setSelectedCategoryId(parentCategory.id);
+			}
+		}
+
+		if (selectedDealId && !selectedDeal) {
+			const matchedDeal = deals.find((deal) => deal.id === selectedDealId);
+			if (matchedDeal) {
+				setSelectedDeal(matchedDeal.name);
+			}
+		}
+	}, [
+		editingHomepage,
+		showHomepageModal,
+		selectedCategoryId,
+		selectedSubcategoryId,
+		selectedDealId,
+		selectedCategory,
+		selectedSubcategory,
+		selectedDeal,
+		selectedProductSource,
+		modalProductIds,
+		allProducts,
+		categories,
+		deals,
+	]);
 
 	const handleSaveHomepageSection = async () => {
 		try {
@@ -364,6 +665,9 @@ const AdminCatalog = () => {
 		setSelectedCategory("");
 		setSelectedSubcategory("");
 		setSelectedDeal("");
+		setSelectedCategoryId(undefined);
+		setSelectedSubcategoryId(undefined);
+		setSelectedDealId(undefined);
 		// Do not reset selectedProducts or modalProductIds to persist selections
 	};
 
@@ -372,8 +676,7 @@ const AdminCatalog = () => {
 		setSelectedCategory(value);
 
 		const category = categories.find((c) => c.name === value);
-		const id = category ? category.id : 0;
-		setSelectedCategoryId(id);
+		setSelectedCategoryId(category?.id);
 	};
 
 	const handleSubcategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -381,8 +684,7 @@ const AdminCatalog = () => {
 		setSelectedSubcategory(value);
 
 		const subcategory = getSubcategories().find((s) => s.name === value);
-		const id = subcategory ? subcategory.id : 0;
-		setSelectedSubcategoryId(id);
+		setSelectedSubcategoryId(subcategory?.id);
 	};
 
 	const handleDealChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -390,8 +692,7 @@ const AdminCatalog = () => {
 		setSelectedDeal(value);
 
 		const deal = deals.find((d) => d.name === value);
-		const id = deal ? deal.id : 0;
-		setSelectedDealId(id);
+		setSelectedDealId(deal?.id);
 	};
 
 	const getSubcategories = () => {

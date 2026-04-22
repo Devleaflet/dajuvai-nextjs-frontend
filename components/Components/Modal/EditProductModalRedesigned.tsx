@@ -29,6 +29,11 @@ interface EditProductModalProps {
   product: ApiProduct | null;
 }
 
+type VariantDraft = ProductVariant & {
+  discount?: number;
+  discountType?: 'PERCENTAGE' | 'FLAT' | '';
+};
+
 const EditProductModal: React.FC<EditProductModalProps> = ({
   show,
   onClose,
@@ -69,11 +74,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   const [selectedCategoryId, setSelectedCategoryId] = useState<number>(0);
 
   // Variant state
-  const [variants, setVariants] = useState<ProductVariant[]>([]);
-  const [newAttribute, setNewAttribute] = useState<Attribute>({
-    type: '',
-    values: [{ value: '', nestedAttributes: [] }]
-  });
+  const [variants, setVariants] = useState<VariantDraft[]>([]);
   // Global attribute specs for generating combinations
   const [attributeSpecs, setAttributeSpecs] = useState<Array<{ type: string; valuesText: string }>>([
     { type: '', valuesText: '' }
@@ -97,46 +98,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
       }
     }
     return unique;
-  };
-
-  // Format attributes safely for display to avoid [object Object]
-  const formatVariantAttributes = (attributes: any): string => {
-    if (!attributes) return '';
-    if (Array.isArray(attributes)) {
-      return attributes
-        .map((attr: any) => {
-          const label = String(attr?.type ?? attr?.attributeType ?? '').trim();
-          const valuesSrc = attr?.values ?? attr?.attributeValues ?? [];
-          const vals = (Array.isArray(valuesSrc) ? valuesSrc : [valuesSrc])
-            .map((v: any) => {
-              if (v == null) return '';
-              if (typeof v === 'object') return String(v.value ?? v.name ?? v.label ?? JSON.stringify(v));
-              return String(v);
-            })
-            .filter(Boolean);
-          return label && vals.length ? `${label}: ${vals.join(', ')}` : vals.join(', ');
-        })
-        .filter(Boolean)
-        .join(', ');
-    }
-    if (typeof attributes === 'object') {
-      return Object.entries(attributes)
-        .map(([key, value]) => {
-          if (value == null) return '';
-          if (Array.isArray(value)) {
-            const vals = value.map((v: any) => String(v?.value ?? v)).filter(Boolean);
-            return `${key}: ${vals.join(', ')}`;
-          }
-          if (typeof value === 'object') {
-            const val = (value as any).value ?? (value as any).name ?? '';
-            return val ? `${key}: ${String(val)}` : `${key}: ${JSON.stringify(value)}`;
-          }
-          return `${key}: ${String(value)}`;
-        })
-        .filter(Boolean)
-        .join(', ');
-    }
-    return String(attributes);
   };
 
   // Helper: compute cartesian product of attribute values
@@ -353,7 +314,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     };
 
     // Map API variants to ProductVariant interface
-    const mappedVariants: ProductVariant[] = fullProduct.variants && fullProduct.variants.length > 0
+    const mappedVariants: VariantDraft[] = fullProduct.variants && fullProduct.variants.length > 0
       ? fullProduct.variants.map((v: any) => {
         const imgs = v.variantImages || v.images || [];
         return ({
@@ -361,6 +322,8 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
           price: Number(v.basePrice || 0),
           stock: Number(v.stock || 0),
           status: v.status || InventoryStatus.AVAILABLE,
+          discount: Number(v.discount || 0),
+          discountType: (v.discountType || '') as VariantDraft['discountType'],
           attributes: normalizeVariantAttributes(v.attributes),
           images: imgs,
           variantImages: imgs,
@@ -443,11 +406,13 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   };
 
   const addVariant = () => {
-    const newVariant: ProductVariant = {
+    const newVariant: VariantDraft = {
       sku: `SKU-${variants.length + 1}`,
       price: 0,
       stock: 0,
       status: InventoryStatus.AVAILABLE,
+      discount: 0,
+      discountType: '',
       attributes: [],
       images: [],
       variantImages: []
@@ -459,38 +424,10 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     setVariants(variants.filter((_, i) => i !== index));
   };
 
-  const updateVariant = (index: number, field: keyof ProductVariant, value: any) => {
+  const updateVariant = (index: number, field: keyof VariantDraft, value: any) => {
     setVariants(variants.map((variant, i) =>
       i === index ? { ...variant, [field]: value } : variant
     ));
-  };
-
-  const addAttribute = (variantIndex: number) => {
-    if (newAttribute.type && newAttribute.values[0]?.value) {
-      const updatedVariants = [...variants];
-      const variant = updatedVariants[variantIndex];
-      if (!variant) return;
-
-      if (!variant.attributes) {
-        variant.attributes = [];
-      }
-      const normalized: Attribute = {
-        type: newAttribute.type,
-        values: newAttribute.values.map(v => ({ value: v.value, nestedAttributes: v.nestedAttributes || [] }))
-      };
-      variant.attributes.push(normalized);
-      setVariants(updatedVariants);
-      setNewAttribute({ type: '', values: [{ value: '', nestedAttributes: [] }] });
-    }
-  };
-
-  const removeAttribute = (variantIndex: number, attributeIndex: number) => {
-    const updatedVariants = [...variants];
-    const variant = updatedVariants[variantIndex];
-    if (!variant?.attributes) return;
-
-    variant.attributes.splice(attributeIndex, 1);
-    setVariants(updatedVariants);
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -680,11 +617,11 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
           );
 
           // Convert variants to match API structure
-          updatePayload.variants = variantsWithImageUrls.map((variant: ProductVariant) => ({
+          updatePayload.variants = variantsWithImageUrls.map((variant: VariantDraft) => ({
             sku: variant.sku,
             basePrice: variant.price,
-            discount: 0,
-            discountType: 'PERCENTAGE',
+            discount: Number(variant.discount || 0),
+            discountType: variant.discountType || 'PERCENTAGE',
             attributes: (variant.attributes || []).reduce((acc, attr) => {
               const key = attr.type?.trim().toLowerCase();
               const firstVal = attr.values && attr.values[0] ? attr.values[0].value : '';
@@ -1054,17 +991,17 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                       </div>
                     </React.Fragment>
                   ))}
-                  <div className="form-group full-width" style={{ display: 'flex', gap: 8 }}>
+                  <div className="form-group full-width variant-builder-actions">
                     <button
                       type="button"
-                      className="btn btn-secondary"
+                      className="btn btn-secondary variant-builder-button variant-builder-button--attribute"
                       onClick={() => setAttributeSpecs(prev => [...prev, { type: '', valuesText: '' }])}
                     >
                       + Add Attribute
                     </button>
                     <button
                       type="button"
-                      className="btn btn-primary"
+                      className="btn btn-primary variant-builder-button variant-builder-button--generate"
                       onClick={generateVariants}
                       disabled={!attributeSpecs.some(s => s.type.trim() && parseValues(s.valuesText).length > 0)}
                     >
@@ -1079,7 +1016,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                       <div className="variant-header">
                         <div className="variant-title">
                           <span className="variant-number">{index + 1}</span>
-                          {formatVariantAttributes(variant.attributes) || `Variant ${index + 1}`}
+                          <span className="variant-label-text">Variant {index + 1}</span>
                         </div>
                         {variants.length > 1 && (
                           <button
@@ -1131,71 +1068,52 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                             required
                           />
                         </div>
+                      </div>
+
+                      <div className="form-grid three-columns variant-discount-grid">
+                        <div className="form-group">
+                          <label className="form-label">Discount Amount</label>
+                          <input
+                            type="number"
+                            className="form-input"
+                            value={variant.discount ?? ''}
+                            onChange={(e) =>
+                              updateVariant(
+                                index,
+                                'discount',
+                                e.target.value === '' ? 0 : Number(e.target.value)
+                              )
+                            }
+                            placeholder=""
+                            min="0"
+                            step="0.01"
+                          />
+                        </div>
 
                         <div className="form-group">
-                          <label className="form-label required">Status</label>
+                          <label className="form-label">Discount Type</label>
                           <select
                             className="form-select"
-                            value={variant.status}
-                            onChange={(e) => updateVariant(index, 'status', e.target.value as InventoryStatus)}
-                            required
+                            value={variant.discountType || ''}
+                            onChange={(e) =>
+                              updateVariant(
+                                index,
+                                'discountType',
+                                (e.target.value || '') as VariantDraft['discountType']
+                              )
+                            }
                           >
-                            <option value={InventoryStatus.AVAILABLE}>Available</option>
-                            <option value={InventoryStatus.OUT_OF_STOCK}>Out of Stock</option>
-                            <option value={InventoryStatus.LOW_STOCK}>Low Stock</option>
+                            <option value="">No discount</option>
+                            <option value="PERCENTAGE">Percentage (%)</option>
+                            <option value="FLAT">Fixed Amount</option>
                           </select>
                         </div>
                       </div>
 
                       <div className="form-group full-width">
-                        <label className="form-label">Attributes</label>
-                        <input
-                          type="text"
-                          className="form-input"
-                          value={newAttribute.type}
-                          onChange={(e) => setNewAttribute({ ...newAttribute, type: e.target.value })}
-                          placeholder="Attribute Type (e.g., Color)"
-                        />
-                        <input
-                          type="text"
-                          className="form-input"
-                          value={newAttribute.values[0]?.value || ''}
-                          onChange={(e) => setNewAttribute({
-                            ...newAttribute,
-                            values: [{ value: e.target.value, nestedAttributes: [] }]
-                          })}
-                          placeholder="Attribute Value (e.g., Red)"
-                        />
-                        <button
-                          type="button"
-                          className="btn btn-add"
-                          onClick={() => addAttribute(index)}
-                          disabled={!newAttribute.type || !newAttribute.values[0]?.value}
-                        >
-                          Add Attribute
-                        </button>
-                        {variant.attributes && variant.attributes.length > 0 && (
-                          <div className="attribute-tags">
-                            {variant.attributes.map((attr, attrIndex) => (
-                              <div key={attrIndex} className="attribute-tag">
-                                {attr.type}: {attr.values.map(v => v.value).join(', ')}
-                                <button
-                                  type="button"
-                                  className="attribute-remove"
-                                  onClick={() => removeAttribute(index, attrIndex)}
-                                >
-                                  ×
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="form-group full-width">
                         <label className="form-label">Variant Images</label>
                         <div
-                          className="image-upload-container"
+                          className="image-upload-container variant-image-upload"
                           onClick={() => document.getElementById(`variant-image-${index}`)?.click()}
                         >
                           <div className="upload-icon">
@@ -1239,13 +1157,13 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
 
                 <button
                   type="button"
-                  className="btn btn-add"
+                  className="variant-add-button"
                   onClick={addVariant}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L12 2L3 7V9C3 14.55 6.84 19.74 12 21C17.16 19.74 21 14.55 21 9Z" />
                   </svg>
-                  Add Another Variant
+                  <span>Add Another Variant</span>
                 </button>
               </div>
             )}

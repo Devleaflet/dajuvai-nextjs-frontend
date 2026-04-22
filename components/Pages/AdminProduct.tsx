@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Pagination from "@/components/Components/Pagination";
 import DeleteModal from "@/components/Components/Modal/DeleteModal";
 import EditProductModal from "@/components/Components/Modal/EditProductModalRedesigned";
@@ -24,6 +24,104 @@ type AdminProductRecord = ApiProduct & {
   discountPercent?: number | string | null;
   vendorName?: string;
   vendor?: ApiProduct["vendor"] & { name?: string };
+};
+
+type VendorOption = {
+  id?: number;
+  value: string;
+  label: string;
+};
+
+const buildVendorOptionsFromProducts = (items: ApiProduct[]): VendorOption[] => {
+  const options = new Map<string, VendorOption>();
+
+  items.forEach((item) => {
+    const productRecord = item as AdminProductRecord;
+    const vendorId =
+      typeof item.vendorId === "number"
+        ? item.vendorId
+        : typeof productRecord.vendor?.id === "number"
+          ? productRecord.vendor.id
+          : undefined;
+
+    const vendorLabel =
+      item.vendor?.businessName ||
+      productRecord.vendor?.name ||
+      productRecord.vendorName ||
+      "";
+
+    const normalizedLabel = vendorLabel.trim();
+    if (!normalizedLabel) return;
+
+    const value =
+      typeof vendorId === "number" && vendorId > 0
+        ? `id:${vendorId}`
+        : `name:${normalizedLabel}`;
+
+    if (!options.has(value)) {
+      const option: VendorOption = {
+        value,
+        label: normalizedLabel,
+      };
+
+      if (typeof vendorId === "number" && vendorId > 0) {
+        option.id = vendorId;
+      }
+
+      options.set(value, option);
+    }
+  });
+
+  return Array.from(options.values()).sort((a, b) =>
+    a.label.localeCompare(b.label)
+  );
+};
+
+const buildVendorOptionsFromResponse = (payload: unknown): VendorOption[] => {
+  const response = payload as {
+    data?:
+      | Array<{ id?: number; businessName?: string; name?: string }>
+      | {
+        vendors?: Array<{ id?: number; businessName?: string; name?: string }>;
+      };
+    vendors?: Array<{ id?: number; businessName?: string; name?: string }>;
+  };
+
+  const rawVendors = Array.isArray(response?.data)
+    ? response.data
+    : Array.isArray(response?.vendors)
+      ? response.vendors
+      : Array.isArray(response?.data?.vendors)
+        ? response.data.vendors
+        : [];
+
+  const uniqueOptions = new Map<string, VendorOption>();
+
+  rawVendors.forEach((vendor) => {
+    const vendorId =
+      typeof vendor?.id === "number" && vendor.id > 0 ? vendor.id : undefined;
+    const vendorLabel =
+      (vendor?.businessName || vendor?.name || "").toString().trim();
+
+    if (!vendorLabel) return;
+
+    const option: VendorOption = {
+      value: vendorId ? `id:${vendorId}` : `name:${vendorLabel}`,
+      label: vendorLabel,
+    };
+
+    if (vendorId) {
+      option.id = vendorId;
+    }
+
+    if (!uniqueOptions.has(option.value)) {
+      uniqueOptions.set(option.value, option);
+    }
+  });
+
+  return Array.from(uniqueOptions.values()).sort((a, b) =>
+    a.label.localeCompare(b.label)
+  );
 };
 
 const SkeletonRow: React.FC = () => (
@@ -61,10 +159,62 @@ const formatRelativeDate = (value?: string) => {
   return formatter.format(diffInSeconds, "second");
 };
 
+const getDisplayPrice = (product: ApiProduct): number => {
+  if (product.basePrice) {
+    const price = typeof product.basePrice === "number"
+      ? product.basePrice
+      : parseFloat(product.basePrice as string);
+    if (!Number.isNaN(price) && price > 0) return price;
+  }
+
+  if (product.price) {
+    const price = typeof product.price === "number"
+      ? product.price
+      : parseFloat(product.price as string);
+    if (!Number.isNaN(price) && price > 0) return price;
+  }
+
+  if (product.variants && product.variants.length > 0) {
+    for (const variant of product.variants) {
+      const price = typeof variant.price === "number"
+        ? variant.price
+        : parseFloat(variant.price as string);
+      if (!Number.isNaN(price) && price > 0) return price;
+    }
+  }
+
+  return 0;
+};
+
+const getDisplayStock = (product: ApiProduct): number => {
+  if (product.stock !== undefined) {
+    const stock = typeof product.stock === "number"
+      ? product.stock
+      : parseInt(product.stock as string, 10);
+    if (!Number.isNaN(stock) && stock >= 0) return stock;
+  }
+
+  if (product.variants && product.variants.length > 0) {
+    for (const variant of product.variants) {
+      const stock = typeof variant.stock === "number"
+        ? variant.stock
+        : parseInt(variant.stock as string, 10);
+      if (!Number.isNaN(stock) && stock >= 0) return stock;
+    }
+  }
+
+  return 0;
+};
+
+const getDisplayStatus = (product: ApiProduct): string => {
+  const rawStatus = String(product.status || "").trim().toUpperCase();
+  if (rawStatus) return rawStatus;
+  return getDisplayStock(product) > 0 ? "AVAILABLE" : "OUT_OF_STOCK";
+};
+
 const AdminProduct: React.FC = () => {
   const { token, isAuthenticated } = useAuth();
   const [products, setProducts] = useState<ApiProduct[]>([]);
-  const [totalProducts, setTotalProducts] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(7);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -74,6 +224,7 @@ const AdminProduct: React.FC = () => {
   const [sortOption, setSortOption] = useState<string>("newest");
   const [filterOption, setFilterOption] = useState<string>("all");
   const [vendorFilter, setVendorFilter] = useState<string>("all");
+  const [vendorOptions, setVendorOptions] = useState<VendorOption[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [searchInput, setSearchInput] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -97,16 +248,15 @@ const AdminProduct: React.FC = () => {
     setError(null);
 
     try {
-      const queryParams = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: productsPerPage.toString(),
-        sort: SORT_QUERY_MAP[sortOption] || "newest",
-        ...(filterOption !== "all" && { filter: filterOption }),
-        ...(vendorFilter !== "all" && { vendor: vendorFilter }),
-        ...(searchQuery && { search: searchQuery }),
-      });
+      const queryParams = new URLSearchParams();
+      queryParams.set("page", "1");
+      queryParams.set("limit", "500");
 
-      const response = await fetch(`${API_BASE_URL}/api/product/admin/products?${queryParams}`, {
+      if (searchQuery.trim()) {
+        queryParams.set("search", searchQuery.trim());
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/categories/all/products?${queryParams}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -119,8 +269,18 @@ const AdminProduct: React.FC = () => {
       const data = await response.json();
 
       if (data.success) {
-        setProducts(data.data.products);
-        setTotalProducts(data.data.total);
+        const fetchedProducts = Array.isArray(data?.data)
+          ? (data.data as ApiProduct[])
+          : [];
+
+        setProducts(fetchedProducts);
+
+        const fallbackOptions = buildVendorOptionsFromProducts(fetchedProducts);
+        if (fallbackOptions.length > 0) {
+          setVendorOptions((current) =>
+            current.length > 0 ? current : fallbackOptions
+          );
+        }
       } else {
         throw new Error(data.message || "Failed to fetch products");
       }
@@ -132,11 +292,126 @@ const AdminProduct: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [token, isAuthenticated, currentPage, productsPerPage, sortOption, filterOption, vendorFilter, searchQuery]);
+  }, [token, isAuthenticated, searchQuery]);
 
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
+
+  useEffect(() => {
+    if (!token || !isAuthenticated) return;
+
+    let active = true;
+
+    const fetchVendors = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/vendors`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        });
+
+        if (!response.ok) return;
+
+        const data = await response.json();
+        const options = buildVendorOptionsFromResponse(data);
+
+        if (active && options.length > 0) {
+          setVendorOptions(options);
+        }
+      } catch (err) {
+        console.error("Failed to fetch vendor options:", err);
+      }
+    };
+
+    fetchVendors();
+
+    return () => {
+      active = false;
+    };
+  }, [token, isAuthenticated]);
+
+  const vendorNameById = useMemo(() => {
+    const map = new Map<number, string>();
+
+    vendorOptions.forEach((vendor) => {
+      if (typeof vendor.id === "number" && vendor.id > 0) {
+        map.set(vendor.id, vendor.label);
+      }
+    });
+
+    return map;
+  }, [vendorOptions]);
+
+  const filteredProducts = useMemo(() => {
+    const filtered = products.filter((product) => {
+      if (filterOption === "out_of_stock") {
+        const status = getDisplayStatus(product);
+        const stock = getDisplayStock(product);
+        if (status !== "OUT_OF_STOCK" && stock > 0) {
+          return false;
+        }
+      }
+
+      if (vendorFilter !== "all") {
+        const productRecord = product as AdminProductRecord;
+        const vendorId =
+          typeof product.vendorId === "number"
+            ? product.vendorId
+            : typeof productRecord.vendor?.id === "number"
+              ? productRecord.vendor.id
+              : undefined;
+
+        const vendorName =
+          product.vendor?.businessName ||
+          productRecord.vendor?.name ||
+          productRecord.vendorName ||
+          "";
+
+        if (vendorFilter.startsWith("id:")) {
+          if (String(vendorId) !== vendorFilter.replace("id:", "")) {
+            return false;
+          }
+        } else if (vendorFilter.startsWith("name:")) {
+          if (vendorName.trim().toLowerCase() !== vendorFilter.replace("name:", "").toLowerCase()) {
+            return false;
+          }
+        }
+      }
+
+      return true;
+    });
+
+    return filtered.sort((a, b) => {
+      if (sortOption === "oldest") {
+        return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
+      }
+
+      if (sortOption === "price-asc") {
+        return getDisplayPrice(a) - getDisplayPrice(b);
+      }
+
+      if (sortOption === "price-desc") {
+        return getDisplayPrice(b) - getDisplayPrice(a);
+      }
+
+      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+    });
+  }, [products, filterOption, vendorFilter, sortOption]);
+
+  const visibleTotalProducts = filteredProducts.length;
+  const totalPages = Math.max(1, Math.ceil(visibleTotalProducts / productsPerPage));
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * productsPerPage;
+    return filteredProducts.slice(startIndex, startIndex + productsPerPage);
+  }, [filteredProducts, currentPage, productsPerPage]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const handleSaveProduct = useCallback(
     async (...args: [number, ProductFormData, number, number]) => {
@@ -221,6 +496,11 @@ const AdminProduct: React.FC = () => {
     );
   }
 
+  const showingFrom = visibleTotalProducts === 0 ? 0 : (currentPage - 1) * productsPerPage + 1;
+  const showingTo = visibleTotalProducts === 0
+    ? 0
+    : Math.min(currentPage * productsPerPage, visibleTotalProducts);
+
   return (
     <div className="admin-products">
       <div className="admin-products__content">
@@ -270,10 +550,7 @@ const AdminProduct: React.FC = () => {
             onChange={(e) => handleFilter(e.target.value)}
           >
             <option value="all">All Products</option>
-            <option value="in_stock">In Stock</option>
             <option value="out_of_stock">Out of Stock</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
           </select>
 
           <select
@@ -282,6 +559,11 @@ const AdminProduct: React.FC = () => {
             onChange={(e) => handleVendorFilter(e.target.value)}
           >
             <option value="all">All vendors</option>
+            {vendorOptions.map((vendor) => (
+              <option key={vendor.value} value={vendor.value}>
+                {vendor.label}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -289,7 +571,7 @@ const AdminProduct: React.FC = () => {
           <div className="admin-products__header">
             <h2>Product Management</h2>
             <div className="admin-products__stats">
-              <span>Total: {totalProducts} products</span>
+              <span>Total: {visibleTotalProducts} products</span>
             </div>
           </div>
 
@@ -314,59 +596,11 @@ const AdminProduct: React.FC = () => {
                   [...Array(productsPerPage)].map((_, i) => (
                     <SkeletonRow key={i} />
                   ))
-                ) : products.length > 0 ? (
-                  products.map((product) => {
+                ) : filteredProducts.length > 0 ? (
+                  paginatedProducts.map((product) => {
                     const productRecord = product as AdminProductRecord;
-
-                    const getDisplayPrice = (): number => {
-                      if (product.basePrice) {
-                        const price = typeof product.basePrice === "number"
-                          ? product.basePrice
-                          : parseFloat(product.basePrice as string);
-                        if (!Number.isNaN(price) && price > 0) return price;
-                      }
-
-                      if (product.price) {
-                        const price = typeof product.price === "number"
-                          ? product.price
-                          : parseFloat(product.price as string);
-                        if (!Number.isNaN(price) && price > 0) return price;
-                      }
-
-                      if (product.variants && product.variants.length > 0) {
-                        for (const variant of product.variants) {
-                          const price = typeof variant.price === "number"
-                            ? variant.price
-                            : parseFloat(variant.price as string);
-                          if (!Number.isNaN(price) && price > 0) return price;
-                        }
-                      }
-
-                      return 0;
-                    };
-
-                    const getDisplayStock = (): number => {
-                      if (product.stock !== undefined) {
-                        const stock = typeof product.stock === "number"
-                          ? product.stock
-                          : parseInt(product.stock as string, 10);
-                        if (!Number.isNaN(stock) && stock >= 0) return stock;
-                      }
-
-                      if (product.variants && product.variants.length > 0) {
-                        for (const variant of product.variants) {
-                          const stock = typeof variant.stock === "number"
-                            ? variant.stock
-                            : parseInt(variant.stock as string, 10);
-                          if (!Number.isNaN(stock) && stock >= 0) return stock;
-                        }
-                      }
-
-                      return 0;
-                    };
-
-                    const displayPrice = getDisplayPrice();
-                    const displayStock = getDisplayStock();
+                    const displayPrice = getDisplayPrice(product);
+                    const displayStock = getDisplayStock(product);
                     const variantCount = product.variants?.length ?? 0;
 
                     const firstVariant =
@@ -388,10 +622,9 @@ const AdminProduct: React.FC = () => {
                     const displayImage =
                       product.productImages?.[0] || variantImage || "/assets/logo.webp";
 
-                    const statusLabel = (
-                      product.status ||
-                      (displayStock > 0 ? "AVAILABLE" : "OUT_OF_STOCK")
-                    ).replace(/\s+/g, "_").toUpperCase();
+                    const statusLabel = getDisplayStatus(product)
+                      .replace(/\s+/g, "_")
+                      .toUpperCase();
 
                     const discount = product.discount ?? productRecord.discountPercent ?? null;
                     const numericDiscount = discount == null ? NaN : Number(discount);
@@ -406,10 +639,20 @@ const AdminProduct: React.FC = () => {
                       productRecord.createdAt || product.created_at
                     );
 
+                    const fallbackVendorId =
+                      typeof product.vendorId === "number"
+                        ? product.vendorId
+                        : typeof productRecord.vendor?.id === "number"
+                          ? productRecord.vendor.id
+                          : undefined;
+
                     const vendorName =
                       product.vendor?.businessName ||
                       productRecord.vendor?.name ||
                       productRecord.vendorName ||
+                      (typeof fallbackVendorId === "number"
+                        ? vendorNameById.get(fallbackVendorId)
+                        : undefined) ||
                       "-";
 
                     return (
@@ -483,8 +726,8 @@ const AdminProduct: React.FC = () => {
                 ) : (
                   <tr>
                     <td colSpan={10} className="admin-products__no-data">
-                      {filterOption !== "all"
-                        ? `No products found with filter: ${filterOption}`
+                      {searchQuery || filterOption !== "all" || vendorFilter !== "all"
+                        ? "No products match the current search/filter."
                         : "No products found"}
                     </td>
                   </tr>
@@ -495,11 +738,11 @@ const AdminProduct: React.FC = () => {
 
           <div className="admin-products__pagination-container">
             <div className="admin-products__pagination-info">
-              Page {currentPage} of {Math.max(1, Math.ceil(totalProducts / productsPerPage))}
+              Showing {showingFrom}-{showingTo} out of {visibleTotalProducts}
             </div>
             <Pagination
               currentPage={currentPage}
-              totalPages={Math.ceil(totalProducts / productsPerPage)}
+              totalPages={totalPages}
               onPageChange={setCurrentPage}
             />
           </div>
@@ -523,6 +766,9 @@ const AdminProduct: React.FC = () => {
         }}
         onDelete={handleDeleteProduct}
         productName={productToDelete?.name || "Product"}
+        title="Delete Product"
+        description="This will permanently remove the product and all its images. This action cannot be undone."
+        isDeleting={isDeleting}
       />
     </div>
   );
