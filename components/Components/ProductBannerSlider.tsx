@@ -151,7 +151,9 @@ const ProductBannerSlider: React.FC<ProductBannerSliderProps> = ({ onLoad }) => 
 
   if (isLoading) return <SliderSkeleton />;
   if (error) return <div>Error loading banners: {error.message}</div>;
-  if (slides.length === 0) return <div>No product banners available</div>;
+  if (slides.length === 0) {
+    return <div style={{ textAlign: 'center', padding: '12px 0' }}>No product banners available</div>;
+  }
 
   return (
     <div

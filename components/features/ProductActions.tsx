@@ -42,6 +42,7 @@ const ProductActions: React.FC<ProductActionsProps> = ({
       {!cartOpen && (
         <>
           <button
+            type="button"
             className="product-card__wishlist-button"
             aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
             onClick={handleWishlistClick}
@@ -58,12 +59,16 @@ const ProductActions: React.FC<ProductActionsProps> = ({
             </svg>
           </button>
 
-          <div className="product-card__cart-button">
+          <button
+            type="button"
+            className="product-card__cart-button"
+            aria-label="Add to cart"
+            onClick={handleCartClick}
+          >
             <FaCartPlus
               style={{ color: '#ea5f0a', width: '18px', height: '18px' }}
-              onClick={handleCartClick}
             />
-          </div>
+          </button>
         </>
       )}
     </>
