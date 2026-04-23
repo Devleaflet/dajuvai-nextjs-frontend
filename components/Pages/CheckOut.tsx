@@ -194,6 +194,7 @@ const Checkout: React.FC = () => {
 	const [promoError, setPromoError] = useState('');
 	const [provinceData, setProvinceData] = useState<string[]>([]);
 	const [districtData, setDistrictData] = useState<string[]>([]);
+	const [isSavingBillingDetails, setIsSavingBillingDetails] = useState(false);
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -214,8 +215,15 @@ const Checkout: React.FC = () => {
 		return string.charAt(0).toUpperCase() + string.slice(1);
 	}
 
+	function normalizeProvinceValue(province: string) {
+		if (province.toLowerCase() === 'koshi province') {
+			return 'Pradesh-1';
+		}
+		return province;
+	}
+
 	function getProvinceLabel(province: string) {
-		if (province.toLowerCase() === 'pradesh-1') {
+		if (normalizeProvinceValue(province).toLowerCase() === 'pradesh-1') {
 			return 'Koshi Province';
 		}
 		return province;
@@ -223,8 +231,9 @@ const Checkout: React.FC = () => {
 
 	async function fetchDistricts(province: string) {
 		try {
+			const normalizedProvince = normalizeProvinceValue(province);
 			const districtResponse = await fetch(
-				`/Nepal-Address-API-main/data/districtsByProvince/${province.toLowerCase()}.json`
+				`/Nepal-Address-API-main/data/districtsByProvince/${normalizedProvince.toLowerCase()}.json`
 			);
 			const data = await districtResponse.json();
 			setDistrictData(data.districts.map(capitalizeFirstLetter));
@@ -290,7 +299,7 @@ const Checkout: React.FC = () => {
 				return '';
 			case 'province':
 				if (!value.trim()) return 'Province is required';
-				if (!provinceData.includes(value))
+				if (!provinceData.includes(normalizeProvinceValue(value)))
 					return 'Please select a valid province';
 				return '';
 			case 'district':
@@ -333,6 +342,8 @@ const Checkout: React.FC = () => {
 			filteredValue = value.replace(/\D/g, '').slice(0, 10);
 		} else if (name === 'fullName' || name === 'city') {
 			filteredValue = value.replace(/[^a-zA-Z\s]/g, '');
+		} else if (name === 'province') {
+			filteredValue = normalizeProvinceValue(value);
 		}
 		setBillingDetails((prev) => ({ ...prev, [name]: filteredValue }));
 		if (touched[name] || errors[name]) {
@@ -422,7 +433,7 @@ const Checkout: React.FC = () => {
 			if (data.success && data.data) {
 				const newBillingDetails = {
 					fullName: data.data.fullName || '',
-					province: data.data.address?.province || '',
+					province: normalizeProvinceValue(data.data.address?.province || ''),
 					district: data.data.address?.district || '',
 					landmark: data.data.address?.landmark || '',
 					streetAddress: data.data.address?.localAddress || '',
@@ -463,8 +474,7 @@ const Checkout: React.FC = () => {
 		}
 	}, [user?.id, token]);
 
-	const handlePlaceOrder = async () => {
-		// Validate all fields
+	const validateBillingDetailsForm = () => {
 		const newErrors: Record<string, string> = {};
 		const newTouched: Record<string, boolean> = {};
 		let isValid = true;
@@ -482,7 +492,70 @@ const Checkout: React.FC = () => {
 		setErrors((prev) => ({ ...prev, ...newErrors }));
 		setTouched((prev) => ({ ...prev, ...newTouched }));
 
-		if (!isValid) {
+		return isValid;
+	};
+
+	const handleSaveBillingDetails = async () => {
+		if (!validateBillingDetailsForm()) {
+			setAlertMessage('Please correct the errors in the billing form before saving.');
+			setShowAlert(true);
+			return;
+		}
+
+		if (!user?.id) {
+			setAlertMessage('Please sign in to save your billing details.');
+			setShowAlert(true);
+			return;
+		}
+
+		setIsSavingBillingDetails(true);
+
+		try {
+			const headers: Record<string, string> = {
+				Accept: 'application/json',
+				'Content-Type': 'application/json',
+			};
+			if (token) {
+				headers.Authorization = `Bearer ${token}`;
+			}
+
+			const response = await fetch(`${API_BASE_URL}/api/auth/users/${user.id}`, {
+				method: 'PUT',
+				headers,
+				credentials: 'include',
+				body: JSON.stringify({
+					fullName: billingDetails.fullName,
+					phoneNumber: billingDetails.phoneNumber,
+					address: {
+						province: normalizeProvinceValue(billingDetails.province),
+						district: billingDetails.district,
+						city: billingDetails.city,
+						localAddress: billingDetails.streetAddress,
+						landmark: billingDetails.landmark || '',
+					},
+				}),
+			});
+
+			const result = await response.json();
+
+			if (response.ok && result.success) {
+				setAlertMessage('Billing details saved successfully.');
+				setShowAlert(true);
+			} else {
+				setAlertMessage(result.message || 'Failed to save billing details.');
+				setShowAlert(true);
+			}
+		} catch (error) {
+			console.error('Error saving billing details:', error);
+			setAlertMessage('An error occurred while saving billing details.');
+			setShowAlert(true);
+		} finally {
+			setIsSavingBillingDetails(false);
+		}
+	};
+
+	const handlePlaceOrder = async () => {
+		if (!validateBillingDetailsForm()) {
 			setAlertMessage(
 				'Please correct the errors in the form before submitting.'
 			);
@@ -1244,8 +1317,10 @@ const Checkout: React.FC = () => {
 						<button
 							type="button"
 							className="checkout-container__save-billing-btn"
+							onClick={handleSaveBillingDetails}
+							disabled={isSavingBillingDetails}
 						>
-							Save Billing Details
+							{isSavingBillingDetails ? 'Saving Billing Details...' : 'Save Billing Details'}
 						</button>
 
 						<div className="checkout-container__promo-section-left">

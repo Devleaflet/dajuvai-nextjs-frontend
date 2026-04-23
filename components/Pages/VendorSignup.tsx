@@ -175,6 +175,13 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 		return string.charAt(0).toUpperCase() + string.slice(1);
 	}
 
+	function getProvinceLabel(province: string) {
+		if (province.toLowerCase() === "pradesh-1") {
+			return "Koshi Province";
+		}
+		return province;
+	}
+
 	async function fetchDistricts(province: string) {
 		try {
 			setIsLoading(true);
@@ -1508,7 +1515,7 @@ const VendorSignup: React.FC<VendorSignupProps> = ({ isOpen, onClose }) => {
 															key={p}
 															value={p}
 														>
-															{p}
+															{getProvinceLabel(p)}
 														</option>
 													))}
 												</select>

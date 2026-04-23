@@ -130,6 +130,13 @@ const UserProfile: React.FC = () => {
 		return string.charAt(0).toUpperCase() + string.slice(1);
 	}
 
+	function getProvinceLabel(province: string) {
+		if (province.toLowerCase() === "pradesh-1") {
+			return "Koshi Province";
+		}
+		return province;
+	}
+
 	const fetchDistricts = useCallback(async (province: string) => {
 		if (!province) {
 			setDistrictData([]);
@@ -769,12 +776,16 @@ const UserProfile: React.FC = () => {
 										key={p}
 										value={p}
 									>
-										{p}
+										{getProvinceLabel(p)}
 									</option>
 								))}
 							</select>
 						) : (
-							<div>{userDetails.address.province || "Not provided"}</div>
+							<div>
+								{userDetails.address.province
+									? getProvinceLabel(userDetails.address.province)
+									: "Not provided"}
+							</div>
 						)}
 					</div>
 					<div className="profile-form__group profile-form__group--half">
