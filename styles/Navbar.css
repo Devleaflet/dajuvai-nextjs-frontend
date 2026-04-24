@@ -124,8 +124,9 @@
 
 .navbar__search {
 	position: relative;
-	width: 100%;
+	width: 90%;
 	max-width: 600px;
+	
 }
 
 .navbar__search-form {

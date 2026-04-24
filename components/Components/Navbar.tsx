@@ -1039,7 +1039,7 @@ const Navbar: React.FC = () => {
 						>
 							<form
 			onSubmit={handleSearch}
-			className="relative w-full max-w-[720px] lg:ml-8 group"
+			className="relative w-full max-w-[716px] lg:ml-8 group"
 		>
 			{/* Input field */}
 			<input
@@ -1050,7 +1050,7 @@ const Navbar: React.FC = () => {
 				onKeyDown={handleKeyDown}
 				onClick={() => setIsLifted(true)}
 				onBlur={() => setIsLifted(false)}
-				className={`w-full h-[48px] px-8 pr-16 rounded-[24px] border border-[#d1d5db] shadow-[0_2px_7px_rgba(15,23,42,0.08)]
+				className={`w-full h-[44px] px-8 pr-[108px] rounded-[24px] border border-[#d1d5db] shadow-[0_2px_7px_rgba(15,23,42,0.08)]
 					focus:border-[#c7ccd4] focus:outline-none outline-none
 					hover:border-[#c7ccd4]
 					transition-all duration-300 ease-in-out bg-[#f5f6f8] text-[1rem]
@@ -1059,16 +1059,17 @@ const Navbar: React.FC = () => {
 			/>
 			
 			{/* Search button */}
-			<button
-				type="submit"
-				className={`absolute right-[6px] top-1/2 -translate-y-1/2 
-					bg-orange-500 hover:bg-orange-600 
-					text-white rounded-full w-[38px] h-[38px]
-					transition-all duration-300
-					flex items-center justify-center`}
-			>
-				<FaSearch className="w-[18px] h-[18px]" />
-			</button>
+<button
+	type="submit"
+	className="absolute right-[6px] top-1/2 -translate-y-1/2 
+	bg-orange-500 hover:bg-orange-600 
+	text-white h-[32px] w-[105px] px-4 rounded-full
+	transition-all duration-300
+	flex items-center justify-center gap-2 text-sm font-medium overflow-hidden"
+>
+	<span>Search</span>
+	<FaSearch className="w-[18px] h-[18px]" />
+</button>
 		</form>
 							{showSearchDropdown && (
 								<div className="navbar__search-dropdown">

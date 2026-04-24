@@ -143,6 +143,7 @@
     font-weight: 500 !important;
     line-height: 1 !important;
     padding: 0 1rem !important;
+    
 }
 
 .shop-products .shop-filter-view-more:hover:not(:disabled) {
