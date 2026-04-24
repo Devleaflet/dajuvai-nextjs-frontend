@@ -195,16 +195,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
  
 		// Navigate to product page
 		router.push(`/product/${product.id}`);
- 
-		// Force scroll to top on next tick
-		setTimeout(() => {
-			window.scrollTo(0, 0);
-		}, 0);
- 
-		// Extra insurance: also after a tiny delay
-		setTimeout(() => {
-			window.scrollTo(0, 0);
-		}, 100);
 	}, [product.id, router]);
  
 	// Memoize wishlist handler

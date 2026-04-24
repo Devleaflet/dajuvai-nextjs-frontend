@@ -825,7 +825,7 @@ const Shop: React.FC = () => {
 			else newSearchParams.delete('bannerId');
 
 			newSearchParams.delete('search');
-			router.push(`?${newSearchParams.toString()}`);
+			router.push(`?${newSearchParams.toString()}`, { scroll: false });
 		};
 
 		window.addEventListener('shopFiltersChanged', handleShopFiltersChanged as EventListener);
@@ -943,7 +943,7 @@ const Shop: React.FC = () => {
 		setSelectedBannerId(undefined);
 		newSearchParams.delete('search');
 		newSearchParams.set('page', '1');
-		router.push(`?${newSearchParams.toString()}`);
+		router.push(`?${newSearchParams.toString()}`, { scroll: false });
 		setCurrentPage(1);
 	};
 
@@ -954,7 +954,7 @@ const Shop: React.FC = () => {
 		newSearchParams.delete('bannerId');
 		setSelectedBannerId(undefined);
 		newSearchParams.set('page', '1');
-		router.push(`?${newSearchParams.toString()}`);
+		router.push(`?${newSearchParams.toString()}`, { scroll: false });
 		setCurrentPage(1);
 	};
 
@@ -964,7 +964,7 @@ const Shop: React.FC = () => {
 		if (newSort && newSort !== 'all') newSearchParams.set('sort', newSort);
 		else newSearchParams.delete('sort');
 		newSearchParams.set('page', '1');
-		router.push(`?${newSearchParams.toString()}`);
+		router.push(`?${newSearchParams.toString()}`, { scroll: false });
 		setCurrentPage(1);
 	};
 
@@ -974,7 +974,7 @@ const Shop: React.FC = () => {
 		setCategorySearch('');
 		setSubcategorySearch('');
 		setSelectedBannerId(undefined);
-		router.push(`?`);
+		router.push(`?`, { scroll: false });
 		setCurrentPage(1);
 		setIsMobileFilterOpen(false);
 	};
@@ -994,7 +994,7 @@ const Shop: React.FC = () => {
 		newSearchParams.delete('bannerId');
 		setSelectedBannerId(undefined);
 		newSearchParams.set('page', '1');
-		router.push(`?${newSearchParams.toString()}`);
+		router.push(`?${newSearchParams.toString()}`, { scroll: false });
 		setCurrentPage(1);
 	};
 
@@ -1003,7 +1003,7 @@ const Shop: React.FC = () => {
 		const newSearchParams = new URLSearchParams(searchParams);
 		newSearchParams.delete('search');
 		newSearchParams.set('page', '1');
-		router.push(`?${newSearchParams.toString()}`);
+		router.push(`?${newSearchParams.toString()}`, { scroll: false });
 	};
 
 	const getCurrentCategoryName = (): string => {
