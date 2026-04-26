@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
+import "quill/dist/quill.snow.css";
 import "./globals.css";
 import { Providers } from "./providers";
 

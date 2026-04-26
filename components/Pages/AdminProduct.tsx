@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Pagination from "@/components/Components/Pagination";
 import DeleteModal from "@/components/Components/Modal/DeleteModal";
+import AdminAddProductModal from "@/components/Components/Modal/AdminAddProductModal";
 import EditProductModal from "@/components/Components/Modal/EditProductModalRedesigned";
 import { useAuth } from "@/lib/context/AuthContext";
 import ProductService from "@/lib/services/productService";
@@ -217,6 +218,7 @@ const AdminProduct: React.FC = () => {
   const [products, setProducts] = useState<ApiProduct[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(7);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [productToDelete, setProductToDelete] = useState<ApiProduct | null>(null);
@@ -229,6 +231,7 @@ const AdminProduct: React.FC = () => {
   const [searchInput, setSearchInput] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -433,6 +436,31 @@ const AdminProduct: React.FC = () => {
     [fetchProducts]
   );
 
+  const handleAddProduct = useCallback(
+    async (
+      productData: ProductFormData,
+      categoryId: number,
+      subcategoryId: number,
+      authToken: string,
+      _role: "admin" | "vendor"
+    ) => {
+      try {
+        setIsCreating(true);
+        await ProductService.createProduct(categoryId, subcategoryId, productData, authToken);
+        await fetchProducts();
+        setShowAddModal(false);
+        toast.success("Product created successfully");
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : "Failed to create product";
+        toast.error(errorMessage);
+        throw err;
+      } finally {
+        setIsCreating(false);
+      }
+    },
+    [fetchProducts]
+  );
+
   const deleteProduct = useCallback(async (product: ApiProduct) => {
     if (!token) {
       toast.error("Authentication required");
@@ -570,8 +598,19 @@ const AdminProduct: React.FC = () => {
         <div className="admin-products__list-container">
           <div className="admin-products__header">
             <h2>Product Management</h2>
-            <div className="admin-products__stats">
-              <span>Total: {visibleTotalProducts} products</span>
+            <div className="admin-products__header-actions">
+              <button
+                type="button"
+                className="admin-products__create-button"
+                onClick={() => setShowAddModal(true)}
+                disabled={isCreating}
+              >
+                <span className="admin-products__create-icon" aria-hidden="true">+</span>
+                <span>Create Product</span>
+              </button>
+              <div className="admin-products__stats">
+                <span>Total: {visibleTotalProducts} products</span>
+              </div>
             </div>
           </div>
 
@@ -749,6 +788,12 @@ const AdminProduct: React.FC = () => {
         </div>
       </div>
 
+      <AdminAddProductModal
+        show={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onAdd={handleAddProduct}
+        role="admin"
+      />
       <EditProductModal
         show={showEditModal}
         onClose={() => {

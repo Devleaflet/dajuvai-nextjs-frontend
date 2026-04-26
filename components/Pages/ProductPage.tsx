@@ -631,6 +631,73 @@ const ProductPage = () => {
         </div>
 
         {/* ══════════════════════════════════════════
+            LONG DESCRIPTION SECTION
+        ══════════════════════════════════════════ */}
+        <div className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-16 mt-2">
+          <div className="bg-white rounded-2xl p-6 sm:p-8">
+            <h2 className="text-[1.3rem] font-semibold text-gray-900 mb-5">Description</h2>
+
+            <div className="rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-[0.95rem] text-gray-600 leading-relaxed mb-5">
+              The image provided here is only for reference purpose. Actual product packaging and materials may contain more and
+              different information than what is shown on our app or website. We recommend that you do not rely solely on the
+              information presented here and that you always read labels, warnings, and directions before using or consuming a
+              product.
+            </div>
+
+            <p className="text-[1.05rem] text-gray-900 mb-4">
+              mamaearth Rice Face Wash With Rice Water &amp; Niacinamide for Glass Skin - 100 ml
+            </p>
+
+            <ul className="list-disc pl-5 space-y-3 text-[1.02rem] leading-relaxed text-gray-900">
+              <li>
+                GENTLY CLEANSES SKIN: The first step to glass skin! Cleanse away dirt &amp; grime with Rice Face Wash that gently
+                cleanses without stripping your skin of essential moisture.
+              </li>
+              <li>
+                HYDRATES SKIN: The secret&apos;s out - hydrated skin glows from within! Rice Face Wash cleanses &amp; hydrates your skin
+                at the same time, leaving you with supple skin.
+              </li>
+              <li>
+                BRIGHTENS SKIN TONE: Time to turn on brightness. Rich in antioxidants, Rice Face Wash brightens your skin tone
+                and also reduces blemishes, leaving you with clearer &amp; radiant skin.
+              </li>
+              <li>
+                MADE SAFE CERTIFIED: Time to glow, naturally! Rice Face Wash is dermatologically tested and Made Safe Certified
+                making it absolutely safe for all skin types.
+              </li>
+            </ul>
+
+            <hr className="my-6 border-gray-200" />
+
+            <h3 className="text-[1.25rem] font-semibold text-gray-900 mb-4">Specifications</h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-6 text-[1.05rem]">
+              <div>
+                <p className="text-gray-500 mb-1">Brand</p>
+                <p className="text-gray-900 font-medium">{product.brand || "MamaEarth"}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 mb-1">SKU</p>
+                <p className="text-gray-900 font-medium">{selectedVariant?.sku || "194171727_NP-1251246617"}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 mb-1">Skin Type</p>
+                <p className="text-gray-900 font-medium">Normal</p>
+              </div>
+              <div>
+                <p className="text-gray-500 mb-1">Product Form</p>
+                <p className="text-gray-900 font-medium">Cream</p>
+              </div>
+            </div>
+
+            <div className="mt-8 text-[1.05rem]">
+              <p className="text-gray-500 mb-1">What&apos;s in the box</p>
+              <p className="text-gray-900 font-medium">mamaearth Rice Face Wash With Rice Water &amp; Niacinamide for Glass Skin - 100 ml</p>
+            </div>
+          </div>
+        </div>
+
+        {/* ══════════════════════════════════════════
             REVIEWS SECTION
         ══════════════════════════════════════════ */}
         <div id="reviews-section" className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-16 mt-2">

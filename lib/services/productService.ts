@@ -47,6 +47,60 @@ class ProductService {
     }
   }
 
+  private async uploadImageFiles(images: (File | string)[] | undefined, token?: string): Promise<string[]> {
+    const files = (images || []).filter((image): image is File => image instanceof File);
+    const existingUrls = (images || []).filter((image): image is string => typeof image === "string");
+
+    if (files.length === 0) return existingUrls;
+
+    const uploadData = new FormData();
+    files.slice(0, 5).forEach((file) => {
+      uploadData.append("files", file);
+    });
+
+    const response = await this.axiosInstance.post<{ success: boolean; urls?: string[]; message?: string }>(
+      `${API_BASE_URL}/api/product/image/upload`,
+      uploadData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      }
+    );
+
+    if (!response.data.success || !Array.isArray(response.data.urls)) {
+      throw new Error(response.data.message || "Failed to upload product images");
+    }
+
+    return [...existingUrls, ...response.data.urls];
+  }
+
+  private async buildProductCreatePayload(formData: ProductFormData, token?: string): Promise<Record<string, unknown>> {
+    const productImages = await this.uploadImageFiles(formData.productImages, token);
+    const discount = formData.discount == null || formData.discount === "" ? 0 : Number(formData.discount);
+    const dealId = formData.dealId == null ? 0 : Number(formData.dealId);
+    const bannerId = formData.bannerId == null ? 0 : Number(formData.bannerId);
+
+    return {
+      name: String(formData.name),
+      description: String(formData.description),
+      basePrice: formData.basePrice == null ? 0 : Number(formData.basePrice),
+      discount: Number.isFinite(discount) ? discount : 0,
+      discountType: formData.discountType || "PERCENTAGE",
+      stock: Number(formData.stock || 0),
+      status: formData.status || "AVAILABLE",
+      hasVariants: Boolean(formData.hasVariants),
+      productImages,
+      variants: formData.variants || [],
+      dealId: Number.isFinite(dealId) ? dealId : 0,
+      bannerId: Number.isFinite(bannerId) ? bannerId : 0,
+      miniDescription: formData.miniDescription || "",
+      longDescription: formData.longDescription || "",
+      vendorId: Number(formData.vendorId),
+    };
+  }
+
   private async handleRequest<T>(request: Promise<T>): Promise<T> {
     try {
       const response = await request;
@@ -92,48 +146,22 @@ class ProductService {
   async createProduct(
     categoryId: number,
     subcategoryId: number,
-    formData: ProductFormData
+    formData: ProductFormData,
+    token?: string
   ): Promise<ApiProduct> {
     this.validateFormData(formData);
-    const formDataObj = new FormData();
-    formDataObj.append("name", String(formData.name));
-    formDataObj.append("description", String(formData.description));
-    formDataObj.append("basePrice", formData.basePrice != null ? String(formData.basePrice) : "0");
-    formDataObj.append("stock", formData.stock.toString());
-    formDataObj.append("quantity", String(formData.quantity));
-    formDataObj.append("vendorId", String(formData.vendorId));
-    if (formData.discount && Number(formData.discount) > 0) {
-      formDataObj.append("discount", Number(formData.discount).toFixed(2));
-      formDataObj.append("discountType", String(formData.discountType || 'PERCENTAGE'));
-    }
-    if (Array.isArray(formData.size) && formData.size.length > 0) {
-      formDataObj.append("size", formData.size.join(","));
-    }
-    if (formData.status) {
-      formDataObj.append("status", String(formData.status));
-    }
-    if (formData.brand_id != null) {
-      formDataObj.append("brand_id", String(formData.brand_id));
-    }
-    if (formData.dealId != null) {
-      formDataObj.append("dealId", String(formData.dealId));
-    }
-    if (formData.productImages && Array.isArray(formData.productImages)) {
-      formData.productImages.forEach((image, index) => {
-        if (index < 5 && image instanceof File) {
-          formDataObj.append("images", image);
-        }
-      });
-    }
-    if (formData.inventory && Array.isArray(formData.inventory)) {
-      formDataObj.append("inventory", JSON.stringify(formData.inventory));
-    }
-    const endpoint = `/api/categories/${categoryId}/subcategories/${subcategoryId}/products`;
+    const payload = await this.buildProductCreatePayload(formData, token);
+    const endpoint = `${API_BASE_URL}/api/categories/${categoryId}/subcategories/${subcategoryId}/products`;
     try {
       const response = await this.axiosInstance.post<ProductResponse>(
         endpoint,
-        formDataObj,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
+        payload,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        }
       );
       return response.data.data;
     } catch (error: unknown) {

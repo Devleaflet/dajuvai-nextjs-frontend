@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import type Quill from 'quill';
 import { ProductFormData } from '@/lib/types/product';
 import { fetchCategories, fetchSubcategories, Category, Subcategory } from '@/lib/api/categories';
 import "@/styles/ProductModal.css";
@@ -21,11 +22,24 @@ interface AdminAddProductModalProps {
   role: 'admin' | 'vendor';
 }
 
+const EMPTY_LONG_DESCRIPTION_DELTA = JSON.stringify({ ops: [{ insert: '\n' }] });
+
+const buildProductDescription = (shortDescription: string, longDescription: string) => {
+  const shortText = shortDescription.trim();
+  const longText = longDescription.trim();
+
+  if (!longText) return shortText;
+
+  return `${shortText}\n\n${longText}`;
+};
+
 const AdminAddProductModal: React.FC<AdminAddProductModalProps> = ({ show, onClose, onAdd, role }) => {
   const { token, user } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
-    description: '',
+    shortDescription: '',
+    longDescription: '',
+    longDescriptionDelta: EMPTY_LONG_DESCRIPTION_DELTA,
     basePrice: '',
     stock: 0,
     discount: '0',
@@ -49,6 +63,9 @@ const AdminAddProductModal: React.FC<AdminAddProductModalProps> = ({ show, onClo
   const [selectedVendorId, setSelectedVendorId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const longDescriptionContainerRef = useRef<HTMLDivElement | null>(null);
+  const longDescriptionEditorRef = useRef<Quill | null>(null);
+  const longDescriptionChangeHandlerRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -99,6 +116,64 @@ const AdminAddProductModal: React.FC<AdminAddProductModalProps> = ({ show, onClo
     };
     loadSubcategories();
   }, [selectedCategory]);
+
+  useEffect(() => {
+    if (!show || !longDescriptionContainerRef.current) return;
+
+    let isMounted = true;
+
+    const setupEditor = async () => {
+      const { default: QuillEditor } = await import('quill');
+
+      if (!isMounted || !longDescriptionContainerRef.current || longDescriptionEditorRef.current) {
+        return;
+      }
+
+      const editor = new QuillEditor(longDescriptionContainerRef.current, {
+        theme: 'snow',
+        placeholder: 'Add full product details, materials, usage notes, warranty, care instructions, and other important information',
+        modules: {
+          toolbar: [
+            [{ header: [2, 3, false] }],
+            ['bold', 'italic', 'underline'],
+            [{ list: 'ordered' }, { list: 'bullet' }],
+            ['link'],
+            ['clean'],
+          ],
+        },
+      });
+
+      longDescriptionEditorRef.current = editor;
+
+      const syncLongDescription = () => {
+        const delta = editor.getContents();
+        const text = editor.getText().trim();
+
+        setFormData(prev => ({
+          ...prev,
+          longDescription: text,
+          longDescriptionDelta: JSON.stringify(delta),
+        }));
+        setErrors(prev => ({ ...prev, longDescription: '' }));
+      };
+
+      longDescriptionChangeHandlerRef.current = syncLongDescription;
+      editor.on('text-change', syncLongDescription);
+    };
+
+    setupEditor();
+
+    return () => {
+      isMounted = false;
+
+      if (longDescriptionEditorRef.current && longDescriptionChangeHandlerRef.current) {
+        longDescriptionEditorRef.current.off('text-change', longDescriptionChangeHandlerRef.current);
+      }
+
+      longDescriptionEditorRef.current = null;
+      longDescriptionChangeHandlerRef.current = null;
+    };
+  }, [show]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -183,8 +258,11 @@ const AdminAddProductModal: React.FC<AdminAddProductModalProps> = ({ show, onClo
     if (!formData.name?.trim()) {
       newErrors['name'] = 'Product name is required';
     }
-    if (!formData.description?.trim()) {
-      newErrors['description'] = 'Product description is required';
+    if (!formData.shortDescription?.trim()) {
+      newErrors['shortDescription'] = 'Short description is required';
+    }
+    if (!formData.longDescription?.trim()) {
+      newErrors['longDescription'] = 'Long description is required';
     }
     const price = parseFloat(formData.basePrice?.toString() || '0');
     if (isNaN(price) || price <= 0) {
@@ -230,7 +308,9 @@ const AdminAddProductModal: React.FC<AdminAddProductModalProps> = ({ show, onClo
 
       const productData: ProductFormData = {
         name: formData.name,
-        description: formData.description,
+        description: buildProductDescription(formData.shortDescription, formData.longDescription),
+        miniDescription: formData.shortDescription.trim(),
+        longDescription: formData.longDescriptionDelta,
         basePrice: formData.basePrice || 0,
         stock: formData.stock || 0,
         discount: formData.discount || null,
@@ -369,16 +449,25 @@ const AdminAddProductModal: React.FC<AdminAddProductModalProps> = ({ show, onClo
             </div>
 
             <div className="product-modal__field">
-              <label className="product-modal__label">Description *</label>
+              <label className="product-modal__label">Short Description *</label>
               <textarea
-                name="description"
-                value={formData.description}
+                name="shortDescription"
+                value={formData.shortDescription}
                 onChange={handleInputChange}
                 required
-                rows={3}
-                className="product-modal__textarea"
+                rows={2}
+                className="product-modal__textarea product-modal__textarea--short"
+                placeholder="Brief product summary for listings and quick previews"
               />
-              {errors['description'] && <span className="product-modal__error">{errors['description']}</span>}
+              {errors['shortDescription'] && <span className="product-modal__error">{errors['shortDescription']}</span>}
+            </div>
+
+            <div className="product-modal__field">
+              <label className="product-modal__label">Long Description *</label>
+              <div className="product-modal__quill">
+                <div ref={longDescriptionContainerRef} />
+              </div>
+              {errors['longDescription'] && <span className="product-modal__error">{errors['longDescription']}</span>}
             </div>
           </div>
 
@@ -468,7 +557,7 @@ const AdminAddProductModal: React.FC<AdminAddProductModalProps> = ({ show, onClo
                   className="product-modal__select"
                 >
                   <option value="PERCENTAGE">Percentage</option>
-                  <option value="FIXED">Fixed Amount</option>
+                  <option value="FLAT">Fixed Amount</option>
                 </select>
               </div>
             </div>
@@ -571,10 +660,11 @@ const AdminAddProductModal: React.FC<AdminAddProductModalProps> = ({ show, onClo
   );
 };
 
-// Add spinner animation
-const style = document.createElement('style');
-style.innerHTML = `@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`;
-document.head.appendChild(style);
+if (typeof document !== 'undefined') {
+  const style = document.createElement('style');
+  style.innerHTML = `@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`;
+  document.head.appendChild(style);
+}
 
 export default AdminAddProductModal;
 

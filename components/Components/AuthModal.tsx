@@ -48,6 +48,9 @@ interface VerificationResponse {
 	message: string;
 }
 
+const ADMIN_DASHBOARD_PATH = "/admin/dashboard";
+const ADMIN_ROLES = new Set(["admin", "staff"]);
+
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 	const { login, fetchUserData } = useAuth();
 	const router = useRouter();
@@ -352,22 +355,21 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
 				login(response.data.token, userData);
 
-				if (response.data.data.userId) {
-					try {
-						await fetchUserData(response.data.data.userId);
-					} catch {
-						// Non-fatal if this fails; continue navigation
-					}
-				}
-
-				const role = response.data.data.role;
-				if (role === "admin" || role === "staff") {
-					router.push("/admin/dashboard");
-				} else {
-					router.push("/");
-				}
+				const role = (response.data.data.role || "").trim().toLowerCase();
+				const nextPath = ADMIN_ROLES.has(role) ? ADMIN_DASHBOARD_PATH : "/";
 
 				onClose();
+				if (nextPath === ADMIN_DASHBOARD_PATH) {
+					router.replace(nextPath);
+				} else {
+					router.push(nextPath);
+				}
+
+				if (nextPath !== ADMIN_DASHBOARD_PATH && response.data.data.userId) {
+					fetchUserData(response.data.data.userId).catch(() => {
+						// Non-fatal if this fails; navigation should not wait on profile hydration.
+					});
+				}
 			}
 		} catch (err) {
 			if (axios.isAxiosError(err)) {
