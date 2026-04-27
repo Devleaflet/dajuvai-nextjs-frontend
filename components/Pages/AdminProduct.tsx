@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Pagination from "@/components/Components/Pagination";
 import DeleteModal from "@/components/Components/Modal/DeleteModal";
-import AdminAddProductModal from "@/components/Components/Modal/AdminAddProductModal";
+import NewProductModal from "@/components/Components/NewProductModalRedesigned";
 import EditProductModal from "@/components/Components/Modal/EditProductModalRedesigned";
 import { useAuth } from "@/lib/context/AuthContext";
 import ProductService from "@/lib/services/productService";
@@ -599,7 +599,7 @@ const AdminProduct: React.FC = () => {
           <div className="admin-products__header">
             <h2>Product Management</h2>
             <div className="admin-products__header-actions">
-              <button
+              {/* <button
                 type="button"
                 className="admin-products__create-button"
                 onClick={() => setShowAddModal(true)}
@@ -607,7 +607,7 @@ const AdminProduct: React.FC = () => {
               >
                 <span className="admin-products__create-icon" aria-hidden="true">+</span>
                 <span className="font-medium">Create Product</span>
-              </button>
+              </button> */}
               <div className="admin-products__stats">
                 <span>Total: {visibleTotalProducts} products</span>
               </div>
@@ -788,11 +788,13 @@ const AdminProduct: React.FC = () => {
         </div>
       </div>
 
-      <AdminAddProductModal
-        show={showAddModal}
+      <NewProductModal
+        isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
-        onAdd={handleAddProduct}
+        onSubmit={() => undefined}
+        onAddProduct={handleAddProduct}
         role="admin"
+        authToken={token}
       />
       <EditProductModal
         show={showEditModal}

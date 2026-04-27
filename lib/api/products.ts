@@ -240,6 +240,8 @@ export const createProduct = async (
 		dealId?: number;
 		bannerId?: number;
 		productImages?: string[]; // URLs from Cloudinary
+		miniDescription?: string;
+		longDescription?: string;
 	}
 ) => {
 	//"🔥 CREATE PRODUCT - NEW JSON API CONTRACT");
@@ -291,6 +293,10 @@ export const createProduct = async (
 
 		// Add optional fields
 		if (productData.description) payload.description = productData.description;
+		if (productData.miniDescription !== undefined)
+			payload.miniDescription = productData.miniDescription;
+		if (productData.longDescription !== undefined)
+			payload.longDescription = productData.longDescription;
 		if (productData.discount !== undefined)
 			payload.discount = productData.discount;
 		if (productData.discountType)

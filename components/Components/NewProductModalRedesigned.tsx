@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import type Quill from "quill";
 import { fetchCategories, fetchSubcategories, Category, Subcategory } from "@/lib/api/categories";
 import { createProduct, uploadProductImages } from "@/lib/api/products";
 import "@/styles/NewProductModal.css";
-import { useVendorAuth } from "@/lib/context/VendorAuthContext";
 import { dealApiService } from "@/lib/services/apiDeals";
 import { Deal } from "@/components/Components/Types/Deal";
-import { toast } from 'react-toastify';
+import { toast } from 'react-hot-toast';
+import { ProductFormData } from "@/lib/types/product";
+import { API_BASE_URL } from "@/lib/config";
 
 export enum InventoryStatus {
   AVAILABLE = 'AVAILABLE',
@@ -19,6 +21,22 @@ interface NewProductModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (success: boolean) => void;
+  role?: "admin" | "vendor";
+  authToken?: string;
+  onAddProduct?: (
+    product: ProductFormData,
+    categoryId: number,
+    subcategoryId: number,
+    token: string,
+    role: "admin" | "vendor"
+  ) => Promise<void>;
+}
+
+interface Vendor {
+  id: number;
+  businessName?: string;
+  name?: string;
+  email?: string;
 }
 
 type ProductVariant = {
@@ -39,9 +57,39 @@ type ProductVariant = {
   images: (File | string)[];
 };
 
-type NewProductFormData = {
+type VariantPayload = {
+  sku: string;
+  basePrice: number;
+  discount: number;
+  discountType: "PERCENTAGE";
+  attributes: Record<string, string>;
+  variantImages: string[];
+  stock: number;
+  status: InventoryStatus;
+};
+
+type ProductPayload = {
   name: string;
   description: string;
+  miniDescription: string;
+  longDescription: string;
+  hasVariants: boolean;
+  productImages: string[];
+  dealId: number;
+  bannerId: number;
+  discount: number;
+  discountType: "PERCENTAGE" | "FLAT";
+  variants: VariantPayload[];
+  basePrice: number;
+  stock: number;
+  status: InventoryStatus;
+};
+
+type NewProductFormData = {
+  name: string;
+  shortDescription: string;
+  longDescription: string;
+  longDescriptionDelta: string;
   basePrice?: number;
   stock?: number;
   discount?: number;
@@ -52,9 +100,32 @@ type NewProductFormData = {
   subcategoryId?: number;
   brand_id?: number | null;
   dealId?: number | null;
+  vendorId?: string;
   hasVariants: boolean;
   variants: ProductVariant[];
 };
+
+const EMPTY_LONG_DESCRIPTION_DELTA = JSON.stringify({ ops: [{ insert: '\n' }] });
+
+const buildProductDescription = (shortDescription: string, longDescription: string) => {
+  const shortText = shortDescription.trim();
+  const longText = longDescription.trim();
+
+  if (!longText) return shortText;
+
+  return `${shortText}\n\n${longText}`;
+};
+
+const createInitialFormData = (): NewProductFormData => ({
+  name: "",
+  shortDescription: "",
+  longDescription: "",
+  longDescriptionDelta: EMPTY_LONG_DESCRIPTION_DELTA,
+  status: InventoryStatus.AVAILABLE,
+  productImages: [],
+  hasVariants: false,
+  variants: [],
+});
 
 const AttributeManager = ({
   attributes,
@@ -185,18 +256,18 @@ const AttributeManager = ({
   );
 };
 
-const NewProductModal: React.FC<NewProductModalProps> = ({ isOpen, onClose, onSubmit }) => {
-  const { authState } = useVendorAuth();
+const NewProductModal: React.FC<NewProductModalProps> = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  role = "vendor",
+  authToken,
+  onAddProduct,
+}) => {
+  const isAdminMode = role === "admin";
 
   // Form state
-  const [formData, setFormData] = useState<NewProductFormData>({
-    name: "",
-    description: "",
-    status: InventoryStatus.AVAILABLE,
-    productImages: [],
-    hasVariants: false,
-    variants: [],
-  });
+  const [formData, setFormData] = useState<NewProductFormData>(createInitialFormData);
 
   // UI state
   const [isLoading, setIsLoading] = useState(false);
@@ -206,7 +277,9 @@ const NewProductModal: React.FC<NewProductModalProps> = ({ isOpen, onClose, onSu
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
+  const [vendors, setVendors] = useState<Vendor[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number>(0);
+  const [selectedVendorId, setSelectedVendorId] = useState<number | null>(null);
 
   // Variant state
   const [variants, setVariants] = useState<ProductVariant[]>([]);
@@ -225,13 +298,76 @@ const NewProductModal: React.FC<NewProductModalProps> = ({ isOpen, onClose, onSu
 
   // Image state: support both local Files and already-uploaded URLs
   const [images, setImages] = useState<Array<File | string>>([]);
+  const longDescriptionContainerRef = useRef<HTMLDivElement | null>(null);
+  const longDescriptionEditorRef = useRef<Quill | null>(null);
+  const longDescriptionChangeHandlerRef = useRef<(() => void) | null>(null);
 
   // Load data on mount
   useEffect(() => {
     if (isOpen) {
       loadCategories();
       loadDeals();
+      if (isAdminMode) {
+        loadVendors();
+      }
     }
+  }, [isOpen, isAdminMode, authToken]);
+
+  useEffect(() => {
+    if (!isOpen || !longDescriptionContainerRef.current) return;
+
+    let isMounted = true;
+
+    const setupEditor = async () => {
+      const { default: QuillEditor } = await import('quill');
+
+      if (!isMounted || !longDescriptionContainerRef.current || longDescriptionEditorRef.current) {
+        return;
+      }
+
+      const editor = new QuillEditor(longDescriptionContainerRef.current, {
+        theme: 'snow',
+        placeholder: 'Add full product details, materials, usage notes, warranty, care instructions, and other important information',
+        modules: {
+          toolbar: [
+            [{ header: [2, 3, false] }],
+            ['bold', 'italic', 'underline'],
+            [{ list: 'ordered' }, { list: 'bullet' }],
+            ['link'],
+            ['clean'],
+          ],
+        },
+      });
+
+      longDescriptionEditorRef.current = editor;
+
+      const syncLongDescription = () => {
+        const delta = editor.getContents();
+        const text = editor.getText().trim();
+
+        setFormData(prev => ({
+          ...prev,
+          longDescription: text,
+          longDescriptionDelta: JSON.stringify(delta),
+        }));
+      };
+
+      longDescriptionChangeHandlerRef.current = syncLongDescription;
+      editor.on('text-change', syncLongDescription);
+    };
+
+    setupEditor();
+
+    return () => {
+      isMounted = false;
+
+      if (longDescriptionEditorRef.current && longDescriptionChangeHandlerRef.current) {
+        longDescriptionEditorRef.current.off('text-change', longDescriptionChangeHandlerRef.current);
+      }
+
+      longDescriptionEditorRef.current = null;
+      longDescriptionChangeHandlerRef.current = null;
+    };
   }, [isOpen]);
 
   const loadCategories = async () => {
@@ -253,6 +389,35 @@ const NewProductModal: React.FC<NewProductModalProps> = ({ isOpen, onClose, onSu
     }
   };
 
+  const loadVendors = async () => {
+    if (!authToken) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/vendors`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          Accept: "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      const rawVendors = Array.isArray(result?.data)
+        ? result.data
+        : Array.isArray(result?.vendors)
+          ? result.vendors
+          : [];
+
+      setVendors(rawVendors);
+    } catch (error) {
+      console.error('Error loading vendors:', error);
+      toast.error('Failed to load vendors');
+    }
+  };
+
   const handleCategoryChange = async (categoryId: number) => {
     setSelectedCategoryId(categoryId);
     setFormData(prev => ({ ...prev, subcategoryId: 0 }));
@@ -270,7 +435,7 @@ const NewProductModal: React.FC<NewProductModalProps> = ({ isOpen, onClose, onSu
     }
   };
 
-  const handleInputChange = (field: keyof NewProductFormData, value: any) => {
+  const handleInputChange = (field: keyof NewProductFormData, value: NewProductFormData[keyof NewProductFormData]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
 
     // Auto-progress steps
@@ -298,7 +463,7 @@ const NewProductModal: React.FC<NewProductModalProps> = ({ isOpen, onClose, onSu
     setVariants(variants.filter((_, i) => i !== index));
   };
 
-  const updateVariant = (index: number, field: keyof ProductVariant, value: any) => {
+  const updateVariant = (index: number, field: keyof ProductVariant, value: ProductVariant[keyof ProductVariant]) => {
     setVariants(variants.map((variant, i) =>
       i === index ? { ...variant, [field]: value } : variant
     ));
@@ -350,7 +515,7 @@ const NewProductModal: React.FC<NewProductModalProps> = ({ isOpen, onClose, onSu
       if (droppedFiles.length > 0) {
         setImages(prev => [...prev, ...droppedFiles]);
         setCurrentStep(3);
-        toast.info(`${droppedFiles.length} image${droppedFiles.length > 1 ? 's' : ''} added`);
+        toast(`${droppedFiles.length} image${droppedFiles.length > 1 ? 's' : ''} added`);
       }
       dt.clearData();
     }
@@ -448,8 +613,11 @@ const NewProductModal: React.FC<NewProductModalProps> = ({ isOpen, onClose, onSu
 
   const validateForm = (): string | null => {
     if (!formData.name.trim()) return 'Product name is required';
+    if (!formData.shortDescription.trim()) return 'Short description is required';
+    if (!formData.longDescription.trim()) return 'Long description is required';
     if (!selectedCategoryId) return 'Please select a category';
     if (!formData.subcategoryId) return 'Please select a subcategory';
+    if (isAdminMode && !selectedVendorId) return 'Please select a vendor';
 
     if (!formData.hasVariants) {
       if (!formData.basePrice || formData.basePrice <= 0) return 'Base price is required';
@@ -536,7 +704,7 @@ const NewProductModal: React.FC<NewProductModalProps> = ({ isOpen, onClose, onSu
       // Warn if files were selected but no URLs were produced
       if (imageFiles.length > 0 && productImageUrls.length === existingImageUrls.length) {
         console.warn('No product image URLs returned from upload');
-        toast.warn('Product images failed to upload. Please try again or add via Edit later.');
+        toast('Product images failed to upload. Please try again or add via Edit later.');
       }
 
       // Step 2: Upload variant images and collect their URLs
@@ -566,15 +734,25 @@ const NewProductModal: React.FC<NewProductModalProps> = ({ isOpen, onClose, onSu
       );
 
       // Step 3: Prepare product data according to new API specification
-      const productData: any = {
+      const description = buildProductDescription(
+        formData.shortDescription,
+        formData.longDescription
+      );
+      const productData: ProductPayload = {
         name: formData.name,
-        description: formData.description || '',
+        description,
+        miniDescription: formData.shortDescription.trim(),
+        longDescription: formData.longDescriptionDelta,
         hasVariants: formData.hasVariants,
         productImages: productImageUrls,
         dealId: formData.dealId || 0,
         bannerId: 0,
         discount: formData.discount !== undefined && formData.discount !== null ? parseFloat(formData.discount.toString()) : 0,
-        discountType: formData.discountType || 'PERCENTAGE'
+        discountType: formData.discountType === 'FLAT' ? 'FLAT' : 'PERCENTAGE',
+        variants: [],
+        basePrice: 0,
+        stock: 0,
+        status: InventoryStatus.AVAILABLE,
       };
 
       if (formData.hasVariants) {
@@ -584,14 +762,15 @@ const NewProductModal: React.FC<NewProductModalProps> = ({ isOpen, onClose, onSu
           basePrice: variant.price,
           discount: 0,
           discountType: 'PERCENTAGE',
-          attributes: variant.attributes ?
-            variant.attributes.reduce((acc: any, attr: any) => {
+          attributes: variant.attributes
+            ? variant.attributes.reduce<Record<string, string>>((acc, attr) => {
               const key = (attr.type || '').toString().trim().toLowerCase();
               const firstVal = attr.values && attr.values[0] ? attr.values[0].value : '';
               if (key && firstVal) acc[key] = firstVal;
               return acc;
-            }, {}) : {},
-          variantImages: variant.images,
+            }, {})
+            : {},
+          variantImages: variant.images as string[],
           stock: variant.stock,
           status: variant.status
         }));
@@ -599,13 +778,48 @@ const NewProductModal: React.FC<NewProductModalProps> = ({ isOpen, onClose, onSu
         // Set base product fields for variant products
         productData.basePrice = 0;
         productData.stock = 0;
-        productData.status = 'AVAILABLE';
+        productData.status = InventoryStatus.AVAILABLE;
       } else {
         // For non-variant products
         productData.basePrice = parseFloat(formData.basePrice?.toString() || '0');
         productData.stock = parseInt(formData.stock?.toString() || '0');
         productData.status = formData.status || 'AVAILABLE';
         productData.variants = [];
+      }
+
+      if (isAdminMode && onAddProduct) {
+        if (!authToken) {
+          throw new Error('Authentication required');
+        }
+
+        const adminProductData: ProductFormData = {
+          name: productData.name,
+          description: productData.description,
+          miniDescription: productData.miniDescription,
+          longDescription: productData.longDescription,
+          basePrice: productData.basePrice,
+          stock: productData.stock,
+          discount: productData.discount,
+          discountType: productData.discountType as "PERCENTAGE" | "FLAT",
+          size: [],
+          status: productData.status,
+          productImages: productImageUrls,
+          categoryId: selectedCategoryId,
+          subcategoryId: formData.subcategoryId,
+          quantity: productData.stock,
+          brand_id: formData.brand_id || null,
+          dealId: formData.dealId || null,
+          inventory: [],
+          vendorId: String(selectedVendorId),
+          hasVariants: formData.hasVariants,
+          variants: productData.variants as unknown as ProductFormData["variants"],
+          bannerId: 0,
+        };
+
+        await onAddProduct(adminProductData, selectedCategoryId, formData.subcategoryId, authToken, "admin");
+        onSubmit(true);
+        handleClose();
+        return;
       }
 
       //('=== FINAL PRODUCT DATA FOR API ===');
@@ -636,19 +850,14 @@ const NewProductModal: React.FC<NewProductModalProps> = ({ isOpen, onClose, onSu
 
   const handleClose = () => {
     // Reset form
-    setFormData({
-      name: "",
-      description: "",
-      status: InventoryStatus.AVAILABLE,
-      productImages: [],
-      hasVariants: false,
-      variants: [],
-    });
+    setFormData(createInitialFormData());
     setVariants([]);
     setSelectedCategoryId(0);
+    setSelectedVendorId(null);
     setSubcategories([]);
     setImages([]);
     setCurrentStep(1);
+    setAttributeSpecs([{ type: '', valuesText: '' }]);
     onClose();
   };
 
@@ -721,14 +930,22 @@ const NewProductModal: React.FC<NewProductModalProps> = ({ isOpen, onClose, onSu
                 </div>
 
                 <div className="form-group full-width">
-                  <label className="form-label">Description</label>
+                  <label className="form-label required">Short Description</label>
                   <textarea
                     className="form-textarea"
-                    value={formData.description}
-                    onChange={(e) => handleInputChange('description', e.target.value)}
-                    placeholder="Describe your product's key features and benefits"
-                    rows={4}
+                    value={formData.shortDescription}
+                    onChange={(e) => handleInputChange('shortDescription', e.target.value)}
+                    placeholder="Brief product summary for listings and quick previews"
+                    rows={2}
+                    required
                   />
+                </div>
+
+                <div className="form-group full-width">
+                  <label className="form-label required">Long Description</label>
+                  <div className="new-product-modal__quill">
+                    <div ref={longDescriptionContainerRef} />
+                  </div>
                 </div>
 
                 <div className="form-group">
@@ -765,6 +982,29 @@ const NewProductModal: React.FC<NewProductModalProps> = ({ isOpen, onClose, onSu
                     ))}
                   </select>
                 </div>
+
+                {isAdminMode && (
+                  <div className="form-group">
+                    <label className="form-label required">Vendor</label>
+                    <select
+                      className="form-select"
+                      value={selectedVendorId || 0}
+                      onChange={(e) => {
+                        const vendorId = Number(e.target.value) || null;
+                        setSelectedVendorId(vendorId);
+                        handleInputChange('vendorId', vendorId ? String(vendorId) : undefined);
+                      }}
+                      required
+                    >
+                      <option value={0}>Choose a vendor</option>
+                      {vendors.map((vendor) => (
+                        <option key={vendor.id} value={vendor.id}>
+                          {vendor.businessName || vendor.name || vendor.email || `Vendor ${vendor.id}`}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 <div className="form-group">
                   <label className="form-label">Deal <span className="label-hint">(Optional)</span></label>

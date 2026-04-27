@@ -379,6 +379,34 @@
   min-height: 100px;
 }
 
+.new-product-modal__quill {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.new-product-modal__quill .ql-toolbar.ql-snow {
+  border: none;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.new-product-modal__quill .ql-container.ql-snow {
+  border: none;
+  min-height: 160px;
+}
+
+.new-product-modal__quill .ql-editor {
+  min-height: 160px;
+  color: var(--text-primary);
+}
+
+.new-product-modal__quill:focus-within {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(251, 146, 60, 0.12);
+}
+
 /* Toggle Switch */
 .toggle-container {
   display: flex;
