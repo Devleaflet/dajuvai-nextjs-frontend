@@ -1,3 +1,31 @@
+export type ProductLongDescriptionAttributes = Record<string, unknown>;
+
+export type ProductLongDescriptionEmbed = Record<string, unknown>;
+
+export type ProductLongDescriptionOp =
+  | {
+      insert: string | ProductLongDescriptionEmbed;
+      attributes?: ProductLongDescriptionAttributes;
+      delete?: never;
+      retain?: never;
+    }
+  | {
+      retain: number;
+      attributes?: ProductLongDescriptionAttributes;
+      insert?: never;
+      delete?: never;
+    }
+  | {
+      delete: number;
+      insert?: never;
+      retain?: never;
+      attributes?: never;
+    };
+
+export interface ProductLongDescriptionDelta {
+  ops: ProductLongDescriptionOp[];
+}
+
 export interface Product {
   id: number;
   name: string;
@@ -92,7 +120,7 @@ export interface ProductFormData {
   name: string;
   description: string;
   miniDescription?: string;
-  longDescription?: string;
+  longDescription?: string | ProductLongDescriptionDelta;
   basePrice: string | number | null;
   stock: number;
   discount: string | number | null;

@@ -1,6 +1,7 @@
 import axios from "axios";
 import axiosInstance from "./axiosInstance";
 import { API_BASE_URL } from "@/lib/config";
+import type { ProductLongDescriptionDelta } from "@/lib/types/product";
 
 // Helper function to safely get error message
 const getErrorMessage = (error: unknown): string => {
@@ -241,7 +242,7 @@ export const createProduct = async (
 		bannerId?: number;
 		productImages?: string[]; // URLs from Cloudinary
 		miniDescription?: string;
-		longDescription?: string;
+		longDescription?: ProductLongDescriptionDelta;
 	}
 ) => {
 	//"🔥 CREATE PRODUCT - NEW JSON API CONTRACT");

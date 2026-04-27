@@ -2,7 +2,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import type Quill from 'quill';
-import { ProductFormData } from '@/lib/types/product';
+import type { Delta as QuillDelta } from 'quill';
+import type {
+  ProductFormData,
+  ProductLongDescriptionDelta,
+  ProductLongDescriptionOp,
+} from '@/lib/types/product';
 import { fetchCategories, fetchSubcategories, Category, Subcategory } from '@/lib/api/categories';
 import "@/styles/ProductModal.css";
 import '@/styles/AdminProductModal.css';
@@ -22,7 +27,65 @@ interface AdminAddProductModalProps {
   role: 'admin' | 'vendor';
 }
 
-const EMPTY_LONG_DESCRIPTION_DELTA = JSON.stringify({ ops: [{ insert: '\n' }] });
+const createEmptyLongDescriptionDelta = (): ProductLongDescriptionDelta => ({
+  ops: [{ insert: '\n' }],
+});
+
+const isPlainObject = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+};
+
+const cloneAttributes = (attributes: unknown): Record<string, unknown> | undefined => {
+  if (!isPlainObject(attributes)) {
+    return undefined;
+  }
+
+  return { ...attributes };
+};
+
+const serializeLongDescriptionDelta = (delta: QuillDelta): ProductLongDescriptionDelta => {
+  const serializedOps: ProductLongDescriptionOp[] = [];
+
+  for (const op of delta.ops) {
+    const attributes = cloneAttributes(op.attributes);
+
+    if (typeof op.insert === 'string') {
+      serializedOps.push({
+        insert: op.insert,
+        ...(attributes ? { attributes } : {}),
+      });
+      continue;
+    }
+
+    if (isPlainObject(op.insert)) {
+      serializedOps.push({
+        insert: { ...op.insert },
+        ...(attributes ? { attributes } : {}),
+      });
+      continue;
+    }
+
+    if (typeof op.retain === 'number' && Number.isFinite(op.retain)) {
+      serializedOps.push({
+        retain: op.retain,
+        ...(attributes ? { attributes } : {}),
+      });
+      continue;
+    }
+
+    if (typeof op.delete === 'number' && Number.isFinite(op.delete)) {
+      serializedOps.push({ delete: op.delete });
+    }
+  }
+
+  if (serializedOps.length === 0) {
+    return createEmptyLongDescriptionDelta();
+  }
+
+  return {
+    ops: serializedOps,
+  };
+};
 
 const buildProductDescription = (shortDescription: string, longDescription: string) => {
   const shortText = shortDescription.trim();
@@ -39,7 +102,7 @@ const AdminAddProductModal: React.FC<AdminAddProductModalProps> = ({ show, onClo
     name: '',
     shortDescription: '',
     longDescription: '',
-    longDescriptionDelta: EMPTY_LONG_DESCRIPTION_DELTA,
+    longDescriptionDelta: createEmptyLongDescriptionDelta(),
     basePrice: '',
     stock: 0,
     discount: '0',
@@ -152,7 +215,7 @@ const AdminAddProductModal: React.FC<AdminAddProductModalProps> = ({ show, onClo
         setFormData(prev => ({
           ...prev,
           longDescription: text,
-          longDescriptionDelta: JSON.stringify(delta),
+          longDescriptionDelta: serializeLongDescriptionDelta(delta),
         }));
         setErrors(prev => ({ ...prev, longDescription: '' }));
       };

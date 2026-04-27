@@ -2,13 +2,18 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import type Quill from "quill";
+import type { Delta as QuillDelta } from "quill";
 import { fetchCategories, fetchSubcategories, Category, Subcategory } from "@/lib/api/categories";
 import { createProduct, uploadProductImages } from "@/lib/api/products";
 import "@/styles/NewProductModal.css";
 import { dealApiService } from "@/lib/services/apiDeals";
 import { Deal } from "@/components/Components/Types/Deal";
 import { toast } from 'react-hot-toast';
-import { ProductFormData } from "@/lib/types/product";
+import type {
+  ProductFormData,
+  ProductLongDescriptionDelta,
+  ProductLongDescriptionOp,
+} from "@/lib/types/product";
 import { API_BASE_URL } from "@/lib/config";
 
 export enum InventoryStatus {
@@ -72,7 +77,7 @@ type ProductPayload = {
   name: string;
   description: string;
   miniDescription: string;
-  longDescription: string;
+  longDescription: ProductLongDescriptionDelta;
   hasVariants: boolean;
   productImages: string[];
   dealId: number;
@@ -88,8 +93,8 @@ type ProductPayload = {
 type NewProductFormData = {
   name: string;
   shortDescription: string;
-  longDescription: string;
-  longDescriptionDelta: string;
+  longDescription: ProductLongDescriptionDelta;
+  longDescriptionText: string;
   basePrice?: number;
   stock?: number;
   discount?: number;
@@ -105,22 +110,75 @@ type NewProductFormData = {
   variants: ProductVariant[];
 };
 
-const EMPTY_LONG_DESCRIPTION_DELTA = JSON.stringify({ ops: [{ insert: '\n' }] });
+const createEmptyLongDescriptionDelta = (): ProductLongDescriptionDelta => ({
+  ops: [{ insert: '\n' }],
+});
 
-const buildProductDescription = (shortDescription: string, longDescription: string) => {
-  const shortText = shortDescription.trim();
-  const longText = longDescription.trim();
+const isPlainObject = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+};
 
-  if (!longText) return shortText;
+const cloneAttributes = (attributes: unknown): Record<string, unknown> | undefined => {
+  if (!isPlainObject(attributes)) {
+    return undefined;
+  }
 
-  return `${shortText}\n\n${longText}`;
+  return { ...attributes };
+};
+
+const serializeLongDescriptionDelta = (delta: QuillDelta): ProductLongDescriptionDelta => {
+  const serializedOps: ProductLongDescriptionOp[] = [];
+
+  for (const op of delta.ops) {
+    const attributes = cloneAttributes(op.attributes);
+
+    if (typeof op.insert === 'string') {
+      serializedOps.push({
+        insert: op.insert,
+        ...(attributes ? { attributes } : {}),
+      });
+      continue;
+    }
+
+    if (isPlainObject(op.insert)) {
+      serializedOps.push({
+        insert: { ...op.insert },
+        ...(attributes ? { attributes } : {}),
+      });
+      continue;
+    }
+
+    if (typeof op.retain === 'number' && Number.isFinite(op.retain)) {
+      serializedOps.push({
+        retain: op.retain,
+        ...(attributes ? { attributes } : {}),
+      });
+      continue;
+    }
+
+    if (typeof op.delete === 'number' && Number.isFinite(op.delete)) {
+      serializedOps.push({ delete: op.delete });
+    }
+  }
+
+  if (serializedOps.length === 0) {
+    return createEmptyLongDescriptionDelta();
+  }
+
+  return {
+    ops: serializedOps,
+  };
+};
+
+const buildProductDescription = (shortDescription: string) => {
+  return shortDescription.trim();
 };
 
 const createInitialFormData = (): NewProductFormData => ({
   name: "",
   shortDescription: "",
-  longDescription: "",
-  longDescriptionDelta: EMPTY_LONG_DESCRIPTION_DELTA,
+  longDescription: createEmptyLongDescriptionDelta(),
+  longDescriptionText: "",
   status: InventoryStatus.AVAILABLE,
   productImages: [],
   hasVariants: false,
@@ -347,8 +405,8 @@ const NewProductModal: React.FC<NewProductModalProps> = ({
 
         setFormData(prev => ({
           ...prev,
-          longDescription: text,
-          longDescriptionDelta: JSON.stringify(delta),
+          longDescription: serializeLongDescriptionDelta(delta),
+          longDescriptionText: text,
         }));
       };
 
@@ -614,7 +672,7 @@ const NewProductModal: React.FC<NewProductModalProps> = ({
   const validateForm = (): string | null => {
     if (!formData.name.trim()) return 'Product name is required';
     if (!formData.shortDescription.trim()) return 'Short description is required';
-    if (!formData.longDescription.trim()) return 'Long description is required';
+    if (!formData.longDescriptionText.trim()) return 'Long description is required';
     if (!selectedCategoryId) return 'Please select a category';
     if (!formData.subcategoryId) return 'Please select a subcategory';
     if (isAdminMode && !selectedVendorId) return 'Please select a vendor';
@@ -734,15 +792,12 @@ const NewProductModal: React.FC<NewProductModalProps> = ({
       );
 
       // Step 3: Prepare product data according to new API specification
-      const description = buildProductDescription(
-        formData.shortDescription,
-        formData.longDescription
-      );
+      const description = buildProductDescription(formData.shortDescription);
       const productData: ProductPayload = {
         name: formData.name,
         description,
         miniDescription: formData.shortDescription.trim(),
-        longDescription: formData.longDescriptionDelta,
+        longDescription: formData.longDescription,
         hasVariants: formData.hasVariants,
         productImages: productImageUrls,
         dealId: formData.dealId || 0,
@@ -812,7 +867,7 @@ const NewProductModal: React.FC<NewProductModalProps> = ({
           inventory: [],
           vendorId: String(selectedVendorId),
           hasVariants: formData.hasVariants,
-          variants: productData.variants as unknown as ProductFormData["variants"],
+          variants: productData.variants as unknown as NonNullable<ProductFormData["variants"]>,
           bannerId: 0,
         };
 
