@@ -606,7 +606,7 @@ const AdminProduct: React.FC = () => {
                 disabled={isCreating}
               >
                 <span className="admin-products__create-icon" aria-hidden="true">+</span>
-                <span>Create Product</span>
+                <span className="font-medium">Create Product</span>
               </button>
               <div className="admin-products__stats">
                 <span>Total: {visibleTotalProducts} products</span>
