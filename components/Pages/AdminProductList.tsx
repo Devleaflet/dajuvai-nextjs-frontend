@@ -160,10 +160,10 @@ const AdminProductList: React.FC = () => {
                 </td>
                 <td className="admin-product-table-cell">
                   <div className="admin-product-text-primary">
-                    ${typeof product['price'] === 'string' ? parseFloat(product['price']).toFixed(2) : (Number(product['price']) || 0).toFixed(2)}
+                    Rs {typeof product['price'] === 'string' ? parseFloat(product['price']).toFixed(2) : (Number(product['price']) || 0).toFixed(2)}
                     {product['originalPrice'] && (
                       <span className="admin-product-text-secondary" style={{ marginLeft: '0.5rem', textDecoration: 'line-through' }}>
-                        ${typeof product['originalPrice'] === 'string' ? parseFloat(product['originalPrice']).toFixed(2) : (Number(product['originalPrice']) || 0).toFixed(2)}
+                        Rs {typeof product['originalPrice'] === 'string' ? parseFloat(product['originalPrice']).toFixed(2) : (Number(product['originalPrice']) || 0).toFixed(2)}
                       </span>
                     )}
                   </div>

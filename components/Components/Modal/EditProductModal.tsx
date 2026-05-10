@@ -1066,7 +1066,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                               Remove
                             </button>
                           </div>
-                          <div>Price: ${variant.price}</div>
+                          <div>Price: Rs {variant.price}</div>
                           <div>Stock: {variant.stock}</div>
                           <div>Status: {variant.status}</div>
                           {/* Per-variant images preview */}

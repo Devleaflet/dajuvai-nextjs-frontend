@@ -779,7 +779,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
                             Remove
                           </button>
                         </div>
-                        <div>Price: ${variant.price}</div>
+                        <div>Price: Rs {variant.price}</div>
                         <div>Stock: {variant.stock}</div>
                         <div>Status: {variant.status}</div>
                         {variant.images && variant.images.length > 0 && (

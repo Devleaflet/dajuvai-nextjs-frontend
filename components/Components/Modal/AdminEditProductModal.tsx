@@ -280,7 +280,7 @@ const AdminEditProductModal: React.FC<AdminEditProductModalProps> = ({
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-gray-500">$</span>
+                    <span className="text-gray-500">Rs</span>
                   </div>
                   <input
                     type="number"
@@ -368,7 +368,7 @@ const AdminEditProductModal: React.FC<AdminEditProductModalProps> = ({
                       className="w-full px-3 py-2 border border-gray-300 rounded-md"
                     >
                       <option value="PERCENTAGE">Percentage (%)</option>
-                      <option value="FLAT">Flat Amount ($)</option>
+                      <option value="FLAT">Flat Amount (Rs)</option>
                     </select>
                   </div>
                 </div>

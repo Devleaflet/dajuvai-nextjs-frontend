@@ -92,7 +92,7 @@ const BulkCreditModal: React.FC<BulkCreditModalProps> = ({
             
             <div className="vendor-product__form-group">
               <label>
-                {creditType === 'fixed' ? 'Credit Amount ($)' : 'Credit Percentage (%)'}
+                {creditType === 'fixed' ? 'Credit Amount (Rs)' : 'Credit Percentage (%)'}
               </label>
               <input 
                 type="number" 
