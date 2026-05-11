@@ -13,6 +13,36 @@
   touch-action: pan-x;
 }
 
+.hero-slider--empty {
+  min-height: 16rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #f6f7f9 0%, #eceef1 100%);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.hero-slider__empty-state {
+  text-align: center;
+  color: #4b5563;
+  padding: 1.5rem;
+}
+
+.hero-slider__empty-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  letter-spacing: 0;
+}
+
+.hero-slider__empty-copy {
+  margin: 0.5rem 0 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #6b7280;
+}
+
 .hero-slider:active {
   cursor: grabbing; /* Maintain grabbing cursor during drag */
 }

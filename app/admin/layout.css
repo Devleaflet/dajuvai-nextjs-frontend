@@ -52,6 +52,12 @@
   letter-spacing: -0.1px;
 }
 
+.admin-shell--delivery,
+.admin-shell--delivery .admin-shell__main,
+.admin-shell--delivery .admin-shell__page {
+  background: #ffffff;
+}
+
 .admin-shell--staff .admin-topbar__title {
   font-size: 22px;
 }

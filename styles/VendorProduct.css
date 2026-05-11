@@ -277,6 +277,7 @@
 	font-size: 14px;
 	cursor: pointer;
 	transition: background-color 0.2s;
+	border: #111827;
 }
 
 .vendor-product__add-btn:hover {

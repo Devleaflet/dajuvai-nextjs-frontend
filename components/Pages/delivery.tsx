@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { FiRefreshCw, FiPhoneCall, FiPackage, FiClipboard, FiAlertTriangle, FiPlus, FiArrowLeft, FiLock, FiUpload, FiChevronDown, FiChevronUp, FiTruck } from 'react-icons/fi';
+import { FiRefreshCw, FiPhoneCall, FiPackage, FiClipboard, FiAlertTriangle, FiPlus, FiArrowLeft, FiLock, FiUpload, FiChevronDown, FiChevronUp, FiTruck, FiFilter, FiSearch, FiCalendar, FiX } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/lib/context/AuthContext';
 import { API_BASE_URL } from '@/lib/config';
@@ -15,6 +15,7 @@ import { API_BASE_URL } from '@/lib/config';
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type DeliveryTab = 'processing' | 'warehouse' | 'assignments' | 'riders' | 'recovery';
+type AssignmentSort = 'newest' | 'oldest' | 'rider-az' | 'rider-za';
 
 interface DeliveryActor {
   id?: number;
@@ -223,6 +224,8 @@ const formatDeliveryStatusLabel = (v?: string) => {
 
 const getCustomerName  = (a?: DeliveryActor | null) => a?.username || a?.fullName || a?.email || 'N/A';
 const getCustomerEmail = (a?: DeliveryActor | null) => a?.email || 'N/A';
+const getRiderName = (a?: DeliveryAssignment | null) =>
+  a?.rider?.fullName || a?.rider?.username || a?.rider?.email || (a?.riderId ? `Rider #${a.riderId}` : 'Unassigned');
 
 const formatRiderOptionLabel = (r: DeliveryRider) => {
   const label = r.fullName?.trim() || r.email?.trim() || r.phoneNumber?.trim() || `Rider #${r.id}`;
@@ -263,9 +266,9 @@ const getInitials = (v?: string) => {
 function StatusBadge({ status }: { status?: string }) {
   const s = (status || '').toUpperCase();
   let cls = 'inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold tracking-wide ';
-  if (s.includes('PROCESSING') || s.includes('PROCESS')) cls += 'bg-orange-500 text-white shadow-[0_8px_20px_rgba(249,115,22,0.22)]';
-  else if (s.includes('WAREHOUSE') || s.includes('AT_WH')) cls += 'bg-orange-100 text-orange-800 ring-1 ring-orange-200';
-  else if (s.includes('ASSIGN')) cls += 'bg-white text-orange-700 ring-1 ring-orange-200';
+  if (s.includes('PROCESSING') || s.includes('PROCESS')) cls += 'bg-orange-50 text-orange-600 ring-1 ring-orange-100';
+  else if (s.includes('WAREHOUSE') || s.includes('AT_WH')) cls += 'bg-blue-50 text-blue-700 ring-1 ring-blue-100';
+  else if (s.includes('ASSIGN')) cls += 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100';
   else if (s.includes('DELIVER')) cls += 'bg-green-50 text-green-700 ring-1 ring-green-200';
   else if (s.includes('FAIL')) cls += 'bg-red-50 text-red-700 ring-1 ring-red-200';
   else cls += 'bg-slate-100 text-slate-600 ring-1 ring-slate-200';
@@ -275,8 +278,8 @@ function StatusBadge({ status }: { status?: string }) {
 /** Availability badge for riders */
 function AvailabilityBadge({ onDelivery }: { onDelivery?: boolean | undefined }) {
   return onDelivery
-    ? <span className="inline-flex items-center gap-1.5 rounded-full bg-orange-500 px-3 py-1 text-[11px] font-semibold text-white shadow-[0_8px_20px_rgba(249,115,22,0.2)]"><span className="inline-block h-1.5 w-1.5 rounded-full bg-white/90" />On Delivery</span>
-    : <span className="inline-flex items-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-[11px] font-semibold text-orange-700"><span className="inline-block h-1.5 w-1.5 rounded-full bg-orange-400" />Available</span>;
+    ? <span className="inline-flex items-center gap-1.5 rounded-full bg-orange-500 px-3 py-1 text-[11px] font-semibold text-white"><span className="inline-block h-1.5 w-1.5 rounded-full bg-white/90" />On Delivery</span>
+    : <span className="inline-flex items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-3 py-1 text-[11px] font-semibold text-green-700"><span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500" />Available</span>;
 }
 
 /** Reusable table */
@@ -290,22 +293,22 @@ function DataTable({
   showAction?: boolean;
 }) {
   return (
-    <div className="overflow-x-auto rounded-[28px] border border-orange-100 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
-      <table className="min-w-full divide-y divide-orange-100 text-sm">
+    <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+      <table className="min-w-full divide-y divide-gray-200 text-sm">
         <thead>
-          <tr className="bg-[linear-gradient(180deg,rgba(255,247,237,0.95),rgba(255,255,255,1))]">
+          <tr className="bg-gray-50">
             {columns.map(col => (
-              <th key={col} className="px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">{col}</th>
+              <th key={col} className="px-5 py-4 text-left text-sm font-semibold text-[#666666]">{col}</th>
             ))}
-            {showAction && <th className="px-4 py-3.5 text-right text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Action</th>}
+            {showAction && <th className="px-5 py-4 text-right text-sm font-semibold text-[#666666]">Action</th>}
           </tr>
         </thead>
-        <tbody className="divide-y divide-orange-50">
+        <tbody className="divide-y divide-gray-200">
           {isLoading ? (
             <tr>
               <td colSpan={columns.length + (showAction ? 1 : 0)} className="px-4 py-12 text-center text-slate-400">
                 <div className="flex flex-col items-center gap-2">
-                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-orange-200 border-t-orange-500" />
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-orange-100 border-t-orange-500" />
                   <span className="text-xs">Loading…</span>
                 </div>
               </td>
@@ -315,11 +318,11 @@ function DataTable({
               <td colSpan={columns.length + (showAction ? 1 : 0)} className="px-4 py-14 text-center text-sm text-slate-400">{emptyMsg}</td>
             </tr>
           ) : rows.map(row => (
-            <tr key={row.key} className="transition-colors hover:bg-orange-50/50">
+            <tr key={row.key} className="transition-colors hover:bg-gray-50/70">
               {row.cells.map((cell, i) => (
-                <td key={i} className="px-4 py-3.5 text-slate-700 whitespace-nowrap">{cell}</td>
+                <td key={i} className="px-5 py-4 text-slate-800 whitespace-nowrap">{cell}</td>
               ))}
-              {showAction && <td className="px-4 py-3 text-right">{row.action ?? '—'}</td>}
+              {showAction && <td className="px-5 py-4 text-right">{row.action ?? '—'}</td>}
             </tr>
           ))}
         </tbody>
@@ -333,9 +336,9 @@ function OrderItemsList({ items }: { items: DeliveryOrderItem[] | undefined }) {
   if (!items || items.length === 0)
     return <p className="py-3 text-sm text-slate-400">No items found.</p>;
   return (
-    <div className="overflow-hidden rounded-[22px] border border-orange-100">
+    <div className="overflow-hidden rounded-xl border border-gray-200">
       {items.map(item => (
-        <div key={item.id} className="flex items-center justify-between border-b border-orange-50 bg-white px-4 py-3.5 transition-colors last:border-b-0 hover:bg-orange-50/40">
+        <div key={item.id} className="flex items-center justify-between border-b border-gray-100 bg-white px-4 py-3.5 transition-colors last:border-b-0 hover:bg-gray-50">
           <div className="flex-1 min-w-0">
             <p className="truncate text-sm font-semibold text-slate-800">{item.product?.name || `Item #${item.id}`}</p>
             <p className="mt-0.5 text-xs text-slate-400">
@@ -345,7 +348,7 @@ function OrderItemsList({ items }: { items: DeliveryOrderItem[] | undefined }) {
                 : null}
             </p>
           </div>
-          <span className="ml-4 text-sm font-semibold text-orange-600">
+          <span className="ml-4 text-sm font-semibold text-slate-900">
             {formatCurrency((Number(item.price) || 0) * Number(item.quantity || 0))}
           </span>
         </div>
@@ -357,7 +360,7 @@ function OrderItemsList({ items }: { items: DeliveryOrderItem[] | undefined }) {
 /** Detail grid for order/assignment metadata */
 function DetailGrid({ fields }: { fields: { label: string; value: ReactNode }[] }) {
   return (
-    <div className="grid grid-cols-1 gap-px overflow-hidden rounded-[24px] border border-orange-100 bg-orange-100/70 sm:grid-cols-2">
+    <div className="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-gray-200 bg-gray-200 sm:grid-cols-2">
       {fields.map(f => (
         <div key={f.label} className="bg-white px-4 py-4">
           <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{f.label}</p>
@@ -384,7 +387,7 @@ function BackButton({ onClick, label = 'Back' }: { onClick: () => void; label?: 
 /** Section card wrapper */
 function SectionCard({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <div className={`rounded-[30px] border border-orange-100 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.06)] sm:p-6 ${className}`}>
+    <div className={`rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6 ${className}`}>
       {children}
     </div>
   );
@@ -402,7 +405,7 @@ function FormField({ label, required, children }: { label: string; required?: bo
   );
 }
 
-const inputCls = 'w-full rounded-2xl border border-orange-200/80 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-[0_1px_2px_rgba(15,23,42,0.03)] outline-none transition placeholder:text-slate-300 focus:border-orange-400 focus:ring-4 focus:ring-orange-100';
+const inputCls = 'w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-orange-400 focus:ring-4 focus:ring-orange-100';
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
@@ -419,6 +422,14 @@ export default function DeliveryPage() {
   const [warehouseRiderSel, setWarehouseRiderSel]   = useState<Record<number,string>>({});
   const [assignments, setAssignments]               = useState<DeliveryAssignment[]>([]);
   const [riders, setRiders]                         = useState<DeliveryRider[]>([]);
+  const [assignmentFilters, setAssignmentFilters]   = useState({
+    search: '',
+    riderId: 'all',
+    status: 'all',
+    dateFrom: '',
+    dateTo: '',
+    sort: 'newest' as AssignmentSort,
+  });
 
   const [selectedOrder, setSelectedOrder]           = useState<DeliveryOrderRecord | null>(null);
   const [selectedRider, setSelectedRider]           = useState<DeliveryRider | null>(null);
@@ -517,7 +528,7 @@ export default function DeliveryPage() {
   }, [activeTab]);
 
   useEffect(() => {
-    if (activeTab !== 'warehouse' || !token || riders.length > 0) return;
+    if (!['warehouse', 'assignments', 'recovery'].includes(activeTab) || !token || riders.length > 0) return;
     let mounted = true;
     void (async () => {
       try { const d = await deliveryAPI.getRiders(); if (mounted) setRiders(d); } catch {}
@@ -643,6 +654,78 @@ export default function DeliveryPage() {
     [assignments],
   );
 
+  const assignmentRiderOptions = useMemo(() => {
+    const options = new Map<string, string>();
+    assignments.forEach(assignment => {
+      const id = assignment.rider?.id ?? assignment.riderId;
+      if (!id) return;
+      options.set(String(id), getRiderName(assignment));
+    });
+    riders.forEach(rider => {
+      options.set(String(rider.id), rider.fullName || rider.email || rider.phoneNumber || `Rider #${rider.id}`);
+    });
+    return Array.from(options, ([id, label]) => ({ id, label })).sort((a, b) => a.label.localeCompare(b.label));
+  }, [assignments, riders]);
+
+  const assignmentStatusOptions = useMemo(() => {
+    const statuses = new Set<string>();
+    assignments.forEach(assignment => {
+      const status = assignment.assignmentStatus || 'ASSIGNED';
+      if (status) statuses.add(status);
+    });
+    return Array.from(statuses).sort((a, b) => formatLabel(a).localeCompare(formatLabel(b)));
+  }, [assignments]);
+
+  const filteredAssignments = useMemo(() => {
+    const query = assignmentFilters.search.trim().toLowerCase();
+    const fromTime = assignmentFilters.dateFrom
+      ? new Date(`${assignmentFilters.dateFrom}T00:00:00`).getTime()
+      : null;
+    const toTime = assignmentFilters.dateTo
+      ? new Date(`${assignmentFilters.dateTo}T23:59:59`).getTime()
+      : null;
+
+    return assignments
+      .filter(assignment => {
+        const riderId = assignment.rider?.id ?? assignment.riderId;
+        const assignedTime = new Date(assignment.createdAt || assignment.updatedAt || 0).getTime();
+        const status = assignment.assignmentStatus || 'ASSIGNED';
+        const searchable = [
+          assignment.id,
+          assignment.orderId,
+          getRiderName(assignment),
+          assignment.rider?.phoneNumber,
+          assignment.failureReason,
+          status,
+        ].join(' ').toLowerCase();
+
+        if (query && !searchable.includes(query)) return false;
+        if (assignmentFilters.riderId !== 'all' && String(riderId || '') !== assignmentFilters.riderId) return false;
+        if (assignmentFilters.status !== 'all' && status !== assignmentFilters.status) return false;
+        if (fromTime !== null && assignedTime < fromTime) return false;
+        if (toTime !== null && assignedTime > toTime) return false;
+        return true;
+      })
+      .sort((a, b) => {
+        if (assignmentFilters.sort === 'rider-az' || assignmentFilters.sort === 'rider-za') {
+          const direction = assignmentFilters.sort === 'rider-az' ? 1 : -1;
+          return getRiderName(a).localeCompare(getRiderName(b)) * direction;
+        }
+
+        const direction = assignmentFilters.sort === 'newest' ? -1 : 1;
+        const aTime = new Date(a.createdAt || a.updatedAt || 0).getTime();
+        const bTime = new Date(b.createdAt || b.updatedAt || 0).getTime();
+        return (aTime - bTime) * direction;
+      });
+  }, [assignmentFilters, assignments]);
+
+  const hasAssignmentFilters = assignmentFilters.search.trim() !== ''
+    || assignmentFilters.riderId !== 'all'
+    || assignmentFilters.status !== 'all'
+    || assignmentFilters.dateFrom !== ''
+    || assignmentFilters.dateTo !== ''
+    || assignmentFilters.sort !== 'newest';
+
   const visiblePages = useMemo(() => {
     const total = warehousePagination.totalPages || 1;
     const cur   = warehousePagination.currentPage || 1;
@@ -656,20 +739,38 @@ export default function DeliveryPage() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-gray-50/70 px-4 py-6 sm:px-6">
+    <div className="min-h-screen bg-white px-4 py-6 sm:px-6 lg:px-8">
+
+      <section className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold leading-tight text-[#333333]">Delivery Management</h1>
+          <p className="mt-2 text-sm font-medium text-[#666666]">
+            Manage warehouse orders, rider assignments, delivery teams, and recovery workflows
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => void refreshActiveTab()}
+          disabled={isRefreshing}
+          className="inline-flex items-center justify-center gap-2 self-start rounded-md bg-[#ff6b35] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#f25f2a] disabled:opacity-60"
+        >
+          <FiRefreshCw size={14} className={isRefreshing ? 'animate-spin' : ''} />
+          Refresh Data
+        </button>
+      </section>
 
       {/* ── Tabs ── */}
-      <div className="mb-6 flex gap-1 rounded-2xl bg-white p-1.5 shadow-sm border border-gray-100 w-fit max-w-full overflow-x-auto">
+      <div className="mb-6 flex max-w-full gap-8 overflow-x-auto border-b border-gray-200">
         {TAB_CONFIG.map(tab => (
           <button
             key={tab.key}
             type="button"
             onClick={() => setActiveTab(tab.key)}
             className={[
-              'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap',
+              'flex items-center gap-2 border-b-2 px-0 pb-3 text-sm font-medium transition-all whitespace-nowrap',
               activeTab === tab.key
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50',
+                ? 'border-[#ff6b35] text-[#ff6b35]'
+                : 'border-transparent text-[#666666] hover:text-[#333333]',
             ].join(' ')}
           >
             {tab.icon}
@@ -685,14 +786,14 @@ export default function DeliveryPage() {
             <BackButton onClick={() => setSelectedOrder(null)} label="Back to processing orders" />
             {isDetailLoading ? (
               <div className="flex items-center justify-center py-16 gap-3 text-gray-400">
-                <div className="h-5 w-5 animate-spin rounded-full border-2 border-blue-200 border-t-blue-500" />
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-orange-100 border-t-orange-500" />
                 <span className="text-sm">Loading order details…</span>
               </div>
             ) : selectedOrder && (
               <>
                 <div className="flex flex-wrap items-start justify-between gap-3 mb-5">
                   <div>
-                    <h2 className="text-lg font-semibold text-gray-800">Order <span className="text-blue-600">#{selectedOrder.id}</span></h2>
+                    <h2 className="text-lg font-semibold text-gray-800">Order <span className="text-slate-900">#{selectedOrder.id}</span></h2>
                     <p className="text-xs text-gray-400 mt-0.5">{formatDate(selectedOrder.createdAt || selectedOrder.updatedAt)}</p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -701,7 +802,7 @@ export default function DeliveryPage() {
                       type="button"
                       onClick={() => void handleMoveToWarehouse(selectedOrder.id)}
                       disabled={actionKey === `processing-${selectedOrder.id}`}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 disabled:opacity-50 transition"
+                      className="inline-flex items-center gap-1.5 rounded-md bg-[#ff6b35] px-3 py-1.5 text-xs font-medium text-white transition hover:bg-[#f25f2a] disabled:opacity-50"
                     >
                       <FiPackage size={13} />
                       {actionKey === `processing-${selectedOrder.id}` ? 'Moving…' : 'Move to Warehouse'}
@@ -711,7 +812,7 @@ export default function DeliveryPage() {
                 <DetailGrid fields={[
                   { label: 'Customer',         value: getCustomerName(selectedOrder.orderedBy) },
                   { label: 'Email',            value: getCustomerEmail(selectedOrder.orderedBy) },
-                  { label: 'Total',            value: <span className="text-blue-700">{formatCurrency(getTotalAmount(selectedOrder))}</span> },
+                  { label: 'Total',            value: <span className="text-slate-900">{formatCurrency(getTotalAmount(selectedOrder))}</span> },
                   { label: 'Shipping Address', value: formatShippingAddress(selectedOrder.shippingAddress) },
                 ]} />
                 <div className="mt-6">
@@ -731,7 +832,7 @@ export default function DeliveryPage() {
               rows={processingOrders.map(o => ({
                 key: o.id,
                 cells: [
-                  <span key="id" className="font-mono text-xs text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md">#{o.id}</span>,
+                  <span key="id" className="font-mono text-sm text-[#333333]">#{o.id}</span>,
                   <div key="customer"><p className="text-sm font-medium text-gray-800">{getCustomerName(o.orderedBy)}</p><p className="text-xs text-gray-400">{getCustomerEmail(o.orderedBy)}</p></div>,
                   <span key="items" className="text-gray-600">{getItemCount(o.orderItems)} item(s)</span>,
                   <span key="total" className="font-medium text-gray-800">{formatCurrency(getTotalAmount(o))}</span>,
@@ -739,7 +840,7 @@ export default function DeliveryPage() {
                   <span key="date" className="text-gray-500 text-xs">{formatDate(o.createdAt || o.updatedAt)}</span>,
                 ],
                 action: (
-                  <button type="button" onClick={() => void handleViewOrder(o.id)} className="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline transition">
+                  <button type="button" onClick={() => void handleViewOrder(o.id)} className="text-xs font-medium text-[#ff6b35] transition hover:text-[#f25f2a] hover:underline">
                     View Items
                   </button>
                 ),
@@ -755,7 +856,7 @@ export default function DeliveryPage() {
           <TabHeader title="Warehouse Queue" subtitle={`${warehouseOrders.length} order(s)`} isRefreshing={isRefreshing} onRefresh={() => void refreshActiveTab()} />
           {isRefreshing && warehouseOrders.length === 0 ? (
             <div className="flex items-center justify-center py-20 gap-3 text-gray-400">
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-blue-200 border-t-blue-500" />
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-orange-100 border-t-orange-500" />
               <span className="text-sm">Loading…</span>
             </div>
           ) : warehouseOrders.length === 0 ? (
@@ -769,11 +870,11 @@ export default function DeliveryPage() {
                   const expanded   = Boolean(warehouseExpanded[order.id]);
                   const selRider   = warehouseRiderSel[order.id] || '';
                   return (
-                    <div key={order.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div key={order.id} className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
                       {/* Card header */}
                       <div className="flex flex-wrap items-center justify-between gap-2 px-5 py-4 border-b border-gray-50">
                         <div className="flex items-center gap-3">
-                          <span className="font-mono text-sm text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-lg">#{order.id}</span>
+                          <span className="font-mono text-sm text-[#333333]">#{order.id}</span>
                           <StatusBadge status={order.deliveryStatus || 'AT_WAREHOUSE'} />
                         </div>
                         <div className="flex gap-2">
@@ -781,7 +882,7 @@ export default function DeliveryPage() {
                             type="button"
                             onClick={() => void handleMarkWarehouseOrder(order.id)}
                             disabled={isMarking}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 disabled:opacity-50 transition"
+                            className="inline-flex items-center gap-1.5 rounded-md bg-[#ff6b35] px-3 py-1.5 text-xs font-medium text-white transition hover:bg-[#f25f2a] disabled:opacity-50"
                           >
                             <FiPackage size={12} />
                             {isMarking ? 'Working…' : 'Mark at Warehouse'}
@@ -827,13 +928,13 @@ export default function DeliveryPage() {
                             type="button"
                             onClick={() => void handleAssignRider(order.id)}
                             disabled={!riders.length || !selRider || isAssigning || isMarking}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-700 disabled:opacity-40 transition whitespace-nowrap"
+                            className="inline-flex items-center gap-1.5 rounded-md bg-[#ff6b35] px-4 py-2 text-xs font-medium text-white transition hover:bg-[#f25f2a] disabled:opacity-40 whitespace-nowrap"
                           >
                             <FiTruck size={12} />
                             {isAssigning ? 'Assigning…' : 'Assign Rider'}
                           </button>
                         </div>
-                        {!riders.length && <p className="text-xs text-amber-600 mt-2">No riders available. Create riders first.</p>}
+                        {!riders.length && <p className="text-xs text-slate-500 mt-2">No riders available. Create riders first.</p>}
                       </div>
 
                       {/* Expandable items */}
@@ -859,7 +960,7 @@ export default function DeliveryPage() {
                   {visiblePages.map(p => (
                     <button key={p} type="button" onClick={() => void loadWarehouseOrders(p)} disabled={isRefreshing}
                       className={['px-3 py-1.5 rounded-lg border text-xs transition',
-                        p===warehousePagination.currentPage ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50',
+                        p===warehousePagination.currentPage ? 'bg-[#ff6b35] text-white border-[#ff6b35]' : 'border-gray-200 text-gray-600 hover:bg-gray-50',
                       ].join(' ')}
                     >{p}</button>
                   ))}
@@ -893,25 +994,126 @@ export default function DeliveryPage() {
             </div>
             <div className="flex gap-2 mt-6">
               <button type="button" onClick={() => setShowCreateAssignment(false)} disabled={actionKey==='assign-create'} className="px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition">Cancel</button>
-              <button type="button" onClick={() => void handleCreateAssignment()} disabled={actionKey==='assign-create'} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition">
+              <button type="button" onClick={() => void handleCreateAssignment()} disabled={actionKey==='assign-create'} className="rounded-md bg-[#ff6b35] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#f25f2a] disabled:opacity-50">
                 {actionKey==='assign-create' ? 'Creating…' : 'Create Assignment'}
               </button>
             </div>
           </SectionCard>
         ) : (
           <>
-            <TabHeader title="All Assignments" subtitle={`${assignments.length} assignment(s)`} />
+            <TabHeader
+              title="All Assignments"
+              subtitle={`${filteredAssignments.length} of ${assignments.length} assignment(s)`}
+              isRefreshing={isRefreshing}
+              onRefresh={() => void refreshActiveTab()}
+            >
+              <button type="button" onClick={() => setShowCreateAssignment(true)} className="inline-flex items-center gap-1.5 rounded-md bg-[#ff6b35] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#f25f2a]">
+                <FiPlus size={14} /> New Assignment
+              </button>
+            </TabHeader>
+
+            <SectionCard className="mb-6 !rounded-xl !p-4">
+              <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-[#333333]">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-orange-50 text-[#ff6b35]">
+                  <FiFilter size={15} />
+                </span>
+                Assignment Filters
+              </div>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-6">
+                <label className="relative xl:col-span-2">
+                  <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-[#666666]">Search</span>
+                  <FiSearch className="pointer-events-none absolute bottom-3.5 left-3 text-slate-400" size={15} />
+                  <input
+                    type="search"
+                    value={assignmentFilters.search}
+                    onChange={e => setAssignmentFilters(s => ({ ...s, search: e.target.value }))}
+                    className="w-full rounded-lg border border-gray-300 bg-white py-3 pl-9 pr-3 text-sm text-slate-700 shadow-sm outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                    placeholder="Order, rider, phone..."
+                  />
+                </label>
+                <label>
+                  <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-[#666666]">Rider</span>
+                  <select
+                    value={assignmentFilters.riderId}
+                    onChange={e => setAssignmentFilters(s => ({ ...s, riderId: e.target.value }))}
+                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm text-slate-700 shadow-sm outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                  >
+                    <option value="all">All riders</option>
+                    {assignmentRiderOptions.map(option => (
+                      <option key={option.id} value={option.id}>{option.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-[#666666]">Status</span>
+                  <select
+                    value={assignmentFilters.status}
+                    onChange={e => setAssignmentFilters(s => ({ ...s, status: e.target.value }))}
+                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm text-slate-700 shadow-sm outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                  >
+                    <option value="all">All status</option>
+                    {assignmentStatusOptions.map(status => (
+                      <option key={status} value={status}>{formatLabel(status)}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-[#666666]">Sort</span>
+                  <select
+                    value={assignmentFilters.sort}
+                    onChange={e => setAssignmentFilters(s => ({ ...s, sort: e.target.value as AssignmentSort }))}
+                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm text-slate-700 shadow-sm outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                  >
+                    <option value="newest">Date: newest first</option>
+                    <option value="oldest">Date: oldest first</option>
+                    <option value="rider-az">Rider: A to Z</option>
+                    <option value="rider-za">Rider: Z to A</option>
+                  </select>
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="relative">
+                    <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-[#666666]">From</span>
+                    <FiCalendar className="pointer-events-none absolute bottom-3.5 left-3 text-slate-400" size={14} />
+                    <input
+                      type="date"
+                      value={assignmentFilters.dateFrom}
+                      onChange={e => setAssignmentFilters(s => ({ ...s, dateFrom: e.target.value }))}
+                      className="w-full rounded-lg border border-gray-300 bg-white py-3 pl-9 pr-2 text-sm text-slate-700 shadow-sm outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                    />
+                  </label>
+                  <label>
+                    <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-[#666666]">To</span>
+                    <input
+                      type="date"
+                      value={assignmentFilters.dateTo}
+                      onChange={e => setAssignmentFilters(s => ({ ...s, dateTo: e.target.value }))}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm text-slate-700 shadow-sm outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                    />
+                  </label>
+                </div>
+              </div>
+              {hasAssignmentFilters && (
+                <button
+                  type="button"
+                  onClick={() => setAssignmentFilters({ search: '', riderId: 'all', status: 'all', dateFrom: '', dateTo: '', sort: 'newest' })}
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-[#666666] transition hover:border-orange-200 hover:text-[#ff6b35]"
+                >
+                  <FiX size={13} /> Clear filters
+                </button>
+              )}
+            </SectionCard>
+
             <DataTable
               isLoading={isRefreshing && assignments.length === 0}
               columns={['Assignment','Order ID','Rider','Phone','Status','Assigned At','Failure Reason']}
               showAction={false}
-              emptyMsg={error || 'No assignments found.'}
-              rows={assignments.map(a => ({
+              emptyMsg={error || (hasAssignmentFilters ? 'No assignments match the selected filters.' : 'No assignments found.')}
+              rows={filteredAssignments.map(a => ({
                 key: a.id,
                 cells: [
-                  <span key="id" className="font-mono text-xs text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md">#{a.id}</span>,
+                  <span key="id" className="font-mono text-sm text-[#333333]">#{a.id}</span>,
                   <span key="order" className="text-gray-600 text-xs">#{a.orderId}</span>,
-                  <span key="rider" className="font-medium text-gray-800">{a.rider?.fullName||a.rider?.username||a.rider?.email||'Unassigned'}</span>,
+                  <span key="rider" className="font-medium text-gray-800">{getRiderName(a)}</span>,
                   <span key="phone" className="text-gray-500 text-xs">{a.rider?.phoneNumber||'N/A'}</span>,
                   <StatusBadge key="status" status={a.assignmentStatus||'ASSIGNED'} />,
                   <span key="date" className="text-gray-500 text-xs">{formatDate(a.createdAt||a.updatedAt)}</span>,
@@ -930,7 +1132,7 @@ export default function DeliveryPage() {
             <BackButton onClick={() => setSelectedRider(null)} label="Back to riders" />
             {isRiderDetailLoading ? (
               <div className="flex items-center justify-center py-16 gap-3 text-gray-400">
-                <div className="h-5 w-5 animate-spin rounded-full border-2 border-blue-200 border-t-blue-500" />
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-orange-100 border-t-orange-500" />
                 <span className="text-sm">Loading rider details…</span>
               </div>
             ) : selectedRider && (
@@ -955,7 +1157,7 @@ export default function DeliveryPage() {
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-1.5"><FiLock size={12}/>Reset Password</p>
                   <div className="flex gap-2">
                     <input type="password" value={pwForm.newPassword} onChange={e => setPwForm({ newPassword:e.target.value })} className={`${inputCls} flex-1`} placeholder="Enter new password…" />
-                    <button type="button" onClick={() => void handleResetRiderPassword()} disabled={actionKey===`rider-pw-${selectedRider.id}`} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition whitespace-nowrap">
+                    <button type="button" onClick={() => void handleResetRiderPassword()} disabled={actionKey===`rider-pw-${selectedRider.id}`} className="rounded-md bg-[#ff6b35] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#f25f2a] disabled:opacity-50 whitespace-nowrap">
                       {actionKey===`rider-pw-${selectedRider.id}` ? 'Saving…' : 'Change'}
                     </button>
                   </div>
@@ -982,7 +1184,7 @@ export default function DeliveryPage() {
               </FormField>
               <div className="sm:col-span-2">
                 <FormField label="Document (optional)">
-                  <label className="flex items-center gap-3 cursor-pointer border border-dashed border-gray-300 rounded-lg px-4 py-3 hover:border-blue-400 hover:bg-blue-50 transition">
+                  <label className="flex items-center gap-3 cursor-pointer border border-dashed border-gray-300 rounded-lg px-4 py-3 hover:border-slate-400 hover:bg-slate-50 transition">
                     <FiUpload size={16} className="text-gray-400" />
                     <span className="text-sm text-gray-500 truncate">{riderDoc?.name || 'Choose a file (JPG, PNG, PDF · max 5 MB)'}</span>
                     <input key={riderDocKey} type="file" accept={RIDER_DOCUMENT_ACCEPT} className="hidden" onChange={e => {
@@ -998,7 +1200,7 @@ export default function DeliveryPage() {
             </form>
             <div className="flex gap-2 mt-6">
               <button type="button" onClick={() => setShowCreateRider(false)} disabled={actionKey==='rider-create'} className="px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition">Cancel</button>
-              <button type="submit" form="create-rider-form" disabled={actionKey==='rider-create'} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition">
+              <button type="submit" form="create-rider-form" disabled={actionKey==='rider-create'} className="rounded-md bg-[#ff6b35] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#f25f2a] disabled:opacity-50">
                 {actionKey==='rider-create' ? 'Creating…' : 'Create Rider'}
               </button>
             </div>
@@ -1006,7 +1208,7 @@ export default function DeliveryPage() {
         ) : (
           <>
             <TabHeader title={`Riders (${riders.length})`} subtitle="Manage delivery riders" isRefreshing={isRefreshing} onRefresh={() => void refreshActiveTab()}>
-              <button type="button" onClick={() => { setSelectedRider(null); setShowCreateRider(true); }} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition">
+              <button type="button" onClick={() => { setSelectedRider(null); setShowCreateRider(true); }} className="inline-flex items-center gap-1.5 rounded-md bg-[#ff6b35] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#f25f2a]">
                 <FiPlus size={14} /> New Rider
               </button>
             </TabHeader>
@@ -1019,9 +1221,9 @@ export default function DeliveryPage() {
                     key={rider.id}
                     type="button"
                     onClick={() => void handleViewRider(rider.id)}
-                    className="flex flex-col items-center gap-2.5 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-blue-300 hover:bg-blue-50/50 hover:shadow transition-all text-left group"
+                    className="flex flex-col items-center gap-2.5 rounded-xl border border-gray-200 bg-white p-4 text-left shadow-sm transition-all hover:border-orange-200 hover:bg-orange-50/40 hover:shadow group"
                   >
-                    <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 text-lg font-semibold group-hover:bg-blue-200 transition">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-50 text-lg font-semibold text-[#ff6b35] transition group-hover:bg-orange-100">
                       {getInitials(rider.fullName||rider.email)}
                     </div>
                     <div className="text-center min-w-0 w-full">
@@ -1060,7 +1262,7 @@ export default function DeliveryPage() {
               ],
               action: (
                 <button type="button" onClick={() => void handleResetToWarehouse(a.orderId)} disabled={actionKey===`recovery-${a.orderId}`}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 disabled:opacity-50 transition">
+                  className="inline-flex items-center gap-1 rounded-md bg-[#ff6b35] px-3 py-1.5 text-xs font-medium text-white transition hover:bg-[#f25f2a] disabled:opacity-50">
                   {actionKey===`recovery-${a.orderId}` ? 'Working…' : 'Reset Order'}
                 </button>
               ),
@@ -1080,16 +1282,16 @@ function TabHeader({
   const hasActions = Boolean(children) || Boolean(onRefresh);
 
   return (
-    <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+    <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
       <div>
-        <h1 className="text-lg font-semibold text-gray-800">{title}</h1>
-        {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
+        <h1 className="text-lg font-semibold text-[#333333]">{title}</h1>
+        {subtitle && <p className="mt-0.5 text-xs font-medium text-[#666666]">{subtitle}</p>}
       </div>
       {hasActions ? (
         <div className="flex items-center gap-2">
           {children}
           {onRefresh && (
-            <button type="button" onClick={onRefresh} disabled={isRefreshing} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition shadow-sm">
+            <button type="button" onClick={onRefresh} disabled={isRefreshing} className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-[#666666] shadow-sm transition hover:bg-gray-50 disabled:opacity-50">
               <FiRefreshCw size={13} className={isRefreshing ? 'animate-spin' : ''} />
               Refresh
             </button>
@@ -1102,7 +1304,7 @@ function TabHeader({
 
 function EmptyState({ icon, message }: { icon: ReactNode; message: string }) {
   return (
-    <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-300 bg-white rounded-2xl border border-gray-100">
+    <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white py-20 text-gray-300 shadow-sm">
       <span className="text-gray-200">{icon}</span>
       <p className="text-sm text-gray-400">{message}</p>
     </div>

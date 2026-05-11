@@ -109,6 +109,7 @@ const VendorProfile: React.FC = () => {
   const [confirmPass, setConfirmPass] = useState("");
   const [resetMsg, setResetMsg] = useState<string | null>(null);
   const [resetLoading, setResetLoading] = useState(false);
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -173,6 +174,10 @@ const VendorProfile: React.FC = () => {
       setForgotEmail(profile?.email || authState.vendor?.email || "");
     }
   }, [activeTab, profile?.email, authState.vendor?.email]);
+
+  useEffect(() => {
+    setShowPasswordReset(false);
+  }, [activeTab]);
 
   const avatarText = useMemo(() => {
     const source = profile?.businessName || authState.vendor?.businessName || "V";
@@ -275,7 +280,7 @@ const VendorProfile: React.FC = () => {
               Manage Details
             </button>
             <button
-              className={`vendor-profile-page__side-btn ${activeTab === "credentials" ? "vendor-profile-page__side-btn--muted" : ""}`}
+              className={`vendor-profile-page__side-btn ${activeTab === "credentials" ? "vendor-profile-page__side-btn--active" : ""}`}
               onClick={() => setActiveTab("credentials")}
             >
               Change Credentials
@@ -336,61 +341,82 @@ const VendorProfile: React.FC = () => {
 
             {activeTab === "credentials" && (
               <div className="vendor-profile-page__credentials">
-                <h2 className="vendor-profile-page__title">Account Credentials</h2>
+                <div className="vendor-profile-page__security-header">
+                  <div className="vendor-profile-page__security-copy">
+                    <h2 className="vendor-profile-page__title">Account Security</h2>
+                    <p className="vendor-profile-page__security-subtitle">
+                      Manage your password and account security
+                    </p>
+                    <span className="vendor-profile-page__title-accent" aria-hidden="true" />
+                  </div>
+                  <button
+                    type="button"
+                    className="vendor-profile-page__change-password-btn"
+                    onClick={() => setShowPasswordReset((current) => !current)}
+                  >
+                    Change Password
+                  </button>
+                </div>
 
-                <section className="vendor-profile-page__credentials-card">
-                  <h3>Forgot Password</h3>
-                  <form onSubmit={handleForgotPassword}>
-                    <input
-                      type="email"
-                      placeholder="Enter your email"
-                      value={forgotEmail}
-                      onChange={(e) => setForgotEmail(e.target.value)}
-                      required
-                    />
-                    <button
-                      type="submit"
-                      disabled={forgotLoading}
-                    >
-                      {forgotLoading ? "Sending..." : "Send Reset Email"}
-                    </button>
-                  </form>
-                  {forgotMsg && <p className="vendor-profile-page__message">{forgotMsg}</p>}
-                </section>
+                {showPasswordReset && (
+                  <section className="vendor-profile-page__reset-panel">
+                    <h3>Reset Password</h3>
+                    <p>Enter your email address to receive a reset token.</p>
+                    <form onSubmit={handleForgotPassword}>
+                      <label htmlFor="vendor-reset-email">Email Address</label>
+                      <input
+                        id="vendor-reset-email"
+                        type="email"
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        required
+                      />
+                      <button
+                        type="submit"
+                        disabled={forgotLoading}
+                      >
+                        {forgotLoading ? "Sending..." : "Send Reset Email"}
+                      </button>
+                    </form>
+                    {forgotMsg && <p className="vendor-profile-page__message">{forgotMsg}</p>}
+                  </section>
+                )}
 
-                <section className="vendor-profile-page__credentials-card">
-                  <h3>Reset Password</h3>
-                  <form onSubmit={handleResetPassword}>
-                    <input
-                      type="text"
-                      placeholder="Reset token"
-                      value={resetToken}
-                      onChange={(e) => setResetToken(e.target.value)}
-                      required
-                    />
-                    <input
-                      type="password"
-                      placeholder="New password"
-                      value={newPass}
-                      onChange={(e) => setNewPass(e.target.value)}
-                      required
-                    />
-                    <input
-                      type="password"
-                      placeholder="Confirm new password"
-                      value={confirmPass}
-                      onChange={(e) => setConfirmPass(e.target.value)}
-                      required
-                    />
-                    <button
-                      type="submit"
-                      disabled={resetLoading}
-                    >
-                      {resetLoading ? "Resetting..." : "Reset Password"}
-                    </button>
-                  </form>
-                  {resetMsg && <p className="vendor-profile-page__message">{resetMsg}</p>}
-                </section>
+                {showPasswordReset && forgotMsg && (
+                  <section className="vendor-profile-page__token-panel">
+                    <h3>Already have a reset token?</h3>
+                    <form onSubmit={handleResetPassword}>
+                      <input
+                        type="text"
+                        placeholder="Reset token"
+                        value={resetToken}
+                        onChange={(e) => setResetToken(e.target.value)}
+                        required
+                      />
+                      <input
+                        type="password"
+                        placeholder="New password"
+                        value={newPass}
+                        onChange={(e) => setNewPass(e.target.value)}
+                        required
+                      />
+                      <input
+                        type="password"
+                        placeholder="Confirm new password"
+                        value={confirmPass}
+                        onChange={(e) => setConfirmPass(e.target.value)}
+                        required
+                      />
+                      <button
+                        type="submit"
+                        disabled={resetLoading}
+                      >
+                        {resetLoading ? "Resetting..." : "Reset Password"}
+                      </button>
+                    </form>
+                    {resetMsg && <p className="vendor-profile-page__message">{resetMsg}</p>}
+                  </section>
+                )}
               </div>
             )}
           </div>

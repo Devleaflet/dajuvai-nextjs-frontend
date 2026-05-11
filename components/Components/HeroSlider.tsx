@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -23,6 +22,21 @@ interface Slide {
   externalLink?: string | null;
 }
 
+interface ApiBanner {
+  id: number;
+  name: string;
+  desktopImage: string | null;
+  mobileImage: string | null;
+  type: string;
+  status: string;
+  startDate?: string | null;
+  endDate?: string | null;
+  productSource?: string;
+  selectedCategory?: { id: number } | null;
+  selectedSubcategory?: { id: number; category: { id: number } } | null;
+  externalLink?: string | null;
+}
+
 interface HeroSliderProps {
   onLoad?: () => void;
 }
@@ -33,19 +47,19 @@ const fetchHeroBanners = async (): Promise<Slide[]> => {
   if (!response.ok) {
     throw new Error(`Failed to fetch banners: ${response.statusText}`);
   }
-  const data = await response.json();
+  const data = (await response.json()) as { data?: ApiBanner[] };
   console.table(data)
   //('Fetched banners:', data);
 
-  return data.data
+  return (data.data ?? [])
     .filter(
-      (banner: any) =>
+      (banner) =>
         banner.type === 'HERO' &&
         banner.status === 'ACTIVE' &&
         (!banner.startDate || new Date(banner.startDate) <= new Date()) &&
         (!banner.endDate || new Date(banner.endDate) >= new Date())
     )
-    .map((banner: any) => ({
+    .map((banner) => ({
       id: banner.id,
       name: banner.name,
       desktopImage: banner.desktopImage,
@@ -69,7 +83,9 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ onLoad }) => {
   const sliderRef = useRef<HTMLDivElement>(null);
 
   const clickThreshold = 5; // Pixels to consider as a click vs. drag
-  const swipeThreshold = sliderRef.current ? sliderRef.current.offsetWidth / 4 : 100;
+
+  const getSwipeThreshold = (): number =>
+    sliderRef.current?.offsetWidth ? sliderRef.current.offsetWidth / 4 : 100;
 
   const { data: slides = [], isLoading, error } = useQuery<Slide[], Error>({
     queryKey: ['heroBanners'],
@@ -128,7 +144,7 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ onLoad }) => {
     setIsDragging(false);
 
     // Check drag distance for swipe
-    if (Math.abs(translateX) > swipeThreshold) {
+    if (Math.abs(translateX) > getSwipeThreshold()) {
       if (translateX > 0) {
         goToPrevSlide();
       } else {
@@ -264,8 +280,24 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ onLoad }) => {
 
   if (isLoading) return <SliderSkeleton />;
   if (error) //(error)
-    if (error) return <div>Error loading banners: {error.message}</div>;
-  if (slides.length === 0) return <div>No hero banners available</div>;
+    if (error)
+      return (
+        <div className="hero-slider hero-slider--empty" role="status" aria-live="polite">
+          <div className="hero-slider__empty-state">
+            <p className="hero-slider__empty-title">Unable to load banners</p>
+            <p className="hero-slider__empty-copy">Please try again in a moment.</p>
+          </div>
+        </div>
+      );
+  if (slides.length === 0)
+    return (
+      <div className="hero-slider hero-slider--empty" role="status" aria-live="polite">
+        <div className="hero-slider__empty-state">
+          <p className="hero-slider__empty-title">No hero banners available</p>
+          <p className="hero-slider__empty-copy">This section will appear when active banners are published.</p>
+        </div>
+      </div>
+    );
 
   return (
     <div

@@ -5,7 +5,7 @@
 // ================================
 import React, { useState, useEffect } from 'react';
 import "@/styles/Wishlist.css";
-import { FaTrash, FaShoppingCart, FaMinus, FaPlus, FaUser, FaHeart } from 'react-icons/fa';
+import { FaTrash, FaShoppingCart, FaMinus, FaPlus, FaUser, FaHeart, FaBell, FaMobileAlt } from 'react-icons/fa';
 import Footer from "@/components/Components/Footer";
 import Navbar from '@/components/Components/Navbar';
 import { API_BASE_URL } from "@/lib/config";
@@ -95,8 +95,18 @@ const EmptyWishlist: React.FC = () => {
           </div>
         </div>
         <div className="wishlist__empty-content">
-          <h2 className="wishlist__empty-title">Your Wishlist is Empty</h2>
-          <p className="wishlist__empty-subtitle">Looks like you haven't added any items to your wishlist yet.</p>
+          <h2 className="wishlist__empty-title">Your Wishlist is Waiting</h2>
+          <p className="wishlist__empty-subtitle">Save products you love and keep them here until you are ready to shop.</p>
+          <p className="wishlist__empty-description">
+            Every item you add will appear here with a clean summary, quick actions, and an easy path back to checkout.
+          </p>
+        </div>
+        <div className="wishlist__empty-tips" aria-hidden="true">
+          <div className="wishlist__empty-tips-list">
+            <span className="wishlist__empty-tip">Warm orange accents</span>
+            <span className="wishlist__empty-tip">Quick move to cart</span>
+            <span className="wishlist__empty-tip">Easy item review</span>
+          </div>
         </div>
         <div className="wishlist__empty-actions">
           <Link href="/shop" className="wishlist__shop-button wishlist__shop-button--primary">
@@ -369,6 +379,7 @@ const Wishlist: React.FC = () => {
     const price = getItemPrice(item);
     return sum + price * (item.quantity || 1);
   }, 0);
+  const wishlistCount = wishlistItems.length;
   const handleRetry = () => {
     fetchWishlist();
   };
@@ -382,7 +393,23 @@ const Wishlist: React.FC = () => {
       <main className="wishlist__main-content">
         <div className="wishlist" role="main">
           <div className="wishlist__container">
-            <h1 className="wishlist__title">My Wishlist</h1>
+            <div className="wishlist__header">
+              <div className="wishlist__header-text">
+                <h1 className="wishlist__title">My Wishlist</h1>
+                <p className="wishlist__subtitle">Keep your favorite finds in one place and move them to cart whenever you are ready.</p>
+              </div>
+              <div className="wishlist__meta" aria-label="Wishlist summary">
+                <span className="wishlist__meta-chip wishlist__meta-chip--accent">
+                  {wishlistCount} saved
+                </span>
+                <span className="wishlist__meta-chip">
+                  {isAuthenticated ? 'Signed in' : 'Guest view'}
+                </span>
+                <span className="wishlist__meta-chip">
+                  Rs. {totalPrice.toLocaleString('en-IN')}
+                </span>
+              </div>
+            </div>
             {loading ? (
               <div className="wishlist__items" aria-busy="true">
                 {[...Array(3)].map((_, index) => (
@@ -392,16 +419,75 @@ const Wishlist: React.FC = () => {
             ) : error ? (
               <div className="wishlist__error" role="alert">
                 {error.includes('Please log in') ? (
-                  <div className="wishlist__login-container">
-                    <p className="wishlist__login-message">Please log in to view and manage your wishlist items</p>
-                    <button
-                      className="wishlist__login-button"
-                      onClick={() => setShowAuthModal(true)}
-                      aria-label="Log in to continue"
-                    >
-                      <FaUser className="wishlist__login-icon" />
-                      Log In to Continue
-                    </button>
+                  <div className="wishlist__login-panel">
+                    <div className="wishlist__login-hero">
+                      <div className="wishlist__login-hero-art" aria-hidden="true">
+                        <span className="wishlist__login-hero-ring"></span>
+                        <span className="wishlist__login-hero-glow"></span>
+                        <div className="wishlist__login-hero-icon">
+                          <FaHeart />
+                        </div>
+                        <span className="wishlist__login-hero-spark wishlist__login-hero-spark--one"></span>
+                        <span className="wishlist__login-hero-spark wishlist__login-hero-spark--two"></span>
+                        <span className="wishlist__login-hero-spark wishlist__login-hero-spark--three"></span>
+                      </div>
+                      <div className="wishlist__login-hero-content">
+                        <h2 className="wishlist__login-title">Your wishlist is waiting</h2>
+                        <p className="wishlist__login-subtitle">
+                          Save items you love, review them anytime, and shop them when you are ready.
+                        </p>
+                        <button
+                          className="wishlist__login-button"
+                          onClick={() => setShowAuthModal(true)}
+                          aria-label="Log in to continue"
+                        >
+                          <FaUser className="wishlist__login-icon" />
+                          Log In to Continue
+                        </button>
+                      </div>
+                    </div>
+                    <div className="wishlist__login-benefits">
+                      <div className="wishlist__login-benefits-title">Why login?</div>
+                      <div className="wishlist__login-benefits-grid">
+                        <div className="wishlist__login-benefit">
+                          <span className="wishlist__login-benefit-icon" aria-hidden="true">
+                            <FaHeart />
+                          </span>
+                          <div>
+                            <h3>Save your favorites</h3>
+                            <p>Keep all the items you love in one place.</p>
+                          </div>
+                        </div>
+                        <div className="wishlist__login-benefit">
+                          <span className="wishlist__login-benefit-icon" aria-hidden="true">
+                            <FaBell />
+                          </span>
+                          <div>
+                            <h3>Get updates</h3>
+                            <p>Receive alerts on price drops and availability.</p>
+                          </div>
+                        </div>
+                        <div className="wishlist__login-benefit">
+                          <span className="wishlist__login-benefit-icon" aria-hidden="true">
+                            <FaMobileAlt />
+                          </span>
+                          <div>
+                            <h3>Access anywhere</h3>
+                            <p>View and manage your wishlist on any device.</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="wishlist__login-footer">
+                      <span>New to our store?</span>
+                      <button
+                        className="wishlist__login-link"
+                        onClick={() => setShowAuthModal(true)}
+                        type="button"
+                      >
+                        Create an account
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <button
@@ -540,4 +626,3 @@ const Wishlist: React.FC = () => {
   );
 };
 export default Wishlist;
-

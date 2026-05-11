@@ -6,6 +6,8 @@ import {
 	IoIosArrowDropleftCircle,
 	IoIosArrowDroprightCircle,
 } from "react-icons/io";
+import { FaAward } from "react-icons/fa";
+import { FiArrowRight } from "react-icons/fi";
 import "@/styles/CategoryCatalogSection.css";
 
 interface Subcategory {
@@ -207,6 +209,21 @@ const CategoryCatalogSection: React.FC = () => {
 
 	return (
 		<div className="category-section">
+			<div className="category-section__top-header">
+				<div className="category-section__heading-group">
+					<span className="category-section__heading-icon" aria-hidden="true">
+						<FaAward />
+					</span>
+					<div>
+						<h2 className="category-section__main-title">Top Categories</h2>
+						<p className="category-section__subtitle">Browse popular categories</p>
+					</div>
+				</div>
+				<a href="/shop" className="category-section__view-all">
+					View all
+					<FiArrowRight />
+				</a>
+			</div>
 			{categories.map((category) => {
 				const catId = category.category.id;
 				const { hasOverflow, atStart, atEnd } = scrollState[catId] || {
@@ -223,12 +240,20 @@ const CategoryCatalogSection: React.FC = () => {
 							<h2 className="category-section__title">
 								{category.category.name}
 							</h2>
+							<a
+								href={`/shop?categoryId=${catId}`}
+								className="category-section__category-link"
+							>
+								Explore
+								<FiArrowRight />
+							</a>
 						</div>
 						<div className="category-section__carousel-container">
 							{showScrollButtons && hasOverflow && !atStart && (
 								<button
 									className="category-section__scroll-button category-section__scroll-button--left"
 									onClick={() => scroll(catId, "left")}
+									aria-label={`Scroll ${category.category.name} subcategories left`}
 								>
 									<IoIosArrowDropleftCircle />
 								</button>
@@ -237,6 +262,7 @@ const CategoryCatalogSection: React.FC = () => {
 								<button
 									className="category-section__scroll-button category-section__scroll-button--right"
 									onClick={() => scroll(catId, "right")}
+									aria-label={`Scroll ${category.category.name} subcategories right`}
 								>
 									<IoIosArrowDroprightCircle />
 								</button>
@@ -262,7 +288,7 @@ const CategoryCatalogSection: React.FC = () => {
 										<a
 											key={item.id}
 											href={`/shop?categoryId=${catId}&subcategoryId=${item.id}`}
-											className="no-underline"
+											className="category-section__subcategory-link no-underline"
 										>
 											<div className="category-section__subcategory-item">
 												<div className="category-section__subcategory-image-container">
