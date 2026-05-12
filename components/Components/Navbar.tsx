@@ -379,7 +379,6 @@ const Navbar: React.FC = () => {
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
-	const isShopRoute = pathname === '/shop' || pathname.startsWith('/shop/');
 
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
@@ -1030,9 +1029,7 @@ const Navbar: React.FC = () => {
 						</div>
 					)}
 
-					<div
-						className={`navbar__search-row ${isShopRoute ? 'navbar__search-row--shop-mobile-hidden' : ''}`}
-					>
+					<div className="navbar__search-row">
 						<div
 							className="navbar__search"
 							ref={searchRef}

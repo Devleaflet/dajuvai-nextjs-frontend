@@ -384,15 +384,15 @@ const ProductPage = () => {
             TOP PRODUCT SECTION
         ══════════════════════════════════════════ */}
         <div className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-16 pt-8 pb-6">
-          <div className="flex flex-col xl:flex-row gap-8 lg:gap-12 items-start bg-white p-6 sm:p-8 rounded-xl shadow-sm">
-
+          <div className="flex flex-col xl:flex-row gap-6 lg:gap-10 items-start bg-white p-4 sm:p-6 lg:p-8 rounded-xl shadow-sm">
             {/* ── COLUMN 1: Product Image ── */}
-            <div className="w-full xl:w-[450px] flex-shrink-0 flex flex-col gap-3 xl:relative">
+            <div className="w-full xl:w-[420px] 2xl:w-[450px] flex-shrink-0 flex flex-col gap-3 xl:relative">
               {/* Main image */}
               <div className="relative">
                 <div
                   ref={mainImageRef}
-                  className="group relative w-full aspect-square overflow-hidden rounded-[24px] border border-gray-200 bg-[#f6f7f9] p-4 sm:p-5 shadow-[0_10px_30px_rgba(15,23,42,0.08)] cursor-crosshair"
+                  className="group relative w-full aspect-square overflow-hidden rounded-2xl border border-gray-200 bg-[#f6f7f9] p-2 sm:p-4 shadow-sm sm:shadow-[0_10px_30px_rgba(15,23,42,0.08)] cursor-crosshair"
+                  // className="group relative w-full aspect-square overflow-hidden rounded-[24px] border border-gray-200 bg-[#f6f7f9] p-4 sm:p-5 shadow-[0_10px_30px_rgba(15,23,42,0.08)] cursor-crosshair"
                   onMouseEnter={handleMouseEnter}
                   onMouseLeave={handleMouseLeave}
                   onMouseMove={handleMouseMove}
@@ -454,13 +454,15 @@ const ProductPage = () => {
             <div className="flex-1 w-full min-w-0 flex flex-col gap-4 pt-2">
 
               {/* Product name */}
-              <h1 className="text-[1.5rem] font-bold text-gray-900 leading-snug">
+              <h1 className="text-[1.2rem] sm:text-[1.4rem] lg:text-[1.5rem] font-bold text-gray-900 leading-snug">
+                {/* <h1 className="text-[1.5rem] font-bold text-gray-900 leading-snug"> */}
                 {product.name}
               </h1>
 
               {/* Price row */}
               <div className="flex items-baseline gap-3 flex-wrap">
-                <span className="text-[1.25rem] font-bold text-[#ea5f0a] leading-none">
+                <span className="text-[1.1rem] sm:text-[1.25rem] font-bold text-[#ea5f0a] leading-none">
+                  {/* </span><span className="text-[1.25rem] font-bold text-[#ea5f0a] leading-none"> */}
                   Rs. {getCurrentPrice().toFixed(2)}
                 </span>
                 {getOriginalPrice() > getCurrentPrice() && (
@@ -533,7 +535,9 @@ const ProductPage = () => {
               {/* ── Action Buttons ── */}
               <div className="flex flex-col gap-3 mt-4">
                 {/* Row 1: Add to Cart + Buy Now — side by side */}
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-3">
+
+                {/* </div><div className="flex gap-4"> */}
                   <button
                     onClick={handleAddToCart}
                     disabled={getCurrentStock() <= 0}

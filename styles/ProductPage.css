@@ -1650,92 +1650,7 @@ html {
 	}
 }
 
-@media (max-width: 498px) {
-	.product-page__recommended {
-		margin: 0rem;
-		padding: 0rem;
-	}
 
-	.product-gallery {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		width: 100%;
-	}
-
-	.product-gallery__images {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		width: 100%;
-	}
-
-	.product-gallery__main-image {
-		width: 90vw;
-		max-width: 90vw;
-		margin: 0 auto;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.product-info__title {
-		font-size: 1.4rem;
-	}
-
-	.product-price__current {
-		font-size: 1.3rem;
-	}
-
-	.product-options__variant {
-		min-width: 6rem;
-		padding: 0.6rem 0.8rem;
-	}
-
-	.product-options__variant-row {
-		gap: 0.15rem;
-	}
-
-	.product-options__button--size {
-		padding: 0.18rem 0.4rem;
-		font-size: 0.85rem;
-		min-width: 1.4rem;
-		min-height: 1.2rem;
-		height: 1.2rem;
-	}
-
-	.product-quantity {
-		align-items: center;
-	}
-
-	.seller-info {
-		padding: 1rem;
-	}
-
-	.seller-info__icon {
-		width: 2.5rem;
-		height: 2.5rem;
-	}
-
-	.recommended-products {
-		padding: 0rem;
-	}
-
-	.recommended-products__grid {
-		grid-template-columns: 1fr;
-		gap: 1rem;
-	}
-
-	.recommended-products__image {
-		height: 12rem;
-	}
-
-	.product-gallery__zoom-box {
-		width: 200px;
-		height: 200px;
-		top: calc(100% + 0.5rem);
-	}
-}
 
 @media (min-width: 48rem) {
 	.recommended-products__grid {
@@ -2007,4 +1922,39 @@ html {
   color: #000;
   margin-right: 0.5rem;
   white-space: nowrap;
+}
+/* FINAL MOBILE OVERRIDES */
+
+@media screen and (max-width: 498px) {
+
+	.product-info {
+		padding: 0.8rem !important;
+	}
+
+	.product-info__title {
+		font-size: 0.95rem !important;
+		font-weight: 500 !important;
+		line-height: 1.3 !important;
+		margin-bottom: 0.5rem !important;
+	}
+
+	.product-price {
+		gap: 0.4rem !important;
+		padding: 0.4rem 0 !important;
+		margin-bottom: 0.7rem !important;
+	}
+
+	.product-price__current {
+		font-size: 1rem !important;
+		font-weight: 700 !important;
+	}
+
+	.product-price__original {
+		font-size: 0.75rem !important;
+	}
+
+	.product-price__savings {
+		font-size: 0.65rem !important;
+		padding: 0.15rem 0.35rem !important;
+	}
 }

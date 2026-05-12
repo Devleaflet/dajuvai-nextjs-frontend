@@ -21,6 +21,21 @@ interface Slide {
   externalLink?: string | null;
 }
 
+interface ApiBanner {
+  id: number;
+  name: string;
+  desktopImage: string | null;
+  mobileImage: string | null;
+  type: string;
+  status: string;
+  startDate?: string | null;
+  endDate?: string | null;
+  productSource?: string;
+  selectedCategory?: { id: number } | null;
+  selectedSubcategory?: { id: number; category: { id: number } } | null;
+  externalLink?: string | null;
+}
+
 interface ProductBannerSliderProps {
   onLoad?: () => void;
 }
@@ -32,18 +47,18 @@ const fetchProductBanners = async (): Promise<Slide[]> => {
     throw new Error(`Failed to fetch product banners: ${response.statusText}`);
   }
 
-  const data = await response.json();
+  const data = (await response.json()) as { data?: ApiBanner[] };
   //("Fetched product banners:', data);
 
-  return data.data
+  return (data.data ?? [])
     .filter(
-      (banner: any) =>
+      (banner) =>
         banner.type === 'PRODUCT' &&
         banner.status === 'ACTIVE' &&
         (!banner.startDate || new Date(banner.startDate) <= new Date()) &&
         (!banner.endDate || new Date(banner.endDate) >= new Date())
     )
-    .map((banner: any) => ({
+    .map((banner) => ({
       id: banner.id,
       name: banner.name,
       desktopImage: banner.desktopImage,
@@ -67,7 +82,7 @@ const ProductBannerSlider: React.FC<ProductBannerSliderProps> = ({ onLoad }) => 
   const sliderRef = useRef<HTMLDivElement>(null);
 
   const clickThreshold = 5;
-  const swipeThreshold = sliderRef.current ? sliderRef.current.offsetWidth / 4 : 100;
+  const getSwipeThreshold = () => sliderRef.current ? sliderRef.current.offsetWidth / 4 : 100;
 
   const { data: slides = [], isLoading, error } = useQuery<Slide[], Error>({
     queryKey: ['productBanners'],
@@ -78,7 +93,7 @@ const ProductBannerSlider: React.FC<ProductBannerSliderProps> = ({ onLoad }) => 
 
   useEffect(() => {
     onLoad?.();
-  }, [slides]);
+  }, [onLoad, slides]);
 
   const goToSlide = (index: number) => setActiveSlide(index);
   const goToPrevSlide = () => setActiveSlide(prev => (prev === 0 ? slides.length - 1 : prev - 1));
@@ -102,8 +117,12 @@ const ProductBannerSlider: React.FC<ProductBannerSliderProps> = ({ onLoad }) => 
 
     setIsDragging(false);
 
-    if (Math.abs(translateX) > swipeThreshold) {
-      translateX > 0 ? goToPrevSlide() : goToNextSlide();
+    if (Math.abs(translateX) > getSwipeThreshold()) {
+      if (translateX > 0) {
+        goToPrevSlide();
+      } else {
+        goToNextSlide();
+      }
     }
 
     const dx = x - (startPos?.x || 0);

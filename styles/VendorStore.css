@@ -55,9 +55,9 @@
 
 .vendor-store__info h1 {
 	margin: 0 0 0.35rem;
-	font-size: 1.6rem;
+	font-size: 1.25rem;
 	line-height: 1.25;
-	font-weight: 800;
+	font-weight: 600;
 	letter-spacing: 0.2px;
 	color: #222;
 	position: relative;
@@ -132,7 +132,7 @@
 
 .vendor-details__title {
 	margin: 0 0 1.2rem;
-	font-size: 1.2rem;
+	font-size: 1rem;
 	color: #2c3e50;
 	font-weight: 600;
 	border-bottom: 2px solid #ea5f0a;
@@ -199,8 +199,9 @@
 
 .products-title {
 	margin: 0;
-	font-size: 1.35rem;
+	font-size: 0.8rem;
 	color: #2c3e50;
+	font-weight: 600;
 }
 
 .products-controls {
@@ -644,4 +645,210 @@
 .vendor-store__product-grid .product-card {
 	width: 100%;
 	min-width: 0;
+}
+
+@media (max-width: 768px) {
+	.vendor-store__product-grid .product-card-wrapper .product-card {
+		overflow: hidden;
+		border-radius: 16px;
+		padding: 14px;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__media {
+		margin-bottom: 20px;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__wishlist-button {
+		top: 9px;
+		left: 9px;
+		width: 30px;
+		height: 30px;
+		background: #fff;
+		border: 1px solid #e5e7eb;
+		box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__wishlist-button svg {
+		width: 21px;
+		height: 21px;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__cart-button {
+		right: 8px;
+		bottom: 8px;
+		width: 30px;
+		height: 30px;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__cart-button svg {
+		width: 16px !important;
+		height: 16px !important;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__image {
+		aspect-ratio: 2 / 3;
+		border-radius: 12px;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__image img {
+		width: 100% !important;
+		height: 100% !important;
+		margin: 0;
+		object-fit: cover !important;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__pagination {
+		display: none;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__rating {
+		margin-bottom: 8px;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__rating-star svg {
+		width: 14px;
+		height: 14px;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__rating-info {
+		font-size: 13px;
+		color: #5f6673;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__title {
+		font-size: 14px;
+		font-weight: 500 !important;
+		line-height: 1.18;
+		min-height: 34px;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__description {
+		font-size: 12px;
+		line-height: 1.35;
+		min-height: 32px;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__price,
+	.vendor-store__product-grid .product-card-wrapper .product-card__price--discounted {
+		display: grid;
+		grid-template-columns: max-content minmax(0, 1fr);
+		width: calc(100% + 20px);
+		gap: 3px;
+		margin-top: 48px;
+		overflow: visible;
+		transform: translateX(-12px);
+		white-space: normal;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__current-price {
+		font-size: 10px;
+		font-weight: 500;
+		min-width: 0;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__current-price--discounted {
+		flex-direction: row;
+		gap: 3px;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__price--discounted .product-card__currency,
+	.vendor-store__product-grid .product-card-wrapper .product-card__price--discounted .product-card__current-amount {
+		font-size: 10px;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__price-details,
+	.vendor-store__product-grid .product-card-wrapper .product-card__price-details--discounted {
+		display: grid;
+		grid-template-columns: max-content max-content;
+		justify-content: start;
+		align-items: end;
+		gap: 4px;
+		min-width: 0;
+		overflow: visible;
+		width: 100%;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__original-price {
+		font-size: 7px;
+		line-height: 1;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__discount {
+		font-size: 9px;
+		line-height: 1;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__discount {
+		white-space: nowrap;
+	}
+}
+
+@media (max-width: 480px) {
+	.vendor-store__product-grid .product-card-wrapper .product-card {
+		padding: 13px;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__media {
+		margin-bottom: 18px;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__wishlist-button {
+		top: 8px;
+		left: 8px;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__cart-button {
+		right: 7px;
+		bottom: 7px;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__title {
+		font-size: 14px;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__description {
+		font-size: 12px;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__price,
+	.vendor-store__product-grid .product-card-wrapper .product-card__price--discounted {
+		margin-top: 44px;
+		gap: 6px;
+	}
+}
+
+@media (max-width: 360px) {
+	.vendor-store__product-grid .product-card-wrapper .product-card {
+		padding: 12px;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__wishlist-button,
+	.vendor-store__product-grid .product-card-wrapper .product-card__cart-button {
+		width: 28px;
+		height: 28px;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__title {
+		font-size: 13px;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__description,
+	.vendor-store__product-grid .product-card-wrapper .product-card__rating-info {
+		font-size: 11px;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__price,
+	.vendor-store__product-grid .product-card-wrapper .product-card__price--discounted {
+		margin-top: 36px;
+	}
+
+	.vendor-store__product-grid .product-card-wrapper .product-card__current-price,
+	.vendor-store__product-grid .product-card-wrapper .product-card__price--discounted .product-card__currency,
+	.vendor-store__product-grid .product-card-wrapper .product-card__price--discounted .product-card__current-amount,
+	.vendor-store__product-grid .product-card-wrapper .product-card__original-price,
+	.vendor-store__product-grid .product-card-wrapper .product-card__discount {
+		font-size: 10px;
+	}
 }

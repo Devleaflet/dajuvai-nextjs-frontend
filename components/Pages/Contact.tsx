@@ -7,6 +7,7 @@ import axiosInstance from "@/lib/api/axiosInstance";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaExclamationCircle } from 'react-icons/fa';
+import Link from "next/link";
 
 const inputClass =
   "w-full border border-red-300 rounded-lg px-3 py-2.5 text-sm text-gray-700 placeholder-gray-400 outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-400 bg-white box-border";
@@ -129,11 +130,12 @@ const Contact: React.FC = () => {
               <p className="text-gray-500 text-[0.95rem] sm:text-sm leading-relaxed mb-5">
                 Join our platform and reach thousands of customers across Nepal.
               </p>
-              <button
-                className="w-full sm:w-auto bg-orange-500 hover:bg-orange-600 active:bg-orange-700 transition-colors text-white font-bold text-[0.98rem] sm:text-[0.9rem] px-6 py-3 sm:py-2.5 rounded-xl"
+              <Link
+                href="/become-vendor"
+                className="w-full sm:w-auto bg-orange-500 hover:bg-orange-600 active:bg-orange-700 transition-colors text-white font-bold text-[0.98rem] sm:text-[0.9rem] px-6 py-3 sm:py-2.5 rounded-xl inline-flex items-center justify-center"
               >
                 Become a Vendor
-              </button>
+              </Link>
             </div>
 
           </div>

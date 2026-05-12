@@ -988,6 +988,17 @@
 }
 
 @media (max-width: 576px) {
+	.navbar__search-row {
+		display: flex;
+		justify-content: center;
+	}
+
+	.navbar__search {
+		width: calc(100% - 16px);
+		max-width: none;
+		margin: 0 auto;
+	}
+
 	.navbar__search-category {
 		display: none;
 	}
@@ -1408,10 +1419,6 @@
 }
 
 @media (max-width: 768px) {
-	.navbar__search-row--shop-mobile-hidden {
-		display: none !important;
-	}
-
 	.navbar__search {
 		max-width: 100%;
 	}

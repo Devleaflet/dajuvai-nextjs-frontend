@@ -16,7 +16,7 @@ import { API_BASE_URL } from "@/lib/config";
 import { useAuth } from "@/lib/context/AuthContext";
 import CategoryService from "@/lib/services/categoryService";
 import ProductCardSkeleton from "@/components/skeleton/ProductCardSkeleton";
-import ProductBannerSlider from '@/components/Components/ProductBannerSlider';
+import HeroSlider from '@/components/Components/HeroSlider';
 import '@/styles/Shop.css';
 
 // Interfaces
@@ -591,7 +591,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 								if (match) handleCategoryChange(match.id);
 							}
 						}}
-						className="shop-filter-search w-full h-[48px] py-0 px-4 border border-[#e6ebf1] rounded-xl text-[0.88rem] outline-none focus:border-[#d9dee8] mb-6 bg-white text-[#2d3950] placeholder:text-[#a2adbd] shadow-none"
+						className="shop-filter-search w-full h-[48px] py-0 px-4 border border-[#e6ebf1] rounded-l text-[0.88rem] outline-none focus:border-[#d9dee8] mb-6 bg-white text-[#2d3950] placeholder:text-[#a2adbd] shadow-none"
 					/>
 					<div className="shop-filter-options flex flex-col gap-4">
 						{isLoadingCategories ? (
@@ -606,7 +606,10 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 										onChange={() => handleCategoryChange(undefined)}
 										className="w-6 h-6 cursor-pointer accent-[#bf58f7]"
 									/>
-									<span className="text-[0.95rem] font-normal text-[#2d3950] group-hover:text-[#1f2b3d] transition-colors">
+									<span
+										className="shop-filter-option-label--light text-[0.90rem] text-[#2d3950] group-hover:text-[#1f2b3d] transition-colors"
+										style={{ fontWeight: 300, fontVariationSettings: '"weight" 300' }}
+									>
 										All Categories
 									</span>
 								</label>
@@ -1088,10 +1091,12 @@ const Shop: React.FC = () => {
 			<Navbar />
 
 			<div style={{ zIndex: '0', backgroundColor: '#ECEEF1' }}>
-				<div style={{ paddingTop: '12px' }}>
-					<ProductBannerSlider />
+				<div className="shop-mobile-hero-strip" style={{ paddingTop: '12px' }}>
+					<HeroSlider />
 				</div>
-				<CategorySlider />
+				<div className="shop-mobile-category-strip">
+					<CategorySlider />
+				</div>
 
 			{/* ── MOBILE FILTER DRAWER ── */}
 			{/* Backdrop */}
@@ -1117,17 +1122,17 @@ const Shop: React.FC = () => {
 
 					{/* Mobile header: count -> search -> heading */}
 					<div className="sm:hidden">
-						<div className="mb-3 flex justify-center">
-							<div className="inline-flex items-center gap-2 py-1.5 px-4 bg-orange-50 border border-orange-200 rounded-full text-sm">
+						<div className="shop-mobile-count-row">
+							<div className="shop-mobile-count-pill">
 								{isLoadingProducts ? (
 									<>
 										<div className="w-3 h-3 border-2 border-gray-200 border-t-[#ff6b00] rounded-full animate-spin" />
-										<span className="text-orange-800 text-xs">Loading products...</span>
+										<span className="shop-mobile-count-text">Loading products...</span>
 									</>
 								) : (
 									<>
-										<span className="font-bold text-[#ff6b00] text-sm">{pagination.total_items}</span>
-										<span className="text-orange-900 text-xs">
+										<span className="shop-mobile-count-number">{pagination.total_items}</span>
+										<span className="shop-mobile-count-text">
 											{pagination.total_items === 1 ? 'product' : 'products'} found
 										</span>
 									</>
@@ -1135,7 +1140,36 @@ const Shop: React.FC = () => {
 							</div>
 						</div>
 
-						<h2 className="text-lg font-semibold text-gray-800 mb-4 truncate">
+						<form onSubmit={handleSearchSubmit} className="shop-mobile-search-form">
+							<div className="shop-mobile-search-input-wrap">
+								<input
+									type="text"
+									value={searchInputValue}
+									onChange={handleSearchInputChange}
+									placeholder="Search for products, brands, or categories."
+									className="shop-mobile-search-input"
+								/>
+								{searchInputValue && (
+									<button
+										type="button"
+										onClick={handleClearSearch}
+										className="shop-mobile-search-clear"
+										aria-label="Clear search"
+									>
+										<X size={16} />
+									</button>
+								)}
+							</div>
+							<button
+								type="submit"
+								className="shop-mobile-search-button"
+								aria-label="Search products"
+							>
+								<Search size={20} strokeWidth={2.2} />
+							</button>
+						</form>
+
+						<h2 className="shop-mobile-title">
 							{getDisplayTitle()}
 							{getCurrentSubcategoryName() && (
 								<span className="text-gray-500 font-normal">
@@ -1143,6 +1177,16 @@ const Shop: React.FC = () => {
 								</span>
 							)}
 						</h2>
+
+						<button
+							type="button"
+							onClick={() => setIsMobileFilterOpen(true)}
+							className="shop-mobile-filter-fab"
+							aria-label="Open filters"
+						>
+							<SlidersHorizontal size={34} strokeWidth={2.4} />
+							{hasActiveFilters && <span className="shop-mobile-filter-dot" aria-hidden="true" />}
+						</button>
 					</div>
 
 					{/* Desktop/tablet header: original order */}
