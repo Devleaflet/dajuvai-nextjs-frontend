@@ -14,8 +14,8 @@ interface Slide {
   desktopImage: string | null;
   mobileImage: string | null;
   status?: string;
-  startDate?: string;
-  endDate?: string;
+  startDate?: string | null;
+  endDate?: string | null;
   productSource?: string;
   selectedCategory?: { id: number } | null;
   selectedSubcategory?: { id: number; category: { id: number } } | null;
@@ -65,12 +65,12 @@ const fetchHeroBanners = async (): Promise<Slide[]> => {
       desktopImage: banner.desktopImage,
       mobileImage: banner.mobileImage,
       status: banner.status,
-      startDate: banner.startDate,
-      endDate: banner.endDate,
-      productSource: banner.productSource,
-      selectedCategory: banner.selectedCategory,
-      selectedSubcategory: banner.selectedSubcategory,
-      externalLink: banner.externalLink,
+      startDate: banner.startDate ?? null,
+      endDate: banner.endDate ?? null,
+      ...(banner.productSource !== undefined && { productSource: banner.productSource }),
+      selectedCategory: banner.selectedCategory ?? null,
+      selectedSubcategory: banner.selectedSubcategory ?? null,
+      externalLink: banner.externalLink ?? null,
     }));
 };
 
