@@ -1,6 +1,5 @@
 'use client';
 
-// Checkout.tsx - Updated for Total Price and Payment Section
 import CryptoJS from 'crypto-js';
 import React, { useEffect, useState, Suspense } from 'react';
 import { FaInfoCircle } from 'react-icons/fa';
