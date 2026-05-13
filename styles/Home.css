@@ -26,8 +26,16 @@
 	margin-top: 80px;
 }
 
+.home__footer-spacing {
+	padding-top: 24px;
+}
+
 @media (max-width: 992px) {
 	.homepage-sections {
 		margin-top: 20px;
+	}
+
+	.home__footer-spacing {
+		padding-top: 20px;
 	}
 }

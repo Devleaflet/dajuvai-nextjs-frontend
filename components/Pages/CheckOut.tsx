@@ -1422,7 +1422,7 @@ const Checkout: React.FC = () => {
 										style={{
 											color: '#22c55e',
 											fontSize: '16px',
-											fontWeight: '600',
+											fontWeight: '500',
 										}}
 									>
 										{'\u2713'} "{appliedPromoCode.promoCode}" applied {'\u2014'}{' '}

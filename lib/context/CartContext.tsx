@@ -294,11 +294,6 @@ const CartContextProvider: React.FC<{ children: React.ReactNode }> = ({
       const response = await axiosInstance.post("/api/cart", payload, { withCredentials: true });
       //("API response:", response.data);
 
-      //("Refreshing cart from backend...");
-      // Refresh cart from backend to get the correct item structure
-      await refreshCart();
-      logger.debug("Cart refreshed successfully");
-
       toast.success("Item added to cart successfully!", {
         position: "top-center",
         duration: 3000,
@@ -316,6 +311,12 @@ const CartContextProvider: React.FC<{ children: React.ReactNode }> = ({
           fontWeight: "500",
         },
       });
+
+      //("Refreshing cart from backend...");
+      // Refresh cart from backend to get the correct item structure
+      await refreshCart();
+      logger.debug("Cart refreshed successfully");
+
       logger.debug("handleCartOnAdd SUCCESS");
     } catch (error: unknown) {
       logger.error("handleCartOnAdd ERROR");

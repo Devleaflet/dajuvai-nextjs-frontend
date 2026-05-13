@@ -118,6 +118,93 @@
 	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
+.admin-customers__pagination-container {
+	display: grid;
+	grid-template-columns: 1fr auto 1fr;
+	align-items: center;
+	gap: 12px;
+	margin-top: 24px;
+	padding: 16px 0;
+	
+}
+
+.admin-customers__pagination-info,
+.admin-orders__pagination-container .admin-orders__pagination-info {
+	font-size: 0.875rem;
+	font-weight: 400;
+	color: #475569;
+	line-height: 1.2;
+}
+
+.admin-customers__pagination .vendor-product__pagination-info {
+	font-size: 0.875rem;
+	font-weight: 400;
+	color: #12233d;
+	line-height: 1.2;
+}
+
+
+.admin-customers__pagination-page-count {
+	font-size: 0.875rem;
+	font-weight: 400;
+	color: #12233d;
+	line-height: 1.2;
+	white-space: nowrap;
+	justify-self: center;
+}
+
+.admin-customers__pagination {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 12px;
+	flex-wrap: wrap;
+	justify-self: end;
+}
+
+.admin-customers__pagination-btn {
+	min-width: 40px;
+	height: 40px;
+	padding: 8px 16px;
+	border: 2px solid #f56a2c;
+	background-color: white;
+	color: #f56a2c;
+	border-radius: 8px;
+	cursor: pointer;
+	font-size: 14px;
+	font-weight: 500;
+	transition: all 0.2s ease;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.admin-customers__pagination-btn:hover:not(:disabled) {
+	background-color: #fff5f2;
+	border-color: #f56a2c;
+	transform: translateY(-1px);
+	box-shadow: 0 2px 4px rgba(245, 106, 44, 0.1);
+}
+
+.admin-customers__pagination-btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+	border-color: #e2e8f0;
+	color: #a0aec0;
+}
+
+.admin-customers__pagination-btn.active {
+	background-color: #f56a2c;
+	color: white;
+	border-color: #f56a2c;
+	font-weight: 600;
+}
+
+.admin-customers__pagination-btn.active:hover {
+	background-color: #e55a1c;
+	box-shadow: 0 2px 4px rgba(245, 106, 44, 0.2);
+}
+
 /* Responsive adjustments for filters */
 @media (max-width: 768px) {
 	.admin-customers__searchbar-row {
@@ -142,6 +229,21 @@
 		align-self: center;
 		width: fit-content;
 	}
+
+	.admin-customers__pagination-container {
+		grid-template-columns: 1fr;
+		justify-items: start;
+	}
+
+	.admin-customers__pagination-page-count {
+		margin: 0;
+		text-align: left;
+		justify-self: start;
+	}
+
+	.admin-customers__pagination {
+		justify-self: start;
+	}
 }
 
 @media (max-width: 480px) {
@@ -156,6 +258,16 @@
 
 	.admin-customers__clear-filters {
 		width: 100%;
+	}
+
+	.admin-customers__pagination {
+		gap: 8px;
+	}
+
+	.admin-customers__pagination-btn {
+		min-width: 36px;
+		height: 38px;
+		padding: 8px 12px;
 	}
 }
 

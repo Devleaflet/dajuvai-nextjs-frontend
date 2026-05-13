@@ -11,6 +11,7 @@ import { FiRefreshCw, FiPhoneCall, FiPackage, FiClipboard, FiAlertTriangle, FiPl
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/lib/context/AuthContext';
 import { API_BASE_URL } from '@/lib/config';
+import '@/styles/Delivery.css';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -739,48 +740,50 @@ export default function DeliveryPage() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-white px-4 py-6 sm:px-6 lg:px-8">
-
-      <section className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold leading-tight text-[#333333]">Delivery Management</h1>
-          <p className="mt-2 text-sm font-medium text-[#666666]">
-            Manage warehouse orders, rider assignments, delivery teams, and recovery workflows
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => void refreshActiveTab()}
-          disabled={isRefreshing}
-          className="inline-flex items-center justify-center gap-2 self-start rounded-md bg-[#ff6b35] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#f25f2a] disabled:opacity-60"
-        >
-          <FiRefreshCw size={14} className={isRefreshing ? 'animate-spin' : ''} />
-          Refresh Data
-        </button>
-      </section>
-
-      {/* ── Tabs ── */}
-      <div className="mb-6 flex max-w-full gap-8 overflow-x-auto border-b border-gray-200">
-        {TAB_CONFIG.map(tab => (
+    <div className="delivery-page min-h-screen bg-[#f7f9fc] px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-6">
+        <section className="flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold leading-tight text-[#333333]">Delivery Management</h1>
+            <p className="mt-2 text-sm font-medium text-[#666666]">
+              Manage warehouse orders, rider assignments, delivery teams, and recovery workflows
+            </p>
+          </div>
           <button
-            key={tab.key}
             type="button"
-            onClick={() => setActiveTab(tab.key)}
-            className={[
-              'flex items-center gap-2 border-b-2 px-0 pb-3 text-sm font-medium transition-all whitespace-nowrap',
-              activeTab === tab.key
-                ? 'border-[#ff6b35] text-[#ff6b35]'
-                : 'border-transparent text-[#666666] hover:text-[#333333]',
-            ].join(' ')}
+            onClick={() => void refreshActiveTab()}
+            disabled={isRefreshing}
+            className="inline-flex items-center justify-center gap-2 self-start rounded-md bg-[#ff6b35] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#f25f2a] disabled:opacity-60"
           >
-            {tab.icon}
-            <span>{tab.label}</span>
+            <FiRefreshCw size={14} className={isRefreshing ? 'animate-spin' : ''} />
+            Refresh Data
           </button>
-        ))}
-      </div>
+        </section>
 
-      {/* ── Processing Orders ── */}
-      {activeTab === 'processing' && (
+        {/* ── Tabs ── */}
+        <div className="flex max-w-full gap-8 overflow-x-auto rounded-2xl border border-gray-200 bg-white px-5 py-3 shadow-sm">
+          {TAB_CONFIG.map(tab => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActiveTab(tab.key)}
+              className={[
+                'flex items-center gap-2 border-b-2 px-0 pb-2 text-sm font-medium transition-all whitespace-nowrap',
+                activeTab === tab.key
+                  ? 'border-[#ff6b35] text-[#ff6b35]'
+                  : 'border-transparent text-[#666666] hover:text-[#333333]',
+              ].join(' ')}
+            >
+              {tab.icon}
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </div>
+
+        <main className="flex flex-col gap-6 pb-2">
+
+        {/* ── Processing Orders ── */}
+        {activeTab === 'processing' && (
         selectedOrder || isDetailLoading ? (
           <SectionCard>
             <BackButton onClick={() => setSelectedOrder(null)} label="Back to processing orders" />
@@ -848,10 +851,10 @@ export default function DeliveryPage() {
             />
           </>
         )
-      )}
+        )}
 
-      {/* ── Warehouse Queue ── */}
-      {activeTab === 'warehouse' && (
+        {/* ── Warehouse Queue ── */}
+        {activeTab === 'warehouse' && (
         <>
           <TabHeader title="Warehouse Queue" subtitle={`${warehouseOrders.length} order(s)`} isRefreshing={isRefreshing} onRefresh={() => void refreshActiveTab()} />
           {isRefreshing && warehouseOrders.length === 0 ? (
@@ -970,10 +973,10 @@ export default function DeliveryPage() {
             </>
           )}
         </>
-      )}
+        )}
 
-      {/* ── All Assignments ── */}
-      {activeTab === 'assignments' && (
+        {/* ── All Assignments ── */}
+        {activeTab === 'assignments' && (
         showCreateAssignment ? (
           <SectionCard>
             <BackButton onClick={() => setShowCreateAssignment(false)} label="Back to assignments" />
@@ -1123,10 +1126,10 @@ export default function DeliveryPage() {
             />
           </>
         )
-      )}
+        )}
 
-      {/* ── Riders ── */}
-      {activeTab === 'riders' && (
+        {/* ── Riders ── */}
+        {activeTab === 'riders' && (
         isRiderDetailLoading || selectedRider ? (
           <SectionCard>
             <BackButton onClick={() => setSelectedRider(null)} label="Back to riders" />
@@ -1240,10 +1243,10 @@ export default function DeliveryPage() {
             )}
           </>
         )
-      )}
+        )}
 
-      {/* ── Failed Recovery ── */}
-      {activeTab === 'recovery' && (
+        {/* ── Failed Recovery ── */}
+        {activeTab === 'recovery' && (
         <>
           <TabHeader title="Failed Recovery" subtitle={`${recoveryAssignments.length} failed delivery(s)`} isRefreshing={isRefreshing} onRefresh={() => void refreshActiveTab()} />
           <DataTable
@@ -1269,7 +1272,9 @@ export default function DeliveryPage() {
             }))}
           />
         </>
-      )}
+        )}
+        </main>
+      </div>
     </div>
   );
 }

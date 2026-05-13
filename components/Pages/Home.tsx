@@ -119,7 +119,9 @@ const Home = () => {
 				<SpecialOffers />
 				{/* <CategorySection maxItemsToShow={8} /> */}
 				<CategoryCatalogSection />
-				<Footer />
+				<div className="home__footer-spacing">
+					<Footer />
+				</div>
 			</div>
 		</>
 	);

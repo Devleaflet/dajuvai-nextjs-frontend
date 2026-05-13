@@ -360,7 +360,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
 				onClose();
 				if (nextPath === ADMIN_DASHBOARD_PATH) {
-					router.replace(nextPath);
+					window.location.replace(nextPath);
 				} else {
 					router.push(nextPath);
 				}

@@ -468,9 +468,10 @@
 }
 
 .admin-vendors__pagination-info {
-	font-size: 18px;
+	font-size: 0.875rem;
 	color: #111827;
-	font-weight: 500;
+	font-weight: 400;
+	line-height: 1.2;
 }
 
 .admin-vendors__pagination-container .vendor-product__pagination {

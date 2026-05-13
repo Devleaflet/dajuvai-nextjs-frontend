@@ -13,11 +13,18 @@
   font-weight: 600;
 }
 
+.admin-shell--delivery,
+.admin-shell--delivery .admin-shell__main,
+.admin-shell--delivery .admin-shell__page {
+  background: #f7f9fc;
+}
+
 .delivery-tabs-wrap {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  
   margin: 0 20px 30px;
   border-bottom: 1px solid #e5e7eb;
   padding: 0 0 14px;
@@ -31,6 +38,7 @@
   min-width: 0;
   flex: 1;
   scrollbar-width: none;
+  
 }
 
 .delivery-tabs::-webkit-scrollbar {
