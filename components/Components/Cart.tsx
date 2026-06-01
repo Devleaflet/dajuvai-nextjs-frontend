@@ -440,7 +440,7 @@ const Cart: React.FC<CartProps> = ({ cartOpen, toggleCart }) => {
 			open={cartOpen}
 			onClose={handleCloseCart}
 			placement="right"
-			width={420}
+			size={420}
 			maskClosable
 			keyboard
 			closable={false}
