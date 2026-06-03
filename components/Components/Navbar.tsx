@@ -817,11 +817,16 @@ const Navbar: React.FC = () => {
 		}
 	}, []);
 
+	const [isMounted, setIsMounted] = useState(false);
+	useEffect(() => {
+		setIsMounted(true);
+	}, []);
+
 	return (
 		<nav className="navbar">
 			<div className="navbar__container">
 				<div className="nav_bar_right">
-					{!isLoading && !isAuthenticated && (
+					{isMounted && !isLoading && !isAuthenticated && (
 						<a
 							className="navbar__top-link text-[14px]   text-[#0a0a0a] cursor-pointer "
 							onClick={toggleVendorAuthModal}

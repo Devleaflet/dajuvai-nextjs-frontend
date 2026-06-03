@@ -30,14 +30,28 @@ interface ErrorState {
 	type: "delete" | "quantity" | "stock";
 }
 
-const Cart: React.FC<CartProps> = ({ cartOpen, toggleCart }) => {
+const Cart: React.FC<CartProps> = ({
+	cartOpen,
+	toggleCart,
+	cartButtonRef,
+	stableCartItems,
+}) => {
 	const {
 		handleCartItemOnDelete,
 		handleIncreaseQuantity,
 		handleDecreaseQuantity,
 		updatingItems,
-		cartItems,
+		cartItems: contextCartItems,
 	} = useCart();
+
+	const [isMounted, setIsMounted] = useState(false);
+
+	useEffect(() => {
+		setIsMounted(true);
+	}, []);
+
+	// Use stableCartItems if provided and we're not mounted, otherwise use contextCartItems
+	const cartItems = isMounted ? contextCartItems : (stableCartItems || []);
 
 	const { setCartOpen } = useUI();
 	const pathname = usePathname();
@@ -48,6 +62,7 @@ const Cart: React.FC<CartProps> = ({ cartOpen, toggleCart }) => {
 
 	// ✅ FIXED: Only auto-close when NAVIGATING TO /checkout from another page
 	useEffect(() => {
+		if (!isMounted) return;
 		const currentPath = pathname;
 		const prevPath = prevLocationRef.current;
 
@@ -59,7 +74,7 @@ const Cart: React.FC<CartProps> = ({ cartOpen, toggleCart }) => {
 
 		// Update the previous location reference
 		prevLocationRef.current = currentPath;
-	}, [pathname, cartOpen, setCartOpen]);
+	}, [pathname, cartOpen, setCartOpen, isMounted]);
 
 	useEffect(() => {
 		if (errors.length > 0) {
@@ -208,6 +223,13 @@ const Cart: React.FC<CartProps> = ({ cartOpen, toggleCart }) => {
 			0
 		);
 	}, [cartItems]);
+
+	const handleCloseCart = useCallback(() => {
+		toggleCart();
+	}, [toggleCart]);
+
+	// Prevent rendering until mounted to avoid hydration mismatch if cart state differs
+	if (!isMounted) return null;
 
 	const CartItem = React.memo(
 		({ item }: { item: any }) => {
@@ -430,10 +452,6 @@ const Cart: React.FC<CartProps> = ({ cartOpen, toggleCart }) => {
 
 	CartItem.displayName = "CartItem";
 
-	const handleCloseCart = useCallback(() => {
-		toggleCart();
-	}, [toggleCart]);
-
 	return (
 		<Drawer
 			rootClassName="cart-antd-drawer"
@@ -449,7 +467,7 @@ const Cart: React.FC<CartProps> = ({ cartOpen, toggleCart }) => {
 			styles={{
 				body: { padding: 0 },
 				mask: { backdropFilter: "blur(2px)", background: "rgba(0, 0, 0, 0.5)" },
-				content: {
+				section: {
 					background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
 					boxShadow: "-4px 0 32px rgba(0, 0, 0, 0.1)",
 				},
