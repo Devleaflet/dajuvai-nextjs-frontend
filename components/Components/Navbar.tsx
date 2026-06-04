@@ -74,6 +74,10 @@ const Navbar: React.FC = () => {
 		logout: userLogout,
 		fetchUserData,
 	} = useAuth();
+	const [isMounted, setIsMounted] = useState(false);
+	useEffect(() => {
+		setIsMounted(true);
+	}, []);
 	const mobileProfileRef = useRef<HTMLDivElement>(null);
 	const { authState: vendorAuthState, logout: vendorLogout } = useVendorAuth();
 	const { cartOpen, setCartOpen, sideMenuOpen, setSideMenuOpen } = useUI();
@@ -209,7 +213,7 @@ const Navbar: React.FC = () => {
 	}, [profileDropdownOpen, moreDropdownOpen]);
 
 	const getUserAvatar = () => {
-		if (isLoading) return <div className="navbar__avatar-loading"></div>;
+		if (!isMounted || isLoading) return <div className="navbar__avatar-loading"></div>;
 		if (!isAuthenticated || !user) return <FaUser />;
 		if (user.profilePicture) {
 			return (
@@ -817,11 +821,6 @@ const Navbar: React.FC = () => {
 		}
 	}, []);
 
-	const [isMounted, setIsMounted] = useState(false);
-	useEffect(() => {
-		setIsMounted(true);
-	}, []);
-
 	return (
 		<nav className="navbar">
 			<div className="navbar__container">
@@ -1248,7 +1247,7 @@ const Navbar: React.FC = () => {
 								>
 									{getUserAvatar()}
 									<span className="tooltip-text">
-										{isAuthenticated ? 'Profile' : 'Login'}
+										{isMounted && isAuthenticated ? 'Profile' : 'Login'}
 									</span>
 								</div>
 								{isAuthenticated && profileDropdownOpen && (
@@ -1366,7 +1365,7 @@ const Navbar: React.FC = () => {
 						<h3 className="navbar__side-menu-title">Menu</h3>
 					</div>
 					<div className="navbar__side-menu-category">
-						{!isLoading && !isAuthenticated && (
+						{isMounted && !isLoading && !isAuthenticated && (
 							<a
 								href="/vendor-login"
 								className="navbar__side-menu-category-button"

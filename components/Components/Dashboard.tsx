@@ -438,8 +438,8 @@ export function Dashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {displayedData.map((item) => (
-                        <tr key={item.productid}>
+                      {displayedData.map((item, index) => (
+                        <tr key={`${item.productid}-${index}`}>
                           <td>{item.productid}</td>
                           <td>{item.productname}</td>
                           <td>{item.stock}</td>

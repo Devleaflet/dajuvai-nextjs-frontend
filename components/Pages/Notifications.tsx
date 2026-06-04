@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import "@/styles/Notifications.css";
 import axiosInstance from "@/lib/api/axiosInstance";
 import { useAuth } from "@/lib/context/AuthContext";
+import { useVendorAuth } from "@/lib/context/VendorAuthContext";
 
 interface Notification {
   id: number;
@@ -16,7 +17,15 @@ interface Notification {
 
 export function Notifications() {
   const [isMobile, setIsMobile] = useState(false);
-  const { token } = useAuth();
+  const pathname = usePathname();
+  const router = useRouter();
+  const isVendor = pathname?.startsWith("/vendor/");
+
+  const { token: adminToken } = useAuth();
+  const { authState: vendorAuthState } = useVendorAuth();
+  
+  // Use the appropriate token based on the route
+  const token = isVendor ? vendorAuthState.token : adminToken;
 
   useEffect(() => {
     setIsMobile(window.innerWidth < 1000);
@@ -27,10 +36,6 @@ export function Notifications() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  const pathname = usePathname();
-  const router = useRouter();
-  const isVendor = pathname.startsWith("/vendor/");
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeTab, setActiveTab] = useState("All");
@@ -64,12 +69,17 @@ export function Notifications() {
 
   useEffect(() => {
     const fetchNotifications = async () => {
+      if (!token) return;
+      
       try {
+        // Explicitly set the token because the API URL is shared and the 
+        // interceptor might incorrectly guess the token type based on URL alone.
         const response = await axiosInstance.get("/api/notification", {
           headers: {
             Authorization: `Bearer ${token}`
           }
         });
+        
         if (response.data && response.data.success) {
           const mappedNotifications: Notification[] = response.data.data.map((item: any) => ({
             id: item.id,
@@ -81,13 +91,15 @@ export function Notifications() {
           setNotifications(mappedNotifications);
         }
       } catch (error) {
-        console.error(error);
+        console.error("Error fetching notifications:", error);
       }
     };
     fetchNotifications();
   }, [token]);
 
   const markAsRead = async (id: number) => {
+    if (!token) return;
+    
     try {
       await axiosInstance.patch(`/api/notification/${id}`, { isRead: true }, {
         headers: {
@@ -96,7 +108,7 @@ export function Notifications() {
       });
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
     } catch (error) {
-      console.error(error);
+      console.error("Error marking notification as read:", error);
     }
   };
 

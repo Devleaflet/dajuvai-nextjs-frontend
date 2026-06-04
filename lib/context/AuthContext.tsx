@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "@/lib/config";
-import { setupAxiosInterceptors } from "@/lib/api/axiosInstance";
 import logger from "@/lib/utils/logger";
 import { secureStorage } from "@/lib/utils/secureStorage";
 
@@ -83,14 +82,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const storedToken = secureStorage.getItem("authToken");
     const storedUser = secureStorage.getItem("authUser");
-    //("[Auth Debug] initializeAuth called");
-    //("[Auth Debug] secureStorage.authToken:", storedToken);
-    //("[Auth Debug] secureStorage.authUser:", storedUser);
 
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-        //("[Auth Debug] Parsed user from secureStorage:", parsedUser);
         if (storedToken && isTokenValid(storedToken)) {
           setToken(storedToken);
           setUser(parsedUser);
@@ -120,13 +115,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               };
               setUser(updatedUser);
               secureStorage.setItem("authUser", JSON.stringify(updatedUser));
-              //("[Auth Debug] User verified with backend:", updatedUser);
             } else {
-              //("[Auth Debug] Backend verification failed, clearing auth");
               logout();
             }
           } else {
-            //("[Auth Debug] Backend verification failed (HTTP error), clearing auth");
             logout();
           }
         } catch (verifyError) {
@@ -138,8 +130,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logger.error("Error initializing auth (JSON parse)", error);
         logout();
       }
-    } else {
-      //("[Auth Debug] No authUser in localStorage after refresh.");
     }
     setIsLoading(false);
   }, []);
@@ -171,7 +161,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Logout function - defined early to avoid TDZ issues
   const logout = useCallback(() => {
-    //("AuthContext logout - user only (full cleanse)");
     setToken(null);
     setUser(null);
 
@@ -215,10 +204,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [token, user]);
 
   // Token refresh logic - Optimized approach with visibility and interaction checks
+  const isRefreshing = React.useRef(false);
+  const lastRefreshAttempt = React.useRef(0);
+
   useEffect(() => {
     if (!token || !isAuthenticated) return;
 
     const refreshToken = async () => {
+      // Prevent concurrent refreshes
+      if (isRefreshing.current) return;
+
+      // Cooldown after failure - don't try again for 30 seconds
+      const now = Date.now();
+      if (now - lastRefreshAttempt.current < 30000) {
+        logger.debug("Token refresh cooldown active, skipping attempt");
+        return;
+      }
+
+      isRefreshing.current = true;
+      lastRefreshAttempt.current = now;
+
       try {
         const response = await axios.post(
           `${API_BASE_URL}/api/auth/refresh`,
@@ -234,15 +239,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (response.data.success && response.data.data.token) {
           setToken(response.data.data.token);
           logger.debug("Token refreshed successfully");
+          // Reset cooldown on success
+          lastRefreshAttempt.current = 0;
         } else {
-          throw new Error("Failed to refresh token");
+          throw new Error("Failed to refresh token: Invalid response format");
         }
       } catch (error) {
         logger.error("Token refresh error", error);
-        // Only logout if it's a clear auth error
-        if (axios.isAxiosError(error) && error.response?.status === 401) {
+        // Only logout if it's a clear auth error (401 Unauthorized or 403 Forbidden)
+        if (axios.isAxiosError(error) && (error.response?.status === 401 || error.response?.status === 403)) {
+          logger.warn("Auth error during refresh, logging out");
           logout();
         }
+      } finally {
+        isRefreshing.current = false;
       }
     };
 
@@ -255,11 +265,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const now = Date.now();
       const timeUntilExpiry = expiration - now;
 
-      // Refresh threshold - only refresh 30 minutes before expiry
-      const refreshThreshold = 30 * 60 * 1000; // 30 minutes
+      // Refresh threshold - refresh 5 minutes before expiry
+      // 30 minutes was too aggressive and could cause loops if token life is short
+      const refreshThreshold = 5 * 60 * 1000; // 5 minutes
 
       if (timeUntilExpiry < refreshThreshold && timeUntilExpiry > 0) {
         logger.debug(`Token expires in ${Math.round(timeUntilExpiry / 60000)} minutes, refreshing...`);
+        refreshToken();
+      } else if (timeUntilExpiry <= 0) {
+        logger.warn("Token already expired, logout might be necessary");
+        // If expired, try to refresh one last time or logout
         refreshToken();
       }
     };
@@ -363,12 +378,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!isAuthenticated || !user) return "Not logged in";
     return `Logged in as ${user.username || user.email || "User"}`;
   }, [isLoading, isAuthenticated, user]);
-
-  // Setup axios interceptors
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    setupAxiosInterceptors(() => token || secureStorage.getItem("authToken"));
-  }, [token]);
 
   // Memoize context value to prevent unnecessary re-renders
   const contextValue = useMemo(

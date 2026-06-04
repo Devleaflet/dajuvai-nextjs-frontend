@@ -1,9 +1,9 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { setupAxiosInterceptors } from '@/lib/api/axiosInstance';
 import axiosInstance from '@/lib/api/axiosInstance';
 import { VendorAuthService } from '@/lib/services/vendorAuthService';
+import logger from '@/lib/utils/logger';
 
 interface Vendor {
   id: number;
@@ -27,10 +27,23 @@ interface AuthContextType {
   login: (token: string, vendor: Vendor) => void;
   logout: () => void;
   isLoading: boolean;
-  refreshToken: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Helper to decode JWT token and get expiration time
+const getTokenExpiration = (token: string): number | null => {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3 || !parts[1]) {
+      return null;
+    }
+    const payload = JSON.parse(atob(parts[1]));
+    return payload.exp ? payload.exp * 1000 : null; // Convert to milliseconds
+  } catch (error) {
+    return null;
+  }
+};
 
 export const VendorAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [authState, setAuthState] = useState<AuthState>({
@@ -84,34 +97,6 @@ export const VendorAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     initializeAuth();
   }, []);
 
-  // Setup axios interceptors
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    // Always get the latest token from localStorage for every request
-    setupAxiosInterceptors(() => localStorage.getItem('vendorToken'));
-  }, [authState.token]);
-
-  const refreshToken = async () => {
-    try {
-      if (!authState.token) return;
-
-      const response = await axiosInstance.post('/api/auth/refresh', {}, {
-        headers: { Authorization: `Bearer ${authState.token}` }
-      });
-
-      if (response.data.success && response.data.token) {
-        const newToken = response.data.token;
-        setAuthState(prev => ({ ...prev, token: newToken }));
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('vendorToken', newToken);
-        }
-      }
-    } catch (error) {
-      console.error('Token refresh failed:', error);
-      logout();
-    }
-  };
-
   const login = (token: string, vendor: Vendor) => {
     setAuthState({ token, vendor, isAuthenticated: true });
     if (typeof window !== 'undefined') {
@@ -119,11 +104,9 @@ export const VendorAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       localStorage.setItem('vendorData', JSON.stringify(vendor));
       document.cookie = `vendorToken=${token}; path=/; max-age=604800; SameSite=Lax`;
     }
-    axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   };
 
   const logout = () => {
-    //("VendorAuthContext logout - using comprehensive logout");
     setAuthState({ token: null, vendor: null, isAuthenticated: false });
     if (typeof window !== 'undefined') {
       document.cookie = 'vendorToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
@@ -131,8 +114,46 @@ export const VendorAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     VendorAuthService.comprehensiveLogout();
   };
 
+  useEffect(() => {
+    if (!authState.token || !authState.isAuthenticated) return;
+
+    const checkTokenExpiration = () => {
+      const expiration = getTokenExpiration(authState.token as string);
+      if (!expiration) return;
+
+      const now = Date.now();
+      const timeUntilExpiry = expiration - now;
+
+      // If expired, log out immediately since there's no refresh endpoint for vendors
+      if (timeUntilExpiry <= 0) {
+        logger.warn("Vendor token expired, logging out");
+        logout();
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') checkTokenExpiration();
+    };
+
+    const handleUserInteraction = () => {
+      checkTokenExpiration();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('click', handleUserInteraction, { once: true, capture: true });
+    window.addEventListener('focus', handleUserInteraction, { once: true });
+
+    checkTokenExpiration();
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('click', handleUserInteraction);
+      window.removeEventListener('focus', handleUserInteraction);
+    };
+  }, [authState.token, authState.isAuthenticated]);
+
   return (
-    <AuthContext.Provider value={{ authState, login, logout, isLoading, refreshToken }}>
+    <AuthContext.Provider value={{ authState, login, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

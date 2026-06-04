@@ -2,59 +2,85 @@
 import axios from "axios";
 import { API_BASE_URL } from "@/lib/config";
 import logger from "@/lib/utils/logger";
+import { secureStorage } from "@/lib/utils/secureStorage";
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true, // Always send cookies for cross-origin requests
 });
 
-export const setupAxiosInterceptors = (getTokenFn: () => string | null) => {
-  axiosInstance.interceptors.request.use((config) => {
-    const token = getTokenFn?.();
-    logger.debug("Axios interceptor - Token", { hasToken: !!token });
-    logger.debug("Axios interceptor - Request", { url: config.url, method: config.method });
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-      logger.debug("Axios interceptor - Authorization header set");
+axiosInstance.interceptors.request.use((config) => {
+  // If authorization header is already set manually, don't overwrite it
+  const hasAuthHeader = config.headers && (
+    config.headers.Authorization || 
+    config.headers.authorization || 
+    (typeof config.headers.has === 'function' && config.headers.has('Authorization'))
+  );
+
+  if (hasAuthHeader) {
+    return config;
+  }
+
+  let token: string | null = null;
+  
+  if (typeof window !== 'undefined') {
+    // Determine token based on the endpoint
+    const url = config.url || '';
+    if (url.includes('/vendor/') || url.includes('/vendors/')) {
+      token = localStorage.getItem('vendorToken');
     } else {
-      logger.warn("Axios interceptor - No token available for request", { url: config.url });
+      token = secureStorage.getItem('authToken');
+    }
+  }
+
+  // Detailed debug logging only in development
+  if (process.env.NODE_ENV === 'development') {
+    logger.debug("Axios request", { 
+      url: config.url, 
+      method: config.method,
+      hasToken: !!token,
+      isVendorRoute: config.url?.includes('/vendor/') || config.url?.includes('/vendors/')
+    });
+  }
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  
+  return config;
+}, (error) => {
+  logger.error("Axios interceptor - Request error", error);
+  return Promise.reject(error);
+});
+
+// Add response interceptor to handle errors
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error.response?.status;
+    const url = error.config?.url;
+    const method = error.config?.method?.toUpperCase();
+
+    // Don't log 404s for common probes or expected failures to reduce noise
+    // but DO log them for application API calls as requested by the user
+    if (status === 404) {
+      logger.error(`HTTP 404: ${method} ${url}`, {
+        data: error.response?.data,
+        message: error.message
+      });
+    } else if (status !== 401 && status !== 403) {
+      // Log other non-auth errors
+      logger.error(`Axios response error ${status}: ${method} ${url}`, {
+        message: error.message,
+        data: error.response?.data
+      });
     }
     
-    return config;
-  }, (error) => {
-    logger.error("Axios interceptor - Request error", error);
     return Promise.reject(error);
-  });
+  }
+);
 
-  // Add response interceptor to handle 401 errors
-  axiosInstance.interceptors.response.use(
-    (response) => response,
-    (error) => {
-      const errorDetails = {
-        message: error.message,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        url: error.config?.url,
-        method: error.config?.method,
-        baseURL: error.config?.baseURL,
-      };
-      
-      logger.error("Axios interceptor - Response error", errorDetails);
-      
-      // Log the full error for debugging
-      if (error.response?.status) {
-        logger.error(`HTTP ${error.response.status}: ${error.config?.method?.toUpperCase()} ${error.config?.url}`);
-      } else if (error.request) {
-        logger.error("No response received from server", { url: error.config?.url });
-      } else {
-        logger.error("Request setup error", { message: error.message });
-      }
-      
-      // Do not handle vendor 401 redirects here; let the products.ts interceptor handle it
-      return Promise.reject(error);
-    }
-  );
-};
+// We keep this as a no-op function so that files importing it don't break
+export const setupAxiosInterceptors = () => {};
 
 export default axiosInstance;

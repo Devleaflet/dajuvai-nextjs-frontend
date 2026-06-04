@@ -139,9 +139,15 @@ const CartContextProvider: React.FC<{ children: React.ReactNode }> = ({
   // Fetch cart items on mount and set them
   useEffect(() => {
     const loadCart = async () => {
-      // Don't fetch cart if user is not authenticated
+      // Don't fetch cart if user is not authenticated or not a customer
       if (!auth.isAuthenticated) {
-        //("User not authenticated, clearing cart");
+        setCartItems([]);
+        return;
+      }
+
+      // Only customers have carts - admins and vendors should skip cart fetching
+      if (auth.user?.role && auth.user.role !== 'customer') {
+        logger.debug("User is not a customer, skipping cart load", { role: auth.user.role });
         setCartItems([]);
         return;
       }
@@ -160,14 +166,15 @@ const CartContextProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     };
     loadCart();
-  }, [auth.isAuthenticated]);
+  }, [auth.isAuthenticated, auth.user?.role]);
 
   // Refresh cart when navigating to cart-related pages
   useEffect(() => {
     const cartRelatedPages = ['/checkout', '/cart'];
     const isCartPage = cartRelatedPages.some(page => pathname?.includes(page));
 
-    if (isCartPage && auth.isAuthenticated) {
+    // Only fetch for customers on cart pages
+    if (isCartPage && auth.isAuthenticated && auth.user?.role === 'customer') {
       const refreshCart = async () => {
         try {
           const items = await fetchCart();
@@ -182,17 +189,22 @@ const CartContextProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       };
       refreshCart();
-    } else if (isCartPage && !auth.isAuthenticated) {
-      // Clear cart if user is not authenticated on cart pages
+    } else if (isCartPage && (!auth.isAuthenticated || auth.user?.role !== 'customer')) {
+      // Clear cart if user is not authenticated or not a customer on cart pages
       setCartItems([]);
     }
-  }, [pathname, auth.isAuthenticated]);
+  }, [pathname, auth.isAuthenticated, auth.user?.role]);
 
   // Refresh cart when authentication state changes
   useEffect(() => {
     const refreshCart = async () => {
       if (!auth.isAuthenticated) {
-        //("User not authenticated, clearing cart");
+        setCartItems([]);
+        return;
+      }
+
+      // Only customers have carts
+      if (auth.user?.role && auth.user.role !== 'customer') {
         setCartItems([]);
         return;
       }
@@ -210,7 +222,7 @@ const CartContextProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     };
     refreshCart();
-  }, [auth.isAuthenticated]);
+  }, [auth.isAuthenticated, auth.user?.role]);
 
   // Listen for logout event and clear cart
   useEffect(() => {
