@@ -12,8 +12,8 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use((config) => {
   // If authorization header is already set manually, don't overwrite it
   const hasAuthHeader = config.headers && (
-    config.headers.Authorization || 
-    config.headers.authorization || 
+    config.headers['Authorization'] || 
+    config.headers['authorization'] || 
     (typeof config.headers.has === 'function' && config.headers.has('Authorization'))
   );
 
