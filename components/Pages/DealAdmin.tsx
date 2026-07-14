@@ -44,6 +44,7 @@ const DealAdmin: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<
     "ENABLED" | "DISABLED" | "ALL"
   >("ALL");
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!isAuthenticated || !token) {
@@ -106,12 +107,20 @@ const DealAdmin: React.FC = () => {
       ...prev,
       [name]: name === "discountPercentage" ? Number(value) : value,
     }));
+    if (validationErrors[name]) {
+      setValidationErrors((prev) => {
+        const next = { ...prev };
+        delete next[name];
+        return next;
+      });
+    }
   };
 
   const handleAddDeal = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!token) return toast.error("Please log in");
     if (!formData.name.trim()) return toast.error("Deal name required");
+    setValidationErrors({});
     try {
       const response: ApiResponse<Deal> =
         await DealService.getInstance().createDeal(formData, token);
@@ -129,7 +138,16 @@ const DealAdmin: React.FC = () => {
         setFormData({ name: "", discountPercentage: 0, status: "ENABLED" });
         toast.success("Deal added successfully");
       } else {
-        toast.error(response.message || "Failed to add deal");
+        if (response.errors && response.errors.length > 0) {
+          const errorsMap: Record<string, string> = {};
+          response.errors.forEach((err) => {
+            errorsMap[err.field] = err.message;
+            toast.error(err.message);
+          });
+          setValidationErrors(errorsMap);
+        } else {
+          toast.error(response.message || "Failed to add deal");
+        }
       }
     } catch (err) {
       toast.error("Failed to add deal");
@@ -141,20 +159,13 @@ const DealAdmin: React.FC = () => {
     if (!token) return toast.error("Please log in");
     if (!showEditModal.deal) return;
     if (!formData.name.trim()) return toast.error("Deal name required");
-    if (formData.discountPercentage < 0 || formData.discountPercentage > 100) {
-      return toast.error("Discount percentage must be between 0 and 100");
-    }
+    setValidationErrors({});
 
-    // Debug log: print the payload before sending
-    //("[Deal Edit] PATCH payload:", formData);
-
-    // Ensure the payload is properly formatted
     const payload = {
       name: formData.name.trim(),
       discountPercentage: Number(formData.discountPercentage),
       status: formData.status
     };
-    //("[Deal Edit] Formatted payload:", payload);
 
     try {
       const response: ApiResponse<Deal> =
@@ -165,7 +176,6 @@ const DealAdmin: React.FC = () => {
         );
       if (response.success && response.data) {
         const updatedDeal = response.data;
-        // Ensure discountPercentage is a number for frontend consistency
         const normalizedDeal = {
           ...updatedDeal,
           discountPercentage: typeof updatedDeal.discountPercentage === 'string'
@@ -191,7 +201,16 @@ const DealAdmin: React.FC = () => {
         setFormData({ name: "", discountPercentage: 0, status: "ENABLED" });
         toast.success("Deal updated successfully");
       } else {
-        toast.error(response.message || "Failed to update deal");
+        if (response.errors && response.errors.length > 0) {
+          const errorsMap: Record<string, string> = {};
+          response.errors.forEach((err) => {
+            errorsMap[err.field] = err.message;
+            toast.error(err.message);
+          });
+          setValidationErrors(errorsMap);
+        } else {
+          toast.error(response.message || "Failed to update deal");
+        }
       }
     } catch (err: unknown) {
       const error = err as any;
@@ -290,7 +309,11 @@ const DealAdmin: React.FC = () => {
             </div>
             <button
               className="deal-admin__add-btn"
-              onClick={() => setShowAddModal(true)}
+              onClick={() => {
+                setFormData({ name: "", discountPercentage: 0, status: "ENABLED" });
+                setValidationErrors({});
+                setShowAddModal(true);
+              }}
             >
               <FiPlus className="deal-admin__btn-icon" />
               <span>Add New Deal</span>
@@ -389,6 +412,7 @@ const DealAdmin: React.FC = () => {
                                       deal.discountPercentage,
                                     status: deal.status,
                                   });
+                                  setValidationErrors({});
                                 }}
                               >
                                 <FiEdit2 />
@@ -458,7 +482,7 @@ const DealAdmin: React.FC = () => {
           )}
         </div>
 
-        {showAddModal && (
+         {showAddModal && (
           <div className="deal-admin__modal-overlay">
             <div className="deal-admin__modal">
               <div className="deal-admin__modal-header">
@@ -473,10 +497,13 @@ const DealAdmin: React.FC = () => {
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
-                    className="deal-admin__input"
+                    className={`deal-admin__input${validationErrors['name'] ? ' deal-admin__input--error' : ''}`}
                     placeholder="Enter deal name"
                     required
                   />
+                  {validationErrors['name'] && (
+                    <span className="deal-admin__error-message">{validationErrors['name']}</span>
+                  )}
                 </div>
                 <div className="deal-admin__form-group">
                   <label className="deal-admin__label">
@@ -487,13 +514,16 @@ const DealAdmin: React.FC = () => {
                     name="discountPercentage"
                     value={formData.discountPercentage}
                     onChange={handleInputChange}
-                    className="deal-admin__input"
+                    className={`deal-admin__input${validationErrors['discountPercentage'] ? ' deal-admin__input--error' : ''}`}
                     placeholder="0"
                     min="0"
                     max="100"
                     step="0.01"
                     required
                   />
+                  {validationErrors['discountPercentage'] && (
+                    <span className="deal-admin__error-message">{validationErrors['discountPercentage']}</span>
+                  )}
                 </div>
                 <div className="deal-admin__form-group">
                   <label className="deal-admin__label">Status</label>
@@ -501,18 +531,24 @@ const DealAdmin: React.FC = () => {
                     name="status"
                     value={formData.status}
                     onChange={handleInputChange}
-                    className="deal-admin__select"
+                    className={`deal-admin__select${validationErrors['status'] ? ' deal-admin__input--error' : ''}`}
                     required
                   >
                     <option value="ENABLED">Enabled</option>
                     <option value="DISABLED">Disabled</option>
                   </select>
+                  {validationErrors['status'] && (
+                    <span className="deal-admin__error-message">{validationErrors['status']}</span>
+                  )}
                 </div>
                 <div className="deal-admin__modal-actions">
                   <button
                     type="button"
                     className="deal-admin__btn deal-admin__btn--secondary"
-                    onClick={() => setShowAddModal(false)}
+                    onClick={() => {
+                      setShowAddModal(false);
+                      setValidationErrors({});
+                    }}
                   >
                     Cancel
                   </button>
@@ -543,10 +579,13 @@ const DealAdmin: React.FC = () => {
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
-                    className="deal-admin__input"
+                    className={`deal-admin__input${validationErrors['name'] ? ' deal-admin__input--error' : ''}`}
                     placeholder="Enter deal name"
                     required
                   />
+                  {validationErrors['name'] && (
+                    <span className="deal-admin__error-message">{validationErrors['name']}</span>
+                  )}
                 </div>
                 <div className="deal-admin__form-group">
                   <label className="deal-admin__label">
@@ -557,13 +596,16 @@ const DealAdmin: React.FC = () => {
                     name="discountPercentage"
                     value={formData.discountPercentage}
                     onChange={handleInputChange}
-                    className="deal-admin__input"
+                    className={`deal-admin__input${validationErrors['discountPercentage'] ? ' deal-admin__input--error' : ''}`}
                     placeholder="0"
                     min="0"
                     max="100"
                     step="0.01"
                     required
                   />
+                  {validationErrors['discountPercentage'] && (
+                    <span className="deal-admin__error-message">{validationErrors['discountPercentage']}</span>
+                  )}
                 </div>
                 <div className="deal-admin__form-group">
                   <label className="deal-admin__label">Status</label>
@@ -571,20 +613,24 @@ const DealAdmin: React.FC = () => {
                     name="status"
                     value={formData.status}
                     onChange={handleInputChange}
-                    className="deal-admin__select"
+                    className={`deal-admin__select${validationErrors['status'] ? ' deal-admin__input--error' : ''}`}
                     required
                   >
                     <option value="ENABLED">Enabled</option>
                     <option value="DISABLED">Disabled</option>
                   </select>
+                  {validationErrors['status'] && (
+                    <span className="deal-admin__error-message">{validationErrors['status']}</span>
+                  )}
                 </div>
                 <div className="deal-admin__modal-actions">
                   <button
                     type="button"
                     className="deal-admin__btn deal-admin__btn--secondary"
-                    onClick={() =>
-                      setShowEditModal({ show: false, deal: null })
-                    }
+                    onClick={() => {
+                      setShowEditModal({ show: false, deal: null });
+                      setValidationErrors({});
+                    }}
                   >
                     Cancel
                   </button>

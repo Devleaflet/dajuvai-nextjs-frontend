@@ -17,10 +17,16 @@ export interface DealFormData {
   status: 'ENABLED' | 'DISABLED';
 }
 
+export interface ApiValidationError {
+  field: string;
+  message: string;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
   message?: string;
+  errors?: ApiValidationError[];
 }
 
 export interface DealsResponse {
@@ -99,7 +105,8 @@ class DealService {
       if (axios.isAxiosError(error)) {
         return {
           success: false,
-          message: error.response?.data?.message || 'Failed to create deal'
+          message: error.response?.data?.message || 'Failed to create deal',
+          errors: error.response?.data?.errors
         };
       }
       return {
@@ -136,7 +143,8 @@ class DealService {
         
         return {
           success: false,
-          message
+          message,
+          errors: error.response?.data?.errors
         };
       }
       return {
